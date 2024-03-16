@@ -1,0 +1,3 @@
+[submodule "inst/adelie"]
+	path = inst/adelie
+	url = git@github.com:JamesYang007/adelie.git
