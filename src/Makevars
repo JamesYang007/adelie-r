@@ -13,6 +13,5 @@ else
 endif
 
 PKG_CPPFLAGS = \
-    -I../inst/include \
-    -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS \
-    -DEIGEN_MATRIXBASE_PLUGIN=\"adelie_core/util/eigen/matrixbase_plugin.hpp\" 
+    -I../inst/adelie/adelie/src/include \
+    -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS 
