@@ -368,6 +368,7 @@ render_glm_naive_inputs_ <- function(
     out
 }
 
+#' @export
 state.glm_naive <- function(
     X,
     glm,
@@ -489,6 +490,7 @@ state.glm_naive <- function(
     out
 }
 
+#' @export
 state.multiglm_naive <- function(
     X,
     glm,

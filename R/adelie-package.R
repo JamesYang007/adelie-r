@@ -1,4 +1,5 @@
 #' @import Rcpp
+#' @import Matrix
 #' @useDynLib adelie, .registration = TRUE
 NULL
 Rcpp::loadModule("adelie_core_configs", TRUE)

@@ -1,3 +1,4 @@
+#' @export
 set_configs <- function(name, value=NULL)
 {
     configs <- new(Configs)

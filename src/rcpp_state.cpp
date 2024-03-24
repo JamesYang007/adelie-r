@@ -302,24 +302,23 @@ auto make_state_multiglm_naive_64(
     );
 }
 
-auto betas(state_gaussian_naive_64_t* state)
+template <class StateType>
+auto betas(StateType* state)
 {
-    return convert_betas(state->X->cols(), state->betas);
-}
-
-auto betas(state_glm_naive_64_t* state)
-{
-    return convert_betas(state->X->cols(), state->betas);
-}
-
-auto betas(state_multigaussian_naive_64_t* state)
-{
-    return convert_betas(state->X->cols() - state->multi_intercept * state->n_classes, state->betas);
-}
-
-auto betas(state_multiglm_naive_64_t* state)
-{
-    return convert_betas(state->X->cols() - state->multi_intercept * state->n_classes, state->betas);
+    using state_t = std::decay_t<StateType>;
+    if constexpr (
+        std::is_same_v<state_t, state_gaussian_naive_64_t> ||
+        std::is_same_v<state_t, state_glm_naive_64_t>
+    ) {
+        return convert_betas(state->X->cols(), state->betas);
+    } else if constexpr (
+        std::is_same_v<state_t, state_multigaussian_naive_64_t> ||
+        std::is_same_v<state_t, state_multiglm_naive_64_t>
+    ) {
+        return convert_betas(state->X->cols() - state->multi_intercept * state->n_classes, state->betas);
+    } else {
+        static_assert("Unexpected state type.");
+    }
 }
 
 RCPP_EXPOSED_AS(matrix_naive_base_64_t)
@@ -336,8 +335,8 @@ RCPP_MODULE(adelie_core_state)
         .field_readonly("screen_set", &state_base_64_t::screen_set)
         .field_readonly("screen_beta", &state_base_64_t::screen_beta)
         .field_readonly("screen_is_active", &state_base_64_t::screen_is_active)
-        .field_readonly("grad", &state_base_64_t::grad)
         .field_readonly("intercepts", &state_base_64_t::intercepts)
+        .field_readonly("grad", &state_base_64_t::grad)
         .field_readonly("devs", &state_base_64_t::devs)
         .field_readonly("lmdas", &state_base_64_t::lmdas)
         ;
@@ -349,19 +348,31 @@ RCPP_MODULE(adelie_core_state)
         .field_readonly("rsq", &state_gaussian_naive_64_t::rsq)
         .field_readonly("resid", &state_gaussian_naive_64_t::resid)
         .field_readonly("resid_sum", &state_gaussian_naive_64_t::resid_sum)
-        .property("betas", &betas, "")
+        .property("betas", &betas<state_gaussian_naive_64_t>, "")
         ;
     Rcpp::class_<state_glm_naive_64_t>("StateGlmNaive64")
         .derives<state_base_64_t>("StateBase64")
-        .property("betas", &betas, "")
+        .field_readonly("beta0", &state_glm_naive_64_t::beta0)
+        .field_readonly("eta", &state_glm_naive_64_t::eta)
+        .field_readonly("resid", &state_glm_naive_64_t::resid)
+        .field_readonly("loss_null", &state_glm_naive_64_t::loss_null)
+        .field_readonly("loss_full", &state_glm_naive_64_t::loss_full)
+        .property("betas", &betas<state_glm_naive_64_t>, "")
         ;
+    // TODO: Rcpp cannot handle inheritance properly. 
+    // If field/property is already defined in the base class,
+    // then even if they are overriden in the derived class,
+    // the most base version will get called.
+    // To get around this issue, we suffix the name with "multi" to make a unique name.
     Rcpp::class_<state_multigaussian_naive_64_t>("StateMultiGaussianNaive64")
         .derives<state_gaussian_naive_64_t>("StateGaussianNaive64")
-        .property("betas", &betas, "")
+        .field_readonly("intercepts_multi", &state_multigaussian_naive_64_t::intercepts)
+        .property("betas_multi", &betas<state_multigaussian_naive_64_t>, "")
         ;
     Rcpp::class_<state_multiglm_naive_64_t>("StateMultiGlmNaive64")
         .derives<state_glm_naive_64_t>("StateGlmNaive64")
-        .property("betas", &betas, "")
+        .field_readonly("intercepts_multi", &state_multiglm_naive_64_t::intercepts)
+        .property("betas_multi", &betas<state_multiglm_naive_64_t>, "")
         ;
 
     Rcpp::function(
