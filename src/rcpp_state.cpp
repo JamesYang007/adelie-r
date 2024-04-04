@@ -339,6 +339,7 @@ RCPP_MODULE(adelie_core_state)
         .field_readonly("grad", &state_base_64_t::grad)
         .field_readonly("devs", &state_base_64_t::devs)
         .field_readonly("lmdas", &state_base_64_t::lmdas)
+        .field_readonly("benchmark_fit_active", &state_base_64_t::benchmark_fit_active)
         ;
     Rcpp::class_<state_gaussian_naive_64_t>("StateGaussianNaive64")
         .derives<state_base_64_t>("StateBase64")

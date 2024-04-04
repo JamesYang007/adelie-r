@@ -2,7 +2,7 @@
 #include <RcppEigen.h>
 #include <adelie_core/matrix/matrix_cov_base.hpp>
 #include <adelie_core/matrix/matrix_cov_dense.hpp>
-#include <adelie_core/matrix/matrix_cov_lazy.hpp>
+#include <adelie_core/matrix/matrix_cov_lazy_cov.hpp>
 #include <adelie_core/matrix/matrix_naive_base.hpp>
 #include <adelie_core/matrix/matrix_naive_dense.hpp>
 #include <adelie_core/matrix/matrix_naive_concatenate.hpp>
@@ -18,7 +18,7 @@ using dense_64F_t = ad::util::colmat_type<value_t>;
 
 using matrix_cov_base_64_t = ad::matrix::MatrixCovBase<value_t>;
 using matrix_cov_dense_64F_t = ad::matrix::MatrixCovDense<dense_64F_t>;
-using matrix_cov_lazy_64F_t = ad::matrix::MatrixCovLazy<dense_64F_t>;
+using matrix_cov_lazy_cov_64F_t = ad::matrix::MatrixCovLazyCov<dense_64F_t>;
 
 using matrix_naive_base_64_t = ad::matrix::MatrixNaiveBase<value_t>;
 using matrix_naive_dense_64F_t = ad::matrix::MatrixNaiveDense<dense_64F_t>;
@@ -36,12 +36,12 @@ auto make_matrix_cov_dense_64F(
     return matrix_cov_dense_64F_t(mat, n_threads);
 }
 
-auto make_matrix_cov_lazy_64F(
+auto make_matrix_cov_lazy_cov_64F(
     const Eigen::Map<dense_64F_t>& mat,
     size_t n_threads
 )
 {
-    return matrix_cov_lazy_64F_t(mat, n_threads);
+    return matrix_cov_lazy_cov_64F_t(mat, n_threads);
 }
 
 auto make_matrix_naive_concatenate_64(
@@ -87,7 +87,8 @@ auto make_matrix_naive_snp_unphased_64(
     size_t n_threads
 )
 {
-    return matrix_naive_snp_unphased_64_t(filename, n_threads);
+    // TODO: generalize 
+    return matrix_naive_snp_unphased_64_t(filename, "file", n_threads);
 }
 
 auto make_matrix_naive_snp_phased_ancestry_64(
@@ -95,7 +96,8 @@ auto make_matrix_naive_snp_phased_ancestry_64(
     size_t n_threads
 )
 {
-    return matrix_naive_snp_phased_ancestry_64_t(filename, n_threads);
+    // TODO: generalize 
+    return matrix_naive_snp_phased_ancestry_64_t(filename, "file", n_threads);
 }
 
 void mul(
@@ -110,7 +112,7 @@ void mul(
 
 RCPP_EXPOSED_AS(matrix_naive_base_64_t)
 RCPP_EXPOSED_WRAP(matrix_cov_dense_64F_t)
-RCPP_EXPOSED_WRAP(matrix_cov_lazy_64F_t)
+RCPP_EXPOSED_WRAP(matrix_cov_lazy_cov_64F_t)
 RCPP_EXPOSED_WRAP(matrix_naive_concatenate_64_t)
 RCPP_EXPOSED_WRAP(matrix_naive_dense_64F_t)
 RCPP_EXPOSED_WRAP(matrix_naive_kronecker_eye_64_t)
@@ -133,7 +135,7 @@ RCPP_MODULE(adelie_core_matrix)
     Rcpp::class_<matrix_cov_dense_64F_t>("MatrixCovDense64F")
         .derives<matrix_cov_base_64_t>("MatrixCovBase64")
         ;
-    Rcpp::class_<matrix_cov_lazy_64F_t>("MatrixCovLazy64F")
+    Rcpp::class_<matrix_cov_lazy_cov_64F_t>("MatrixCovLazy64F")
         .derives<matrix_cov_base_64_t>("MatrixCovBase64")
         ;
 
@@ -150,12 +152,12 @@ RCPP_MODULE(adelie_core_matrix)
     Rcpp::class_<matrix_naive_kronecker_eye_dense_64F_t>("MatrixNaiveKroneckerEyeDense64")
         .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
         ;
-    Rcpp::class_<matrix_naive_snp_unphased_64_t>("MatrixNaiveSNPUnphased64")
-        .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
-        ;
-    Rcpp::class_<matrix_naive_snp_phased_ancestry_64_t>("MatrixNaiveSNPPhasedAncestry64")
-        .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
-        ;
+    //Rcpp::class_<matrix_naive_snp_unphased_64_t>("MatrixNaiveSNPUnphased64")
+    //    .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
+    //    ;
+    //Rcpp::class_<matrix_naive_snp_phased_ancestry_64_t>("MatrixNaiveSNPPhasedAncestry64")
+    //    .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
+    //    ;
 
     /* factory functions */
     Rcpp::function(
@@ -163,8 +165,8 @@ RCPP_MODULE(adelie_core_matrix)
         &make_matrix_cov_dense_64F
     );
     Rcpp::function(
-        "make_matrix_cov_lazy_64F", 
-        &make_matrix_cov_lazy_64F
+        "make_matrix_cov_lazy_cov_64F", 
+        &make_matrix_cov_lazy_cov_64F
     );
 
     Rcpp::function(
@@ -183,12 +185,12 @@ RCPP_MODULE(adelie_core_matrix)
         "make_matrix_naive_kronecker_eye_dense_64F", 
         &make_matrix_naive_kronecker_eye_dense_64F
     );
-    Rcpp::function(
-        "make_matrix_naive_snp_unphased_64", 
-        &make_matrix_naive_snp_unphased_64
-    );
-    Rcpp::function(
-        "make_matrix_naive_snp_phased_ancestry_64", 
-        &make_matrix_naive_snp_phased_ancestry_64
-    );
+    //Rcpp::function(
+    //    "make_matrix_naive_snp_unphased_64", 
+    //    &make_matrix_naive_snp_unphased_64
+    //);
+    //Rcpp::function(
+    //    "make_matrix_naive_snp_phased_ancestry_64", 
+    //    &make_matrix_naive_snp_phased_ancestry_64
+    //);
 }

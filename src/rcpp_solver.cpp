@@ -68,7 +68,7 @@ Rcpp::List solve_gaussian_naive_64(
     sw.start();
     try {
         ad::solver::gaussian::naive::solve(
-            state, display_progress_bar, 
+            state, display_progress_bar, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -118,7 +118,7 @@ Rcpp::List solve_glm_naive_64(
     sw.start();
     try {
         ad::solver::glm::naive::solve(
-            state, glm, display_progress_bar, 
+            state, glm, display_progress_bar, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -167,7 +167,7 @@ Rcpp::List solve_multigaussian_naive_64(
     sw.start();
     try {
         ad::solver::multigaussian::naive::solve(
-            state, display_progress_bar, 
+            state, display_progress_bar, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -217,7 +217,7 @@ Rcpp::List solve_multiglm_naive_64(
     sw.start();
     try {
         ad::solver::multiglm::naive::solve(
-            state, glm, display_progress_bar, 
+            state, glm, display_progress_bar, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
