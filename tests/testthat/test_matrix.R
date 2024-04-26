@@ -8,7 +8,14 @@ test_that("matrix.concatenate", {
     mats <- lapply(ps, function(p) { 
         matrix.dense(matrix(rnorm(n * p), n, p))
     })
-    expect_error(matrix.concatenate(mats), NA)
+    expect_error(matrix.concatenate(mats, axis=1), NA)
+
+    ns <- c(10, 20, 30)
+    p <- 100
+    mats <- lapply(ns, function(n) { 
+        matrix.dense(matrix(rnorm(n * p), n, p))
+    })
+    expect_error(matrix.concatenate(mats, axis=0), NA)
 })
 
 test_that("matrix.dense", {
@@ -43,7 +50,8 @@ test_that("matrix.snp_unphased", {
         ) - 1),
         n, s
     )
-    handle$write(mat, 1)
+    impute <- double(s)
+    handle$write(mat, "mean", impute, 1)
     expect_error(matrix.snp_unphased("/tmp/snp_unphased_dummy.snpdat"), NA)
     file.remove(filename)
 })
@@ -56,9 +64,9 @@ test_that("matrix.snp_phased_ancestry", {
     handle <- io.snp_phased_ancestry(filename)
     calldata <- matrix(
         as.integer(sample.int(
-            3, n * s * 2,
+            2, n * s * 2,
             replace=TRUE,
-            prob=c(0.7, 0.2, 0.1)
+            prob=c(0.7, 0.3)
         ) - 1),
         n, s * 2
     )
@@ -74,9 +82,9 @@ test_that("matrix.snp_phased_ancestry", {
     expect_error(matrix.snp_phased_ancestry("/tmp/snp_phased_ancestry_dummy.snpdat"), NA)
 })
 
-test_that("matrix.cov_lazy", {
+test_that("matrix.lazy_cov", {
     n <- 100
     p <- 20
     mat <- matrix(rnorm(n * p), n, p)
-    expect_error(matrix.cov_lazy(mat), NA)
+    expect_error(matrix.lazy_cov(mat), NA)
 })

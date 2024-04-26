@@ -15,7 +15,8 @@ test_that("io.snp_unphased", {
         ) - 1),
         n, s
     )
-    handle$write(mat, 1)
+    impute <- double(s)
+    handle$write(mat, "mean", impute, 1)
     handle$read()
     expect_equal(handle$rows(), n)
     expect_equal(handle$snps(), s)
@@ -31,9 +32,9 @@ test_that("io.snp_phased_ancestry", {
     handle <- io.snp_phased_ancestry(filename)
     calldata <- matrix(
         as.integer(sample.int(
-            3, n * s * 2,
+            2, n * s * 2,
             replace=TRUE,
-            prob=c(0.7, 0.2, 0.1)
+            prob=c(0.7, 0.3)
         ) - 1),
         n, s * 2
     )

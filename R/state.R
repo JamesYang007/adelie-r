@@ -58,6 +58,7 @@ render_multi_inputs_ <- function(
         ones_kron <- matrix.kronecker_eye(matrix(rep_len(1.0, n), n, 1), n_classes, n_threads)
         X <- matrix.concatenate(
             list(ones_kron, X),
+            axis=1,
             n_threads
         )
     }
@@ -113,6 +114,8 @@ state.gaussian_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
+    active_set_size,
+    active_set,
     rsq,
     lmda,
     grad,
@@ -196,6 +199,8 @@ state.gaussian_naive <- function(
         screen_set=screen_set,
         screen_beta=screen_beta,
         screen_is_active=screen_is_active,
+        active_set_size=active_set_size,
+        active_set=active_set,
         rsq=rsq,
         lmda=lmda,
         grad=grad
@@ -211,6 +216,7 @@ state.gaussian_naive <- function(
     attr(out, "_screen_set") <- screen_set
     attr(out, "_screen_beta") <- screen_beta
     attr(out, "_screen_is_active") <- screen_is_active
+    attr(out, "_active_set") <- active_set
     attr(out, "_grad") <- grad
     out
 }
@@ -232,6 +238,8 @@ state.multigaussian_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
+    active_set_size,
+    active_set,
     rsq,
     lmda,
     grad,
@@ -333,6 +341,8 @@ state.multigaussian_naive <- function(
         screen_set=screen_set,
         screen_beta=screen_beta,
         screen_is_active=screen_is_active,
+        active_set_size=active_set_size,
+        active_set=active_set,
         rsq=rsq,
         lmda=lmda,
         grad=grad
@@ -350,6 +360,7 @@ state.multigaussian_naive <- function(
     attr(out, "_screen_set") <- screen_set
     attr(out, "_screen_beta") <- screen_beta
     attr(out, "_screen_is_active") <- screen_is_active
+    attr(out, "_active_set") <- active_set
     attr(out, "_grad") <- grad
     out
 }
@@ -380,6 +391,8 @@ state.glm_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
+    active_set_size,
+    active_set,
     beta0,
     lmda,
     grad,
@@ -472,6 +485,8 @@ state.glm_naive <- function(
         screen_set=screen_set,
         screen_beta=screen_beta,
         screen_is_active=screen_is_active,
+        active_set_size=active_set_size,
+        active_set=active_set,
         beta0=beta0,
         lmda=lmda,
         grad=grad
@@ -486,6 +501,7 @@ state.glm_naive <- function(
     attr(out, "_screen_set") <- screen_set
     attr(out, "_screen_beta") <- screen_beta
     attr(out, "_screen_is_active") <- screen_is_active
+    attr(out, "_active_set") <- active_set
     attr(out, "_grad") <- grad
     out
 }
@@ -502,6 +518,8 @@ state.multiglm_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
+    active_set_size,
+    active_set,
     lmda,
     grad,
     eta,
@@ -606,6 +624,8 @@ state.multiglm_naive <- function(
         screen_set=screen_set,
         screen_beta=screen_beta,
         screen_is_active=screen_is_active,
+        active_set_size=active_set_size,
+        active_set=active_set,
         beta0=0.0,
         lmda=lmda,
         grad=grad
@@ -621,6 +641,7 @@ state.multiglm_naive <- function(
     attr(out, "_screen_set") <- screen_set
     attr(out, "_screen_beta") <- screen_beta
     attr(out, "_screen_is_active") <- screen_is_active
+    attr(out, "_active_set") <- active_set
     attr(out, "_grad") <- grad
     out
 }

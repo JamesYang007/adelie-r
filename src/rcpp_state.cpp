@@ -124,6 +124,8 @@ auto make_state_gaussian_naive_64(
     const Eigen::Map<vec_index_t>& screen_set,
     const Eigen::Map<vec_value_t>& screen_beta, 
     const Eigen::Map<vec_bool_t>& screen_is_active,
+    size_t active_set_size,
+    const Eigen::Map<vec_index_t>& active_set,
     value_t rsq,
     value_t lmda,
     const Eigen::Map<vec_value_t>& grad
@@ -134,7 +136,7 @@ auto make_state_gaussian_naive_64(
         lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, max_iters, tol, adev_tol, ddev_tol, 
         newton_tol, newton_max_iters, early_exit, setup_lmda_max, setup_lmda_path, intercept, n_threads,
-        screen_set, screen_beta, screen_is_active, rsq, lmda, grad
+        screen_set, screen_beta, screen_is_active, active_set_size, active_set, rsq, lmda, grad
     );
 }
 
@@ -176,6 +178,8 @@ auto make_state_glm_naive_64(
     const Eigen::Map<vec_index_t>& screen_set,
     const Eigen::Map<vec_value_t>& screen_beta,
     const Eigen::Map<vec_bool_t>& screen_is_active,
+    size_t active_set_size,
+    const Eigen::Map<vec_index_t>& active_set,
     value_t beta0,
     value_t lmda,
     const Eigen::Map<vec_value_t>& grad
@@ -187,7 +191,7 @@ auto make_state_glm_naive_64(
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, 
         irls_max_iters, irls_tol, max_iters, tol, adev_tol, ddev_tol, newton_tol, newton_max_iters,
         early_exit, setup_loss_null, setup_lmda_max, setup_lmda_path, intercept, n_threads,
-        screen_set, screen_beta, screen_is_active, beta0, lmda, grad
+        screen_set, screen_beta, screen_is_active, active_set_size, active_set, beta0, lmda, grad
     );
 }
 
@@ -230,6 +234,8 @@ auto make_state_multigaussian_naive_64(
     const Eigen::Map<vec_index_t>& screen_set,
     const Eigen::Map<vec_value_t>& screen_beta, 
     const Eigen::Map<vec_bool_t>& screen_is_active,
+    size_t active_set_size,
+    const Eigen::Map<vec_index_t>& active_set,
     value_t rsq,
     value_t lmda,
     const Eigen::Map<vec_value_t>& grad 
@@ -241,7 +247,7 @@ auto make_state_multigaussian_naive_64(
         lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, max_iters, tol, adev_tol, ddev_tol, 
         newton_tol, newton_max_iters, early_exit, setup_lmda_max, setup_lmda_path, intercept, n_threads,
-        screen_set, screen_beta, screen_is_active, rsq, lmda, grad
+        screen_set, screen_beta, screen_is_active, active_set_size, active_set, rsq, lmda, grad
     );
 }
 
@@ -286,6 +292,8 @@ auto make_state_multiglm_naive_64(
     const Eigen::Map<vec_index_t>& screen_set,
     const Eigen::Map<vec_value_t>& screen_beta,
     const Eigen::Map<vec_bool_t>& screen_is_active,
+    size_t active_set_size,
+    const Eigen::Map<vec_index_t>& active_set,
     value_t beta0,
     value_t lmda,
     const Eigen::Map<vec_value_t>& grad
@@ -298,7 +306,7 @@ auto make_state_multiglm_naive_64(
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, 
         irls_max_iters, irls_tol, max_iters, tol, adev_tol, ddev_tol, newton_tol, newton_max_iters,
         early_exit, setup_loss_null, setup_lmda_max, setup_lmda_path, intercept, n_threads,
-        screen_set, screen_beta, screen_is_active, beta0, lmda, grad
+        screen_set, screen_beta, screen_is_active, active_set_size, active_set, beta0, lmda, grad
     );
 }
 
@@ -335,6 +343,8 @@ RCPP_MODULE(adelie_core_state)
         .field_readonly("screen_set", &state_base_64_t::screen_set)
         .field_readonly("screen_beta", &state_base_64_t::screen_beta)
         .field_readonly("screen_is_active", &state_base_64_t::screen_is_active)
+        .field_readonly("active_set_size", &state_base_64_t::active_set_size)
+        .field_readonly("active_set", &state_base_64_t::active_set)
         .field_readonly("intercepts", &state_base_64_t::intercepts)
         .field_readonly("grad", &state_base_64_t::grad)
         .field_readonly("devs", &state_base_64_t::devs)

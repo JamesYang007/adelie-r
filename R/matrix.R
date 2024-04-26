@@ -1,10 +1,15 @@
 #' @export
 matrix.concatenate <- function(
     mats, 
+    axis =0,
     n_threads =1
 )
 {
-    out <- make_matrix_naive_concatenate_64(mats, n_threads)
+    if (axis == 0) {
+        out <- make_matrix_naive_rconcatenate_64(mats, n_threads)
+    } else {
+        out <- make_matrix_naive_cconcatenate_64(mats, n_threads)
+    }
     attr(out, "_mats") <- mats
     out
 }
@@ -44,28 +49,30 @@ matrix.kronecker_eye <- function(
 #' @export
 matrix.snp_unphased <- function(
     filename,
+    read_mode ="file",
     n_threads =1
 )
 {
-    make_matrix_naive_snp_unphased_64(filename, n_threads)
+    make_matrix_naive_snp_unphased_64(filename, read_mode, n_threads)
 }
 
 #' @export
 matrix.snp_phased_ancestry <- function(
     filename,
+    read_mode ="file",
     n_threads =1
 )
 {
-    make_matrix_naive_snp_phased_ancestry_64(filename, n_threads)
+    make_matrix_naive_snp_phased_ancestry_64(filename, read_mode, n_threads)
 }
 
 #' @export
-matrix.cov_lazy <- function(
+matrix.lazy_cov <- function(
     mat,
     n_threads =1
 )
 {
-    out <- make_matrix_cov_lazy_64F(mat, n_threads)
+    out <- make_matrix_cov_lazy_cov_64F(mat, n_threads)
     attr(out, "_mat") <- mat
     out
 }

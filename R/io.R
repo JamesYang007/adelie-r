@@ -1,11 +1,11 @@
 #' @export
-io.snp_unphased <- function(filename)
+io.snp_unphased <- function(filename, read_mode="file")
 {
-    make_io_snp_unphased(filename)
+    make_io_snp_unphased(filename, read_mode)
 }
 
 #' @export
-io.snp_phased_ancestry <- function(filename)
+io.snp_phased_ancestry <- function(filename, read_mode="file")
 {
-    make_io_snp_phased_ancestry(filename)
+    make_io_snp_phased_ancestry(filename, read_mode)
 }

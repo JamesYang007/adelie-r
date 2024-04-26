@@ -210,12 +210,19 @@ grpnet <- function(
             screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
             screen_beta <- double(sum(group_sizes[screen_set + 1]))
             screen_is_active <- as.integer(rep_len(1, length(screen_set)))
+            active_set_size <- length(screen_set)
+            active_set <- integer(G)
+            if (active_set_size > 0) {
+                active_set[1:active_set_size] <- 0:(active_set_size-1)
+            }
         } else {
             lmda <- as.double(warm_start$lmda)
             lmda_max <- as.double(warm_start$lmda_max)
             screen_set <- as.integer(warm_start$screen_set)
             screen_beta <- as.double(warm_start$screen_beta)
             screen_is_active <- as.integer(warm_start$screen_is_active)
+            active_set_size <- as.integer(warm_start$active_set_size)
+            active_set <- as.integer(warm_start$active_set)
         }
 
         solver_args[["groups"]] <- groups
@@ -226,6 +233,8 @@ grpnet <- function(
         solver_args[["screen_set"]] <- screen_set
         solver_args[["screen_beta"]] <- screen_beta
         solver_args[["screen_is_active"]] <- screen_is_active
+        solver_args[["active_set_size"]] <- active_set_size
+        solver_args[["active_set"]] <- active_set
 
         # represent the augmented X matrix as used in single-response reformatted problem.
         X_aug <- matrix.kronecker_eye(X_raw, K, n_threads=n_threads)
@@ -235,7 +244,7 @@ grpnet <- function(
                     matrix(rep_len(1.0, n), n, 1), K, n_threads=n_threads
                 ),
                 X_aug
-            ), n_threads=n_threads)
+            ), axis=1, n_threads=n_threads)
         }
 
         if (is_gaussian_opt) {
@@ -343,12 +352,19 @@ grpnet <- function(
             screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
             screen_beta <- double(sum(group_sizes[screen_set + 1]))
             screen_is_active <- as.integer(rep_len(1, length(screen_set)))
+            active_set_size <- length(screen_set)
+            active_set <- integer(G)
+            if (active_set_size > 0) {
+                active_set[1:active_set_size] <- 0:(active_set_size-1)
+            }
         } else {
             lmda <- as.double(warm_start$lmda)
             lmda_max <- as.double(warm_start$lmda_max)
             screen_set <- as.integer(warm_start$screen_set)
             screen_beta <- as.double(warm_start$screen_beta)
             screen_is_active <- as.integer(warm_start$screen_is_active)
+            active_set_size <- as.integer(warm_start$active_set_size)
+            active_set <- as.integer(warm_start$active_set)
         }
 
         solver_args[["groups"]] <- groups
@@ -359,6 +375,8 @@ grpnet <- function(
         solver_args[["screen_set"]] <- screen_set
         solver_args[["screen_beta"]] <- screen_beta
         solver_args[["screen_is_active"]] <- screen_is_active
+        solver_args[["active_set_size"]] <- active_set_size
+        solver_args[["active_set"]] <- active_set
 
         # special gaussian case
         if (is_gaussian_opt) {
