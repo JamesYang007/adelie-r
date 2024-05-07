@@ -6,6 +6,7 @@
 #include <adelie_core/matrix/matrix_naive_base.hpp>
 #include <adelie_core/matrix/matrix_naive_dense.hpp>
 #include <adelie_core/matrix/matrix_naive_concatenate.hpp>
+#include <adelie_core/matrix/matrix_naive_interaction.hpp>
 #include <adelie_core/matrix/matrix_naive_kronecker_eye.hpp>
 #include <adelie_core/matrix/matrix_naive_snp_unphased.hpp>
 #include <adelie_core/matrix/matrix_naive_snp_phased_ancestry.hpp>
@@ -13,8 +14,12 @@
 namespace ad = adelie_core;
 
 using value_t = double;
+using index_t = int;
 using vec_value_t = ad::util::colvec_type<value_t>;
+using vec_index_t = ad::util::colvec_type<index_t>;
+using mat_index_t = ad::util::colmat_type<index_t>;
 using dense_64F_t = ad::util::colmat_type<value_t>;
+using sp_mat_value_t = Eigen::SparseMatrix<value_t, Eigen::RowMajor>;
 using mmap_ptr_t = std::shared_ptr<char>;
 
 using matrix_cov_base_64_t = ad::matrix::MatrixCovBase<value_t>;
@@ -25,6 +30,7 @@ using matrix_naive_base_64_t = ad::matrix::MatrixNaiveBase<value_t>;
 using matrix_naive_dense_64F_t = ad::matrix::MatrixNaiveDense<dense_64F_t>;
 using matrix_naive_cconcatenate_64_t = ad::matrix::MatrixNaiveCConcatenate<value_t>;
 using matrix_naive_rconcatenate_64_t = ad::matrix::MatrixNaiveRConcatenate<value_t>;
+using matrix_naive_interaction_dense_64F_t = ad::matrix::MatrixNaiveInteractionDense<dense_64F_t>;
 using matrix_naive_kronecker_eye_64_t = ad::matrix::MatrixNaiveKroneckerEye<value_t>;
 using matrix_naive_kronecker_eye_dense_64F_t = ad::matrix::MatrixNaiveKroneckerEyeDense<dense_64F_t>;
 using matrix_naive_snp_unphased_64_t = ad::matrix::MatrixNaiveSNPUnphased<value_t, mmap_ptr_t>;
@@ -78,6 +84,18 @@ auto make_matrix_naive_dense_64F(
     return matrix_naive_dense_64F_t(dense, n_threads);
 }
 
+auto make_matrix_naive_interaction_dense_64F(
+    const Eigen::Map<dense_64F_t>& dense,
+    const Eigen::Map<mat_index_t>& pairsT,
+    const Eigen::Map<vec_index_t>& levels,
+    size_t n_threads
+)
+{
+    using rowarr_index_t = typename ad::util::rowarr_type<index_t>;
+    Eigen::Map<const rowarr_index_t> pairs(pairsT.data(), pairsT.cols(), pairsT.rows());
+    return matrix_naive_interaction_dense_64F_t(dense, pairs, levels, n_threads);
+}
+
 auto make_matrix_naive_kronecker_eye_64(
     matrix_naive_base_64_t& mat,
     size_t K,
@@ -124,12 +142,24 @@ void mul(
     X->mul(v, weights, out);
 }
 
+void sp_btmul(
+    matrix_naive_base_64_t* X,
+    const sp_mat_value_t& v,
+    Eigen::Map<dense_64F_t> outT
+)
+{
+    using rowmat_value_t = ad::util::rowmat_type<value_t>;
+    Eigen::Map<rowmat_value_t> out(outT.data(), outT.cols(), outT.rows());
+    X->sp_btmul(v, out);
+}
+
 RCPP_EXPOSED_AS(matrix_naive_base_64_t)
 RCPP_EXPOSED_WRAP(matrix_cov_dense_64F_t)
 RCPP_EXPOSED_WRAP(matrix_cov_lazy_cov_64F_t)
 RCPP_EXPOSED_WRAP(matrix_naive_cconcatenate_64_t)
 RCPP_EXPOSED_WRAP(matrix_naive_rconcatenate_64_t)
 RCPP_EXPOSED_WRAP(matrix_naive_dense_64F_t)
+RCPP_EXPOSED_WRAP(matrix_naive_interaction_dense_64F_t)
 RCPP_EXPOSED_WRAP(matrix_naive_kronecker_eye_64_t)
 RCPP_EXPOSED_WRAP(matrix_naive_kronecker_eye_dense_64F_t)
 RCPP_EXPOSED_WRAP(matrix_naive_snp_unphased_64_t)
@@ -144,6 +174,7 @@ RCPP_MODULE(adelie_core_matrix)
         .method("rows", &matrix_naive_base_64_t::rows)
         .method("cols", &matrix_naive_base_64_t::cols)
         .method("mul", &mul)
+        .method("sp_btmul", &sp_btmul)
         ;
 
     /* cov matrices */
@@ -163,6 +194,11 @@ RCPP_MODULE(adelie_core_matrix)
         ;
     Rcpp::class_<matrix_naive_dense_64F_t>("MatrixNaiveDense64F")
         .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
+        ;
+    Rcpp::class_<matrix_naive_interaction_dense_64F_t>("MatrixNaiveInteractionDense64F")
+        .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
+        .property("groups", &matrix_naive_interaction_dense_64F_t::groups)
+        .property("group_sizes", &matrix_naive_interaction_dense_64F_t::group_sizes)
         ;
     Rcpp::class_<matrix_naive_kronecker_eye_64_t>("MatrixNaiveKroneckerEye64")
         .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
@@ -198,6 +234,10 @@ RCPP_MODULE(adelie_core_matrix)
     Rcpp::function(
         "make_matrix_naive_dense_64F", 
         &make_matrix_naive_dense_64F
+    );
+    Rcpp::function(
+        "make_matrix_naive_interaction_dense_64F", 
+        &make_matrix_naive_interaction_dense_64F
     );
     Rcpp::function(
         "make_matrix_naive_kronecker_eye_64", 

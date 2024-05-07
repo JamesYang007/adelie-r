@@ -13,6 +13,7 @@ LinkingTo:
     RcppEigen
 Imports: 
     Matrix,
+    r2r,
     Rcpp
 Suggests:
     ggplot2,

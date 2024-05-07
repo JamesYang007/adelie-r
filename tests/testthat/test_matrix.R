@@ -27,6 +27,17 @@ test_that("matrix.dense", {
     expect_error(matrix.dense(A_dense, method="cov"), NA)
 })
 
+test_that("matrix.interaction", {
+    n <- 10
+    p <- 20
+    X_dense <- matrix(rnorm(n * p), n, p)
+    X_dense[,1] <- rbinom(n, 4, 0.5)
+    intr_keys <- c(0, 1)
+    intr_values <- list(NULL, c(0, 2))
+    levels <- c(c(5), rep(0, p-1))
+    expect_error(matrix.interaction(X_dense, intr_keys, intr_values, levels), NA)
+})
+
 test_that("matrix.kronecker_eye", {
     n <- 100
     p <- 20

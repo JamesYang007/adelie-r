@@ -157,7 +157,7 @@ state.gaussian_naive <- function(
     lmda_max <- inputs[["lmda_max"]]
     lmda_path <- inputs[["lmda_path"]]
 
-    if (is.matrix(X)) {
+    if (is.matrix(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
 

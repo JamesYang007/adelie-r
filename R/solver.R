@@ -92,7 +92,7 @@ grpnet <- function(
 {
     X_raw <- X
 
-    if (is.matrix(X)) {
+    if (is.matrix(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
 
@@ -188,7 +188,7 @@ grpnet <- function(
         }
         group_sizes <- as.integer(c(groups, (p+intercept) * K))
         group_sizes <- as.integer(
-            group_sizes[2:length(group_sizes)] - group_sizes[1:length(group_sizes)-1]
+            group_sizes[2:length(group_sizes)] - group_sizes[1:(length(group_sizes)-1)]
         )
 
         if (is.null(penalty)) {
@@ -335,7 +335,7 @@ grpnet <- function(
             groups <- as.integer(groups)
         }
         group_sizes <- c(groups, p)
-        group_sizes <- group_sizes[2:length(group_sizes)] - group_sizes[1:length(group_sizes)-1]
+        group_sizes <- group_sizes[2:length(group_sizes)] - group_sizes[1:(length(group_sizes)-1)]
         group_sizes <- as.integer(group_sizes)
 
         G <- length(groups)
