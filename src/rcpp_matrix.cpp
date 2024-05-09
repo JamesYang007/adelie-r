@@ -144,7 +144,7 @@ void mul(
 
 void sp_btmul(
     matrix_naive_base_64_t* X,
-    const sp_mat_value_t& v,
+    const Eigen::Map<sp_mat_value_t> v,
     Eigen::Map<dense_64F_t> outT
 )
 {
