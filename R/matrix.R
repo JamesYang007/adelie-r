@@ -46,13 +46,22 @@ matrix.interaction <- function(
     intr_keys,
     intr_values,
     levels =NULL,
+    centers =NULL,
+    scales =NULL,
     n_threads =1
 )
 {   
     mat <- as.matrix(mat)
     d <- ncol(mat)
+
     if (is.null(levels)) {
         levels <- integer(d)
+    }
+    if (is.null(centers)) {
+        centers <- double(0)
+    }
+    if (is.null(scales)) {
+        scales <- double(0)
     }
 
     stopifnot(length(intr_keys) == length(intr_values))
@@ -94,11 +103,15 @@ matrix.interaction <- function(
     mode(pairsT) <- "integer"
 
     levels <- as.integer(levels)
+    centers <- as.double(centers)
+    scales <- as.double(scales)
 
-    out <- make_matrix_naive_interaction_dense_64F(mat, pairsT, levels, n_threads)
+    out <- make_matrix_naive_interaction_dense_64F(mat, pairsT, levels, centers, scales, n_threads)
     attr(out, "_mat") <- mat
     attr(out, "_pairs") <- t(pairsT)
     attr(out, "_levels") <- levels
+    attr(out, "_centers") <- centers
+    attr(out, "_scales") <- scales
     out
 }
 

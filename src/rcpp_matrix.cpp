@@ -19,7 +19,7 @@ using vec_value_t = ad::util::colvec_type<value_t>;
 using vec_index_t = ad::util::colvec_type<index_t>;
 using mat_index_t = ad::util::colmat_type<index_t>;
 using dense_64F_t = ad::util::colmat_type<value_t>;
-using sp_mat_value_t = Eigen::SparseMatrix<value_t, Eigen::RowMajor>;
+using sp_mat_value_t = Eigen::SparseMatrix<value_t, Eigen::RowMajor, index_t>;
 using mmap_ptr_t = std::shared_ptr<char>;
 
 using matrix_cov_base_64_t = ad::matrix::MatrixCovBase<value_t>;
@@ -88,12 +88,14 @@ auto make_matrix_naive_interaction_dense_64F(
     const Eigen::Map<dense_64F_t>& dense,
     const Eigen::Map<mat_index_t>& pairsT,
     const Eigen::Map<vec_index_t>& levels,
+    const Eigen::Map<vec_value_t>& centers,
+    const Eigen::Map<vec_value_t>& scales,
     size_t n_threads
 )
 {
     using rowarr_index_t = typename ad::util::rowarr_type<index_t>;
     Eigen::Map<const rowarr_index_t> pairs(pairsT.data(), pairsT.cols(), pairsT.rows());
-    return matrix_naive_interaction_dense_64F_t(dense, pairs, levels, n_threads);
+    return matrix_naive_interaction_dense_64F_t(dense, pairs, levels, centers, scales, n_threads);
 }
 
 auto make_matrix_naive_kronecker_eye_64(
@@ -144,7 +146,7 @@ void mul(
 
 void sp_btmul(
     matrix_naive_base_64_t* X,
-    const Eigen::Map<sp_mat_value_t> v,
+    const sp_mat_value_t& v,
     Eigen::Map<dense_64F_t> outT
 )
 {
@@ -199,6 +201,8 @@ RCPP_MODULE(adelie_core_matrix)
         .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
         .property("groups", &matrix_naive_interaction_dense_64F_t::groups)
         .property("group_sizes", &matrix_naive_interaction_dense_64F_t::group_sizes)
+        .property("centers", &matrix_naive_interaction_dense_64F_t::centers)
+        .property("scales", &matrix_naive_interaction_dense_64F_t::scales)
         ;
     Rcpp::class_<matrix_naive_kronecker_eye_64_t>("MatrixNaiveKroneckerEye64")
         .derives<matrix_naive_base_64_t>("MatrixNaiveBase64")
