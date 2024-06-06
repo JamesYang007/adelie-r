@@ -10,24 +10,24 @@ solve_ <- function(
         #core.state.StateGaussianCov64: core.solver.solve_gaussian_cov_64,
         # naive methods
         #core.state.StateGaussianPinNaive64: core.solver.solve_gaussian_pin_naive_64,
-        "Rcpp_StateGaussianNaive64"=solve_gaussian_naive_64,
-        "Rcpp_StateMultiGaussianNaive64"=solve_multigaussian_naive_64,
-        "Rcpp_StateGlmNaive64"=solve_glm_naive_64,
-        "Rcpp_StateMultiGlmNaive64"=solve_multiglm_naive_64
+        "Rcpp_RStateGaussianNaive64"=r_solve_gaussian_naive_64,
+        "Rcpp_RStateMultiGaussianNaive64"=r_solve_multigaussian_naive_64,
+        "Rcpp_RStateGlmNaive64"=r_solve_glm_naive_64,
+        "Rcpp_RStateMultiGlmNaive64"=r_solve_multiglm_naive_64
     )
 
     is_gaussian_pin <- (
-        (class(state) == "Rcpp_StateGaussianPinCov64") ||
-        (class(state) == "Rcpp_StateGaussianPinNaive64")
+        (class(state) == "Rcpp_RStateGaussianPinCov64") ||
+        (class(state) == "Rcpp_RStateGaussianPinNaive64")
     )
     is_gaussian <- (
-        (class(state) == "Rcpp_StateGaussianCov64") ||
-        (class(state) == "Rcpp_StateGaussianNaive64") ||
-        (class(state) == "Rcpp_StateMultiGaussianNaive64")
+        (class(state) == "Rcpp_RStateGaussianCov64") ||
+        (class(state) == "Rcpp_RStateGaussianNaive64") ||
+        (class(state) == "Rcpp_RStateMultiGaussianNaive64")
     )
     is_glm <- (
-        (class(state) == "Rcpp_StateGlmNaive64") ||
-        (class(state) == "Rcpp_StateMultiGlmNaive64")
+        (class(state) == "Rcpp_RStateGlmNaive64") ||
+        (class(state) == "Rcpp_RStateMultiGlmNaive64")
     )
 
     # solve group elastic net
@@ -92,18 +92,17 @@ grpnet <- function(
 {
     X_raw <- X
 
-    if (is.matrix(X) || is.data.frame(X)) {
+    if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
 
-    n <- X$rows()
-    p <- X$cols()
+    n <- X$rows
+    p <- X$cols
 
-    # NOTE: this is different from Python code!
     y <- glm$y 
     weights <- as.double(glm$weights)
-    if (nrow(glm$y) == 1) {
-        y <- as.double(glm$y)
+    if (is.null(dim(y))) {
+        y <- as.double(y)
     }
 
     # compute common quantities
@@ -276,7 +275,7 @@ grpnet <- function(
                 }
                 resid <- as.double(t(y_off))
                 resid_sum <- sum(weights_mscaled * y_off)
-                grad <- double(X_aug$cols())
+                grad <- double(X_aug$cols)
                 weights_mscaled <- rep(weights_mscaled, each=K)
                 X_aug$mul(resid, weights_mscaled, grad)
             } else {
@@ -306,7 +305,7 @@ grpnet <- function(
                 residT <- matrix(double(length(eta)), ncol(eta), nrow(eta))
                 glm$gradient(etaT, residT)
                 resid <- as.double(residT)
-                grad <- double(X_aug$cols())
+                grad <- double(X_aug$cols)
                 X_aug$mul(resid, ones, grad)
                 loss_null <- NULL
                 loss_full <- as.double(glm$loss_full())

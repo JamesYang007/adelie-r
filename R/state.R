@@ -63,10 +63,10 @@ render_multi_inputs_ <- function(
         )
     }
 
-    if (length(groups) == X$cols()) {
+    if (length(groups) == X$cols) {
         group_type <- "ungrouped"
     } else {
-        if (length(groups) != X$cols() / n_classes + (n_classes-1) * intercept) {
+        if (length(groups) != X$cols / n_classes + (n_classes-1) * intercept) {
             stop("groups must be of the \"grouped\" or \"ungrouped\" type.")
         }
         group_type <- "grouped"
@@ -157,13 +157,12 @@ state.gaussian_naive <- function(
     lmda_max <- inputs[["lmda_max"]]
     lmda_path <- inputs[["lmda_path"]]
 
-    if (is.matrix(X) || is.data.frame(X)) {
+    if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
 
     glm <- glm.gaussian(y=y, weights=weights)
-
-    out <- make_state_gaussian_naive_64(
+    out <- make_r_state_gaussian_naive_64(
         X=X,
         X_means=X_means,
         y_mean=y_mean,
@@ -298,7 +297,7 @@ state.multigaussian_naive <- function(
     X_expanded <- X
     weights_expanded <- rep(weights, each=n_classes) / n_classes
 
-    out <- make_state_multigaussian_naive_64(
+    out <- make_r_state_multigaussian_naive_64(
         group_type=group_type,
         n_classes=n_classes,
         multi_intercept=intercept,
@@ -447,7 +446,7 @@ state.glm_naive <- function(
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
 
-    out <- make_state_glm_naive_64(
+    out <- make_r_state_glm_naive_64(
         X=X,
         eta=eta,
         resid=resid,
@@ -583,7 +582,7 @@ state.multiglm_naive <- function(
     group_type <- inputs[["group_type"]]
 
     X_expanded <- X
-    out <- make_state_multiglm_naive_64(
+    out <- make_r_state_multiglm_naive_64(
         group_type=group_type,
         n_classes=n_classes,
         multi_intercept=intercept,

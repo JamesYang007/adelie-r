@@ -2,6 +2,16 @@
 # TEST matrix
 # ==================================================================
 
+test_that("matrix.block_diag", {
+    n <- 100
+    ps <- c(10, 20, 30)
+    mats <- lapply(ps, function(p) {
+        X <- matrix(rnorm(n * p), n, p)
+        matrix.dense(t(X) %*% X, method="cov")
+    })
+    expect_error(matrix.block_diag(mats), NA)
+})
+
 test_that("matrix.concatenate", {
     n <- 100
     ps <- c(10, 20, 30)
@@ -48,23 +58,18 @@ test_that("matrix.kronecker_eye", {
     expect_error(matrix.kronecker_eye(mat, K), NA)
 })
 
-test_that("matrix.snp_unphased", {
-    n <- 123
-    s <- 423
-    filename <- "/tmp/snp_unphased_dummy.snpdat"
-    handle <- io.snp_unphased(filename)
-    mat <- matrix(
-        as.integer(sample.int(
-            3, n * s, 
-            replace=TRUE, 
-            prob=c(0.7, 0.2, 0.1)
-        ) - 1),
-        n, s
-    )
-    impute <- double(s)
-    handle$write(mat, "mean", impute, 1)
-    expect_error(matrix.snp_unphased("/tmp/snp_unphased_dummy.snpdat"), NA)
-    file.remove(filename)
+test_that("matrix.one_hot", {
+    n <- 100
+    p <- 20
+    mat <- matrix(rnorm(n * p), n, p)
+    expect_error(matrix.one_hot(mat), NA)
+})
+
+test_that("matrix.lazy_cov", {
+    n <- 100
+    p <- 20
+    mat <- matrix(rnorm(n * p), n, p)
+    expect_error(matrix.lazy_cov(mat), NA)
 })
 
 test_that("matrix.snp_phased_ancestry", {
@@ -90,12 +95,51 @@ test_that("matrix.snp_phased_ancestry", {
         n, s * 2
     )
     handle$write(calldata, ancestries, A, 1)
-    expect_error(matrix.snp_phased_ancestry("/tmp/snp_phased_ancestry_dummy.snpdat"), NA)
+    expect_error(matrix.snp_phased_ancestry(handle), NA)
 })
 
-test_that("matrix.lazy_cov", {
+test_that("matrix.snp_unphased", {
+    n <- 123
+    s <- 423
+    filename <- "/tmp/snp_unphased_dummy.snpdat"
+    handle <- io.snp_unphased(filename)
+    mat <- matrix(
+        as.integer(sample.int(
+            3, n * s, 
+            replace=TRUE, 
+            prob=c(0.7, 0.2, 0.1)
+        ) - 1),
+        n, s
+    )
+    impute <- double(s)
+    handle$write(mat, "mean", impute, 1)
+    expect_error(matrix.snp_unphased(handle), NA)
+    file.remove(filename)
+})
+
+test_that("matrix.sparse", {
     n <- 100
     p <- 20
-    mat <- matrix(rnorm(n * p), n, p)
-    expect_error(matrix.lazy_cov(mat), NA)
+    X_dense <- matrix(rnorm(n * p), n, p)
+    X_sp <- as(X_dense, "dgCMatrix")
+    expect_error(matrix.sparse(X_sp, method="naive"), NA)
+    A_dense <- t(X_dense) %*% X_dense
+    A_sp <- as(A_dense, "dgCMatrix")
+    expect_error(matrix.sparse(A_sp, method="cov"), NA)
+})
+
+test_that("matrix.standardize", {
+    n <- 100
+    p <- 20
+    X <- matrix(rnorm(n * p), n, p)
+    expect_error(matrix.standardize(matrix.dense(X)), NA)
+})
+
+test_that("matrix.subset", {
+    n <- 100
+    p <- 20
+    X <- matrix.dense(matrix(rnorm(n * p), n, p))
+    indices <- c(1, 3, 10)
+    expect_error(matrix.subset(X, indices, axis=0), NA)
+    expect_error(matrix.subset(X, indices, axis=1), NA)
 })

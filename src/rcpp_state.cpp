@@ -1,12 +1,6 @@
-#include <Rcpp.h>
-#include <RcppEigen.h>
+#include "rcpp_state.hpp"
+#include "rcpp_matrix.hpp"
 #include <adelie_core/matrix/matrix_naive_base.hpp>
-#include <adelie_core/state/state_gaussian_naive.hpp>
-#include <adelie_core/state/state_glm_naive.hpp>
-#include <adelie_core/state/state_multigaussian_naive.hpp>
-#include <adelie_core/state/state_multiglm_naive.hpp>
-
-namespace ad = adelie_core;
 
 template <class BetasType>
 static auto convert_betas(
@@ -69,27 +63,9 @@ using safe_bool_t = int;
 using vec_value_t = ad::util::colvec_type<value_t>;
 using vec_index_t = ad::util::colvec_type<index_t>;
 using vec_bool_t = ad::util::colvec_type<bool_t>;
-using matrix_naive_base_64_t = ad::matrix::MatrixNaiveBase<value_t>;
 
-using state_base_64_t = ad::state::StateBase<value_t, index_t, bool_t, safe_bool_t>;
-using state_gaussian_naive_64_t = ad::state::StateGaussianNaive<
-    matrix_naive_base_64_t, value_t, index_t, bool_t, safe_bool_t
->;
-using state_multigaussian_naive_64_t = ad::state::StateMultiGaussianNaive<
-    matrix_naive_base_64_t, value_t, index_t, bool_t, safe_bool_t
->;
-using state_glm_naive_64_t = ad::state::StateGlmNaive<
-    matrix_naive_base_64_t, value_t, index_t, bool_t, safe_bool_t
->;
-using state_multiglm_naive_64_t = ad::state::StateMultiGlmNaive<
-    matrix_naive_base_64_t, value_t, index_t, bool_t, safe_bool_t
->;
-
-// TODO: port over the following
-// - gaussian_cov
-
-auto make_state_gaussian_naive_64(
-    matrix_naive_base_64_t& X,
+auto make_r_state_gaussian_naive_64(
+    r_matrix_naive_base_64_t& X,
     const Eigen::Map<vec_value_t>& X_means,
     value_t y_mean,
     value_t y_var,
@@ -131,8 +107,8 @@ auto make_state_gaussian_naive_64(
     const Eigen::Map<vec_value_t>& grad
 )
 {
-    return state_gaussian_naive_64_t(
-        X, X_means, y_mean, y_var, resid, resid_sum, groups, group_sizes, alpha, penalty, weights, lmda_path,
+    return r_state_gaussian_naive_64_t(
+        *X.ptr, X_means, y_mean, y_var, resid, resid_sum, groups, group_sizes, alpha, penalty, weights, lmda_path,
         lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, max_iters, tol, adev_tol, ddev_tol, 
         newton_tol, newton_max_iters, early_exit, setup_lmda_max, setup_lmda_path, intercept, n_threads,
@@ -140,8 +116,8 @@ auto make_state_gaussian_naive_64(
     );
 }
 
-auto make_state_glm_naive_64(
-    matrix_naive_base_64_t& X,
+auto make_r_state_glm_naive_64(
+    r_matrix_naive_base_64_t& X,
     const Eigen::Map<vec_value_t>& eta,
     const Eigen::Map<vec_value_t>& resid,
     const Eigen::Map<vec_index_t>& groups, 
@@ -185,8 +161,8 @@ auto make_state_glm_naive_64(
     const Eigen::Map<vec_value_t>& grad
 )
 {
-    return state_glm_naive_64_t(
-        X, eta, resid, groups, group_sizes, alpha, penalty, offsets, lmda_path,
+    return r_state_glm_naive_64_t(
+        *X.ptr, eta, resid, groups, group_sizes, alpha, penalty, offsets, lmda_path,
         loss_null, loss_full, lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, 
         irls_max_iters, irls_tol, max_iters, tol, adev_tol, ddev_tol, newton_tol, newton_max_iters,
@@ -195,11 +171,11 @@ auto make_state_glm_naive_64(
     );
 }
 
-auto make_state_multigaussian_naive_64(
+auto make_r_state_multigaussian_naive_64(
     const std::string& group_type,
     size_t n_classes,
     bool multi_intercept,
-    matrix_naive_base_64_t& X,
+    r_matrix_naive_base_64_t& X,
     const Eigen::Map<vec_value_t>& X_means,
     value_t y_mean,
     value_t y_var,
@@ -241,9 +217,9 @@ auto make_state_multigaussian_naive_64(
     const Eigen::Map<vec_value_t>& grad 
 )
 {
-    return state_multigaussian_naive_64_t(
+    return r_state_multigaussian_naive_64_t(
         group_type, n_classes, multi_intercept,
-        X, X_means, y_mean, y_var, resid, resid_sum, groups, group_sizes, alpha, penalty, weights, lmda_path,
+        *X.ptr, X_means, y_mean, y_var, resid, resid_sum, groups, group_sizes, alpha, penalty, weights, lmda_path,
         lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, max_iters, tol, adev_tol, ddev_tol, 
         newton_tol, newton_max_iters, early_exit, setup_lmda_max, setup_lmda_path, intercept, n_threads,
@@ -251,11 +227,11 @@ auto make_state_multigaussian_naive_64(
     );
 }
 
-auto make_state_multiglm_naive_64(
+auto make_r_state_multiglm_naive_64(
     const std::string& group_type,
     size_t n_classes,
     bool multi_intercept,
-    matrix_naive_base_64_t& X,
+    r_matrix_naive_base_64_t& X,
     const Eigen::Map<vec_value_t>& eta,
     const Eigen::Map<vec_value_t>& resid,
     const Eigen::Map<vec_index_t>& groups, 
@@ -299,9 +275,9 @@ auto make_state_multiglm_naive_64(
     const Eigen::Map<vec_value_t>& grad
 )
 {
-    return state_multiglm_naive_64_t(
+    return r_state_multiglm_naive_64_t(
         group_type, n_classes, multi_intercept,
-        X, eta, resid, groups, group_sizes, alpha, penalty, offsets, lmda_path,
+        *X.ptr, eta, resid, groups, group_sizes, alpha, penalty, offsets, lmda_path,
         loss_null, loss_full, lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, 
         irls_max_iters, irls_tol, max_iters, tol, adev_tol, ddev_tol, newton_tol, newton_max_iters,
@@ -315,25 +291,19 @@ auto betas(StateType* state)
 {
     using state_t = std::decay_t<StateType>;
     if constexpr (
-        std::is_same_v<state_t, state_gaussian_naive_64_t> ||
-        std::is_same_v<state_t, state_glm_naive_64_t>
+        std::is_same_v<state_t, r_state_gaussian_naive_64_t> ||
+        std::is_same_v<state_t, r_state_glm_naive_64_t>
     ) {
         return convert_betas(state->X->cols(), state->betas);
     } else if constexpr (
-        std::is_same_v<state_t, state_multigaussian_naive_64_t> ||
-        std::is_same_v<state_t, state_multiglm_naive_64_t>
+        std::is_same_v<state_t, r_state_multigaussian_naive_64_t> ||
+        std::is_same_v<state_t, r_state_multiglm_naive_64_t>
     ) {
         return convert_betas(state->X->cols() - state->multi_intercept * state->n_classes, state->betas);
     } else {
         static_assert("Unexpected state type.");
     }
 }
-
-RCPP_EXPOSED_AS(matrix_naive_base_64_t)
-RCPP_EXPOSED_WRAP(state_gaussian_naive_64_t)
-RCPP_EXPOSED_WRAP(state_glm_naive_64_t)
-RCPP_EXPOSED_WRAP(state_multigaussian_naive_64_t)
-RCPP_EXPOSED_WRAP(state_multiglm_naive_64_t)
 
 RCPP_MODULE(adelie_core_state) 
 {
@@ -351,6 +321,10 @@ RCPP_MODULE(adelie_core_state)
         .field_readonly("lmdas", &state_base_64_t::lmdas)
         .field_readonly("benchmark_fit_active", &state_base_64_t::benchmark_fit_active)
         ;
+    Rcpp::class_<r_state_base_64_t>("RStateBase64")
+        .derives<state_base_64_t>("StateBase64")
+        ;
+
     Rcpp::class_<state_gaussian_naive_64_t>("StateGaussianNaive64")
         .derives<state_base_64_t>("StateBase64")
         .field_readonly("X_means", &state_gaussian_naive_64_t::X_means)
@@ -359,8 +333,12 @@ RCPP_MODULE(adelie_core_state)
         .field_readonly("rsq", &state_gaussian_naive_64_t::rsq)
         .field_readonly("resid", &state_gaussian_naive_64_t::resid)
         .field_readonly("resid_sum", &state_gaussian_naive_64_t::resid_sum)
-        .property("betas", &betas<state_gaussian_naive_64_t>, "")
         ;
+    Rcpp::class_<r_state_gaussian_naive_64_t>("RStateGaussianNaive64")
+        .derives<state_gaussian_naive_64_t>("StateGaussianNaive64")
+        .property("betas", &betas<r_state_gaussian_naive_64_t>, "")
+        ;
+
     Rcpp::class_<state_glm_naive_64_t>("StateGlmNaive64")
         .derives<state_base_64_t>("StateBase64")
         .field_readonly("beta0", &state_glm_naive_64_t::beta0)
@@ -368,8 +346,12 @@ RCPP_MODULE(adelie_core_state)
         .field_readonly("resid", &state_glm_naive_64_t::resid)
         .field_readonly("loss_null", &state_glm_naive_64_t::loss_null)
         .field_readonly("loss_full", &state_glm_naive_64_t::loss_full)
-        .property("betas", &betas<state_glm_naive_64_t>, "")
         ;
+    Rcpp::class_<r_state_glm_naive_64_t>("RStateGlmNaive64")
+        .derives<state_glm_naive_64_t>("StateGlmNaive64")
+        .property("betas", &betas<r_state_glm_naive_64_t>, "")
+        ;
+
     // TODO: Rcpp cannot handle inheritance properly. 
     // If field/property is already defined in the base class,
     // then even if they are overriden in the derived class,
@@ -378,28 +360,35 @@ RCPP_MODULE(adelie_core_state)
     Rcpp::class_<state_multigaussian_naive_64_t>("StateMultiGaussianNaive64")
         .derives<state_gaussian_naive_64_t>("StateGaussianNaive64")
         .field_readonly("intercepts_multi", &state_multigaussian_naive_64_t::intercepts)
-        .property("betas_multi", &betas<state_multigaussian_naive_64_t>, "")
         ;
+    Rcpp::class_<r_state_multigaussian_naive_64_t>("RStateMultiGaussianNaive64")
+        .derives<state_multigaussian_naive_64_t>("StateMultiGaussianNaive64")
+        .property("betas_multi", &betas<r_state_multigaussian_naive_64_t>, "")
+        ;
+
     Rcpp::class_<state_multiglm_naive_64_t>("StateMultiGlmNaive64")
-        .derives<state_glm_naive_64_t>("StateGlmNaive64")
+        .derives<state_glm_naive_64_t>("RStateGlmNaive64")
         .field_readonly("intercepts_multi", &state_multiglm_naive_64_t::intercepts)
-        .property("betas_multi", &betas<state_multiglm_naive_64_t>, "")
+        ;
+    Rcpp::class_<r_state_multiglm_naive_64_t>("RStateMultiGlmNaive64")
+        .derives<state_multiglm_naive_64_t>("StateMultiGlmNaive64")
+        .property("betas_multi", &betas<r_state_multiglm_naive_64_t>, "")
         ;
 
     Rcpp::function(
-        "make_state_gaussian_naive_64", 
-        &make_state_gaussian_naive_64
+        "make_r_state_gaussian_naive_64", 
+        &make_r_state_gaussian_naive_64
     );
     Rcpp::function(
-        "make_state_glm_naive_64", 
-        &make_state_glm_naive_64
+        "make_r_state_glm_naive_64", 
+        &make_r_state_glm_naive_64
     );
     Rcpp::function(
-        "make_state_multigaussian_naive_64", 
-        &make_state_multigaussian_naive_64
+        "make_r_state_multigaussian_naive_64", 
+        &make_r_state_multigaussian_naive_64
     );
     Rcpp::function(
-        "make_state_multiglm_naive_64", 
-        &make_state_multiglm_naive_64
+        "make_r_state_multiglm_naive_64", 
+        &make_r_state_multiglm_naive_64
     );
 }

@@ -1,41 +1,14 @@
-#include <Rcpp.h>
-#include <RcppEigen.h>
-#include <adelie_core/glm/glm_base.hpp>
-#include <adelie_core/glm/glm_multibase.hpp>
-#include <adelie_core/matrix/matrix_naive_base.hpp>
-#include <adelie_core/state/state_gaussian_naive.hpp>
-#include <adelie_core/state/state_glm_naive.hpp>
-#include <adelie_core/state/state_multigaussian_naive.hpp>
-#include <adelie_core/state/state_multiglm_naive.hpp>
+#include "decl.hpp"
+#include "rcpp_glm.hpp"
+#include "rcpp_matrix.hpp"
+#include "rcpp_state.hpp"
 #include <adelie_core/solver/solver_gaussian_naive.hpp>
 #include <adelie_core/solver/solver_glm_naive.hpp>
 #include <adelie_core/solver/solver_multigaussian_naive.hpp>
 #include <adelie_core/solver/solver_multiglm_naive.hpp>
 
-namespace ad = adelie_core;
-
-using value_t = double;
-using index_t = int;
-using bool_t = int;
-using safe_bool_t = int;
-using glm_base_64_t = ad::glm::GlmBase<value_t>;
-using glm_multibase_64_t = ad::glm::GlmMultiBase<value_t>;
-using matrix_naive_base_64_t = ad::matrix::MatrixNaiveBase<value_t>;
-using state_gaussian_naive_64_t = ad::state::StateGaussianNaive<
-    matrix_naive_base_64_t, value_t, index_t, bool_t, safe_bool_t
->;
-using state_multigaussian_naive_64_t = ad::state::StateMultiGaussianNaive<
-    matrix_naive_base_64_t, value_t, index_t, bool_t, safe_bool_t
->;
-using state_glm_naive_64_t = ad::state::StateGlmNaive<
-    matrix_naive_base_64_t, value_t, index_t, bool_t, safe_bool_t
->;
-using state_multiglm_naive_64_t = ad::state::StateMultiGlmNaive<
-    matrix_naive_base_64_t, value_t, index_t, bool_t, safe_bool_t
->;
-
-Rcpp::List solve_gaussian_naive_64(
-    state_gaussian_naive_64_t state,
+Rcpp::List r_solve_gaussian_naive_64(
+    r_state_gaussian_naive_64_t state,
     bool display_progress_bar
 )
 {
@@ -68,7 +41,8 @@ Rcpp::List solve_gaussian_naive_64(
     sw.start();
     try {
         ad::solver::gaussian::naive::solve(
-            state, display_progress_bar, [](){ return false; },
+            static_cast<state_gaussian_naive_64_t&>(state), 
+            display_progress_bar, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -83,9 +57,9 @@ Rcpp::List solve_gaussian_naive_64(
     );
 } 
 
-Rcpp::List solve_glm_naive_64(
-    state_glm_naive_64_t state,
-    glm_base_64_t& glm,
+Rcpp::List r_solve_glm_naive_64(
+    r_state_glm_naive_64_t state,
+    r_glm_base_64_t& glm,
     bool display_progress_bar
 )
 {
@@ -118,7 +92,8 @@ Rcpp::List solve_glm_naive_64(
     sw.start();
     try {
         ad::solver::glm::naive::solve(
-            state, glm, display_progress_bar, [](){ return false; },
+            static_cast<state_glm_naive_64_t&>(state), 
+            *glm.ptr, display_progress_bar, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -133,8 +108,8 @@ Rcpp::List solve_glm_naive_64(
     );
 } 
 
-Rcpp::List solve_multigaussian_naive_64(
-    state_multigaussian_naive_64_t state,
+Rcpp::List r_solve_multigaussian_naive_64(
+    r_state_multigaussian_naive_64_t state,
     bool display_progress_bar
 )
 {
@@ -167,7 +142,8 @@ Rcpp::List solve_multigaussian_naive_64(
     sw.start();
     try {
         ad::solver::multigaussian::naive::solve(
-            state, display_progress_bar, [](){ return false; },
+            static_cast<state_multigaussian_naive_64_t&>(state), 
+            display_progress_bar, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -182,9 +158,9 @@ Rcpp::List solve_multigaussian_naive_64(
     );
 } 
 
-Rcpp::List solve_multiglm_naive_64(
-    state_multiglm_naive_64_t state,
-    glm_multibase_64_t& glm,
+Rcpp::List r_solve_multiglm_naive_64(
+    r_state_multiglm_naive_64_t state,
+    r_glm_multibase_64_t& glm,
     bool display_progress_bar
 )
 {
@@ -217,7 +193,8 @@ Rcpp::List solve_multiglm_naive_64(
     sw.start();
     try {
         ad::solver::multiglm::naive::solve(
-            state, glm, display_progress_bar, [](){ return false; },
+            static_cast<state_multiglm_naive_64_t&>(state), 
+            *glm.ptr, display_progress_bar, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -232,33 +209,22 @@ Rcpp::List solve_multiglm_naive_64(
     );
 } 
 
-RCPP_EXPOSED_AS(glm_base_64_t)
-RCPP_EXPOSED_AS(glm_multibase_64_t)
-RCPP_EXPOSED_AS(state_gaussian_naive_64_t)
-RCPP_EXPOSED_WRAP(state_gaussian_naive_64_t)
-RCPP_EXPOSED_AS(state_glm_naive_64_t)
-RCPP_EXPOSED_WRAP(state_glm_naive_64_t)
-RCPP_EXPOSED_AS(state_multigaussian_naive_64_t)
-RCPP_EXPOSED_WRAP(state_multigaussian_naive_64_t)
-RCPP_EXPOSED_AS(state_multiglm_naive_64_t)
-RCPP_EXPOSED_WRAP(state_multiglm_naive_64_t)
-
 RCPP_MODULE(adelie_core_solver)
 {
     Rcpp::function(
-        "solve_gaussian_naive_64",
-        &solve_gaussian_naive_64
+        "r_solve_gaussian_naive_64",
+        &r_solve_gaussian_naive_64
     );
     Rcpp::function(
-        "solve_glm_naive_64",
-        &solve_glm_naive_64
+        "r_solve_glm_naive_64",
+        &r_solve_glm_naive_64
     );
     Rcpp::function(
-        "solve_multigaussian_naive_64",
-        &solve_multigaussian_naive_64
+        "r_solve_multigaussian_naive_64",
+        &r_solve_multigaussian_naive_64
     );
     Rcpp::function(
-        "solve_multiglm_naive_64",
-        &solve_multiglm_naive_64
+        "r_solve_multiglm_naive_64",
+        &r_solve_multiglm_naive_64
     );
 }

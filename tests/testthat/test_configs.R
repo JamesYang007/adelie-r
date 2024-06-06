@@ -3,17 +3,17 @@
 # ==================================================================
 
 test_that("check_global_change", {
-    configs <- new(Configs)
+    configs <- new(RConfigs)
     curr <- configs$hessian_min
     set_configs("hessian_min", 23)
     expect_equal(configs$hessian_min, 23)
 
-    configs <- new(Configs)
+    configs <- new(RConfigs)
     expect_equal(configs$hessian_min, 23)
 })
 
 test_that("check_default_change", {
-    configs <- new(Configs)
+    configs <- new(RConfigs)
     curr <- configs$hessian_min_def
     set_configs("hessian_min", 23)
     expect_equal(configs$hessian_min, 23)
