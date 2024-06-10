@@ -1,5 +1,5 @@
 #pragma once
-#include "decl.hpp"
+#include "decl.h"
 #include <adelie_core/io/io_snp_unphased.hpp>
 #include <adelie_core/io/io_snp_phased_ancestry.hpp>
 

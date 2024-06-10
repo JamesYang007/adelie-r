@@ -1,5 +1,5 @@
 Package: adelie
-Title: A fast and flexible group elastic net solver.
+Title: A fast and flexible group elastic net solver
 Version: 0.0.0.9000
 Authors@R: 
     person("James", "Yang", , "jy2816@stanford.edu", role = c("aut", "cre"))
@@ -11,10 +11,13 @@ RoxygenNote: 7.3.1
 LinkingTo: 
     Rcpp,
     RcppEigen
+NeedsCompilation: yes
+SystemRequirements: C++17
 Imports: 
     Matrix,
     r2r,
-    Rcpp
+    Rcpp,
+    methods
 Suggests:
     ggplot2,
     reshape2,

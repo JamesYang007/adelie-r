@@ -1,7 +1,7 @@
-#include "decl.hpp"
-#include "rcpp_glm.hpp"
-#include "rcpp_matrix.hpp"
-#include "rcpp_state.hpp"
+#include "decl.h"
+#include "rcpp_glm.h"
+#include "rcpp_matrix.h"
+#include "rcpp_state.h"
 #include <adelie_core/solver/solver_gaussian_naive.hpp>
 #include <adelie_core/solver/solver_glm_naive.hpp>
 #include <adelie_core/solver/solver_multigaussian_naive.hpp>
@@ -31,6 +31,10 @@ Rcpp::List r_solve_gaussian_naive_64(
         );
     };
 
+    auto pb = ad::util::tq::trange(0);
+    pb.set_display(display_progress_bar);
+    pb.set_ostream(Rcpp::Rcerr);
+
     const auto check_user_interrupt = [&]() {
         Rcpp::checkUserInterrupt();
     };
@@ -42,7 +46,7 @@ Rcpp::List r_solve_gaussian_naive_64(
     try {
         ad::solver::gaussian::naive::solve(
             static_cast<state_gaussian_naive_64_t&>(state), 
-            display_progress_bar, [](){ return false; },
+            pb, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -82,6 +86,10 @@ Rcpp::List r_solve_glm_naive_64(
         );
     };
 
+    auto pb = ad::util::tq::trange(0);
+    pb.set_display(display_progress_bar);
+    pb.set_ostream(Rcpp::Rcerr);
+
     const auto check_user_interrupt = [&]() {
         Rcpp::checkUserInterrupt();
     };
@@ -93,7 +101,7 @@ Rcpp::List r_solve_glm_naive_64(
     try {
         ad::solver::glm::naive::solve(
             static_cast<state_glm_naive_64_t&>(state), 
-            *glm.ptr, display_progress_bar, [](){ return false; },
+            *glm.ptr, pb, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -132,6 +140,10 @@ Rcpp::List r_solve_multigaussian_naive_64(
         );
     };
 
+    auto pb = ad::util::tq::trange(0);
+    pb.set_display(display_progress_bar);
+    pb.set_ostream(Rcpp::Rcerr);
+
     const auto check_user_interrupt = [&]() {
         Rcpp::checkUserInterrupt();
     };
@@ -143,7 +155,7 @@ Rcpp::List r_solve_multigaussian_naive_64(
     try {
         ad::solver::multigaussian::naive::solve(
             static_cast<state_multigaussian_naive_64_t&>(state), 
-            display_progress_bar, [](){ return false; },
+            pb, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {
@@ -183,6 +195,10 @@ Rcpp::List r_solve_multiglm_naive_64(
         );
     };
 
+    auto pb = ad::util::tq::trange(0);
+    pb.set_display(display_progress_bar);
+    pb.set_ostream(Rcpp::Rcerr);
+
     const auto check_user_interrupt = [&]() {
         Rcpp::checkUserInterrupt();
     };
@@ -194,7 +210,7 @@ Rcpp::List r_solve_multiglm_naive_64(
     try {
         ad::solver::multiglm::naive::solve(
             static_cast<state_multiglm_naive_64_t&>(state), 
-            *glm.ptr, display_progress_bar, [](){ return false; },
+            *glm.ptr, pb, [](){ return false; },
             update_coefficients_f, check_user_interrupt
         );
     } catch(const std::exception& e) {

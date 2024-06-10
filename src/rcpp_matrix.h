@@ -1,7 +1,7 @@
 #pragma once
-#include "decl.hpp"
-#include "utils.hpp"
-#include "rcpp_io.hpp"
+#include "decl.h"
+#include "utils.h"
+#include "rcpp_io.h"
 #include <adelie_core/io/io_snp_unphased.hpp>
 #include <adelie_core/io/io_snp_phased_ancestry.hpp>
 #include <adelie_core/matrix/matrix_cov_base.hpp>

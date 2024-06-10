@@ -1,4 +1,4 @@
-#include "decl.hpp"
+#include "decl.h"
 #include <adelie_core/configs.hpp>
 
 using configs_t = ad::Configs;

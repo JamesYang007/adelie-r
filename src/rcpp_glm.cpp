@@ -1,9 +1,9 @@
-#include "rcpp_glm.hpp"
+#include "rcpp_glm.h"
 
 using value_t = double;
 using vec_value_t = ad::util::colvec_type<value_t>;
 using rowarr_value_t = ad::util::rowarr_type<value_t>;
-using colmat_value_t = ad::util::colmat_type<value_t>;
+using colarr_value_t = ad::util::colarr_type<value_t>;
 
 /* Factory functions */
 
@@ -50,8 +50,17 @@ auto make_r_glm_poisson_64(
     return r_glm_poisson_64_t(y, weights);
 }
 
+auto make_r_glm_s4_64(
+    Rcpp::S4 glm,
+    const Eigen::Map<vec_value_t>& y,
+    const Eigen::Map<vec_value_t>& weights
+)
+{
+    return r_glm_s4_64_t(glm, y, weights);
+}
+
 auto make_r_glm_multigaussian_64(
-    const Eigen::Map<colmat_value_t>& yT,
+    const Eigen::Map<colarr_value_t>& yT,
     const Eigen::Map<vec_value_t>& weights
 )
 {
@@ -60,12 +69,22 @@ auto make_r_glm_multigaussian_64(
 }
 
 auto make_r_glm_multinomial_64(
-    const Eigen::Map<colmat_value_t>& yT,
+    const Eigen::Map<colarr_value_t>& yT,
     const Eigen::Map<vec_value_t>& weights
 )
 {
     Eigen::Map<const rowarr_value_t> y(yT.data(), yT.cols(), yT.rows());
     return r_glm_multinomial_64_t(y, weights);
+}
+
+auto make_r_glm_multis4_64(
+    Rcpp::S4 glm,
+    const Eigen::Map<colarr_value_t>& yT,
+    const Eigen::Map<vec_value_t>& weights
+)
+{
+    Eigen::Map<const rowarr_value_t> y(yT.data(), yT.cols(), yT.rows());
+    return r_glm_multis4_64_t(glm, y, weights);
 }
 
 RCPP_MODULE(adelie_core_glm)
@@ -107,10 +126,16 @@ RCPP_MODULE(adelie_core_glm)
     Rcpp::class_<r_glm_poisson_64_t>("RGlmPoisson64")
         .derives<r_glm_base_64_t>("RGlmBase64")
         ;
+    Rcpp::class_<r_glm_s4_64_t>("RGlmS464")
+        .derives<r_glm_base_64_t>("RGlmBase64")
+        ;
     Rcpp::class_<r_glm_multigaussian_64_t>("RGlmMultiGaussian64")
         .derives<r_glm_multibase_64_t>("RGlmMultiBase64")
         ;
     Rcpp::class_<r_glm_multinomial_64_t>("RGlmMultinomial64")
+        .derives<r_glm_multibase_64_t>("RGlmMultiBase64")
+        ;
+    Rcpp::class_<r_glm_multis4_64_t>("RGlmMultiS464")
         .derives<r_glm_multibase_64_t>("RGlmMultiBase64")
         ;
 
@@ -136,11 +161,19 @@ RCPP_MODULE(adelie_core_glm)
         &make_r_glm_poisson_64
     );
     Rcpp::function(
+        "make_r_glm_s4_64", 
+        &make_r_glm_s4_64
+    );
+    Rcpp::function(
         "make_r_glm_multigaussian_64", 
         &make_r_glm_multigaussian_64
     );
     Rcpp::function(
         "make_r_glm_multinomial_64", 
         &make_r_glm_multinomial_64
+    );
+    Rcpp::function(
+        "make_r_glm_multis4_64", 
+        &make_r_glm_multis4_64
     );
 }

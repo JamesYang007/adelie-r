@@ -1,5 +1,5 @@
-#include "rcpp_state.hpp"
-#include "rcpp_matrix.hpp"
+#include "rcpp_state.h"
+#include "rcpp_matrix.h"
 #include <adelie_core/matrix/matrix_naive_base.hpp>
 
 template <class BetasType>

@@ -1,4 +1,4 @@
-#include "rcpp_matrix.hpp"
+#include "rcpp_matrix.h"
 
 using value_t = double;
 using index_t = int;

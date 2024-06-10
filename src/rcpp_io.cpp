@@ -1,4 +1,4 @@
-#include "rcpp_io.hpp"
+#include "rcpp_io.h"
 
 /* Factory functions */
 

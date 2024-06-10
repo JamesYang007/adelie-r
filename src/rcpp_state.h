@@ -1,6 +1,6 @@
 #pragma once
-#include "decl.hpp"
-#include "rcpp_matrix.hpp"
+#include "decl.h"
+#include "rcpp_matrix.h"
 #include <adelie_core/state/state_gaussian_naive.hpp>
 #include <adelie_core/state/state_glm_naive.hpp>
 #include <adelie_core/state/state_multigaussian_naive.hpp>
