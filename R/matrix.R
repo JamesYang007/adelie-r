@@ -257,8 +257,8 @@ matrix.standardize <- function(
         scales <- sqrt((n / (n - ddof)) * vars)
     }
 
-    centers <- as.double(centers)
-    scales <- as.double(scales)
+    centers <- as.numeric(centers)
+    scales <- as.numeric(scales)
     out <- make_r_matrix_naive_standardize_64(mat, centers, scales, n_threads)
     attr(out, "_mat") <- mat
     attr(out, "_centers") <- centers
