@@ -50,6 +50,13 @@ auto make_r_matrix_cov_sparse_64F(
     return r_matrix_cov_sparse_64F_t(rows, cols, nnz, outer, inner, value, n_threads);
 }
 
+auto make_r_matrix_cov_s4_64(
+    Rcpp::S4 mat
+)
+{
+    return r_matrix_cov_s4_64_t(mat);
+}
+
 auto make_r_matrix_naive_cconcatenate_64(
     Rcpp::List mat_list_r
 )
@@ -176,6 +183,13 @@ auto make_r_matrix_naive_rsubset_64(
     return r_matrix_naive_rsubset_64_t(*mat.ptr, subset, n_threads);
 }
 
+auto make_r_matrix_naive_s4_64(
+    Rcpp::S4 mat
+)
+{
+    return r_matrix_naive_s4_64_t(mat);
+}
+
 RCPP_MODULE(adelie_core_matrix)
 {
     /* base matrices */
@@ -200,6 +214,9 @@ RCPP_MODULE(adelie_core_matrix)
         .derives<r_matrix_cov_base_64_t>("RMatrixCovBase64")
         ;
     Rcpp::class_<r_matrix_cov_sparse_64F_t>("RMatrixCovSparse64F")
+        .derives<r_matrix_cov_base_64_t>("RMatrixCovBase64")
+        ;
+    Rcpp::class_<r_matrix_cov_s4_64_t>("RMatrixCovS464")
         .derives<r_matrix_cov_base_64_t>("RMatrixCovBase64")
         ;
 
@@ -247,6 +264,9 @@ RCPP_MODULE(adelie_core_matrix)
     Rcpp::class_<r_matrix_naive_rsubset_64_t>("RMatrixNaiveRSubset64")
         .derives<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
         ;
+    Rcpp::class_<r_matrix_naive_s4_64_t>("RMatrixNaiveS464")
+        .derives<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
+        ;
 
     /* factory functions */
     Rcpp::function(
@@ -264,6 +284,10 @@ RCPP_MODULE(adelie_core_matrix)
     Rcpp::function(
         "make_r_matrix_cov_sparse_64F",
         &make_r_matrix_cov_sparse_64F
+    );
+    Rcpp::function(
+        "make_r_matrix_cov_s4_64",
+        &make_r_matrix_cov_s4_64
     );
 
     Rcpp::function(
@@ -317,5 +341,9 @@ RCPP_MODULE(adelie_core_matrix)
     Rcpp::function(
         "make_r_matrix_naive_rsubset_64",
         &make_r_matrix_naive_rsubset_64
+    );
+    Rcpp::function(
+        "make_r_matrix_naive_s4_64",
+        &make_r_matrix_naive_s4_64
     );
 }

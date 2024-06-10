@@ -187,14 +187,12 @@ public:
 
     using base_t::base_t;
 
-    virtual ~RGlmBase64() {}
-
     bool is_multi() const { return ptr->is_multi; }
     string_t name() const { return ptr->name; }
     vec_value_t y() const { return ptr->y; }
     vec_value_t weights() const { return ptr->weights; }
 
-    virtual void gradient(
+    void gradient(
         const Eigen::Map<vec_value_t>& eta,
         Eigen::Map<vec_value_t> grad
     ) 
@@ -202,7 +200,7 @@ public:
         ADELIE_CORE_PIMPL_OVERRIDE(gradient, eta, grad);
     }
 
-    virtual void hessian(
+    void hessian(
         const Eigen::Map<vec_value_t>& eta,
         const Eigen::Map<vec_value_t>& grad,
         Eigen::Map<vec_value_t> hess
@@ -211,7 +209,7 @@ public:
         ADELIE_CORE_PIMPL_OVERRIDE(hessian, eta, grad, hess);
     }
 
-    virtual void inv_hessian_gradient(
+    void inv_hessian_gradient(
         const Eigen::Map<vec_value_t>& eta,
         const Eigen::Map<vec_value_t>& grad,
         const Eigen::Map<vec_value_t>& hess,
@@ -221,14 +219,14 @@ public:
         ADELIE_CORE_PIMPL_OVERRIDE(inv_hessian_gradient, eta, grad, hess, inv_hess_grad);
     }
 
-    virtual value_t loss(
+    value_t loss(
         const Eigen::Map<vec_value_t>& eta
     )
     {
         ADELIE_CORE_PIMPL_OVERRIDE(loss, eta);
     }
 
-    virtual value_t loss_full()
+    value_t loss_full()
     {
         ADELIE_CORE_PIMPL_OVERRIDE(loss_full,);
     }
@@ -246,14 +244,12 @@ public:
 
     using base_t::base_t;
 
-    virtual ~RGlmMultiBase64() {}
-
     bool is_multi() const { return ptr->is_multi; }
     string_t name() const { return ptr->name; }
     colarr_value_t y() const { return ptr->y; }
     vec_value_t weights() const { return ptr->weights; }
 
-    virtual void gradient(
+    void gradient(
         const Eigen::Map<colarr_value_t>& etaT,
         Eigen::Map<colarr_value_t> gradT
     ) 
@@ -263,7 +259,7 @@ public:
         ADELIE_CORE_PIMPL_OVERRIDE(gradient, eta, grad);
     }
 
-    virtual void hessian(
+    void hessian(
         const Eigen::Map<colarr_value_t>& etaT,
         const Eigen::Map<colarr_value_t>& gradT,
         Eigen::Map<colarr_value_t> hessT
@@ -275,7 +271,7 @@ public:
         ADELIE_CORE_PIMPL_OVERRIDE(hessian, eta, grad, hess);
     }
 
-    virtual void inv_hessian_gradient(
+    void inv_hessian_gradient(
         const Eigen::Map<colarr_value_t>& etaT,
         const Eigen::Map<colarr_value_t>& gradT,
         const Eigen::Map<colarr_value_t>& hessT,
@@ -289,7 +285,7 @@ public:
         ADELIE_CORE_PIMPL_OVERRIDE(inv_hessian_gradient, eta, grad, hess, inv_hess_grad);
     }
 
-    virtual value_t loss(
+    value_t loss(
         const Eigen::Map<colarr_value_t>& etaT
     )
     {
@@ -297,7 +293,7 @@ public:
         ADELIE_CORE_PIMPL_OVERRIDE(loss, eta);
     }
 
-    virtual value_t loss_full()
+    value_t loss_full()
     {
         ADELIE_CORE_PIMPL_OVERRIDE(loss_full,);
     }
