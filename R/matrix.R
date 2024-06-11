@@ -279,25 +279,17 @@ matrix.standardize <- function(
     is_centers_none <- is.null(centers)
 
     if (is_centers_none) {
-        centers <- double(p)
-        mat$mul(sqrt_weights, sqrt_weights, centers)
+        centers <- mat$mul(sqrt_weights, sqrt_weights)
     }
 
     if (is.null(scales)) {
         if (is_centers_none) {
             means <- centers
         } else {
-            means <- double(p)
-            mat$mul(sqrt_weights, sqrt_weights, means)
+            means <- mat$mul(sqrt_weights, sqrt_weights)
         }
 
-        vars <- double(p)
-        buffer <- matrix(0, n, 1)
-        for (j in 1:p) {
-            var_j <- 0
-            mat$cov(j-1, 1, sqrt_weights, var_j, buffer)
-            vars[j] <- var_j
-        }
+        vars <- sapply(1:p, function(j) mat$cov(j-1, 1, sqrt_weights))
         vars <- vars + centers * (centers - 2 * means)
         scales <- sqrt((n / (n - ddof)) * vars)
     }

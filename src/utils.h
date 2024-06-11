@@ -2,31 +2,23 @@
 #include <memory>
 
 #ifndef ADELIE_CORE_S4_OVERRIDE
-#define ADELIE_CORE_S4_OVERRIDE(ret, name, object, ...) \
+#define ADELIE_CORE_S4_OVERRIDE(name, object, ...) \
     do { \
         Rcpp::Environment global = Rcpp::Environment::global_env(); \
         if (global.exists(#name)) { \
             Rcpp::Function f = global[#name]; \
-            if constexpr (std::is_same_v<ret, void>) { \
-                f(object, __VA_ARGS__); \
-            } else { \
-                return f(object, __VA_ARGS__); \
-            } \
+            return f(object, __VA_ARGS__); \
         } \
     } while (false)
 #endif
 
 #ifndef ADELIE_CORE_S4_PURE_OVERRIDE
-#define ADELIE_CORE_S4_PURE_OVERRIDE(ret, name, object, ...) \
-    do { \
+#define ADELIE_CORE_S4_PURE_OVERRIDE(name, object, ...) \
+    [&]() { \
         Rcpp::Environment global = Rcpp::Environment::global_env(); \
         Rcpp::Function f = global[#name]; \
-        if constexpr (std::is_same_v<ret, void>) { \
-            f(object, ## __VA_ARGS__); \
-        } else { \
-            return f(object, ## __VA_ARGS__); \
-        } \
-    } while (false)
+        return f(object, ## __VA_ARGS__); \
+    }()
 #endif
 
 #ifndef ADELIE_CORE_PIMPL_OVERRIDE

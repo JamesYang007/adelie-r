@@ -250,8 +250,7 @@ grpnet <- function(
             weights_mscaled <- weights / K
             if (is.null(warm_start)) {
                 ones <- rep(1.0, n)
-                X_means <- double(p)
-                X$mul(ones, weights_mscaled, X_means)
+                X_means <- X$mul(ones, weights_mscaled)
                 X_means <- rep(X_means, each=K)
                 if (intercept) {
                     X_means <- c(rep_len(1/K, K), X_means)
@@ -275,9 +274,8 @@ grpnet <- function(
                 }
                 resid <- as.double(t(y_off))
                 resid_sum <- sum(weights_mscaled * y_off)
-                grad <- double(X_aug$cols)
                 weights_mscaled <- rep(weights_mscaled, each=K)
-                X_aug$mul(resid, weights_mscaled, grad)
+                grad <- X_aug$mul(resid, weights_mscaled)
             } else {
                 X_means <- as.double(warm_start$X_means)
                 y_var <- as.double(warm_start$y_var)
@@ -302,11 +300,9 @@ grpnet <- function(
                 ones <- rep_len(1.0, length(offsets))
                 eta <- offsets
                 etaT <- t(eta)
-                residT <- matrix(double(length(eta)), ncol(eta), nrow(eta))
-                glm$gradient(etaT, residT)
+                residT <- glm$gradient(etaT)
                 resid <- as.double(residT)
-                grad <- double(X_aug$cols)
-                X_aug$mul(resid, ones, grad)
+                grad <- X_aug$mul(resid, ones)
                 loss_null <- NULL
                 loss_full <- as.double(glm$loss_full())
             } else {
@@ -381,8 +377,7 @@ grpnet <- function(
         if (is_gaussian_opt) {
             if (is.null(warm_start)) {
                 ones <- rep_len(1.0, n)
-                X_means <- double(p)
-                X$mul(ones, weights, X_means)
+                X_means <- X$mul(ones, weights)
                 y_off <- y - offsets
                 y_mean <- sum(y_off * weights)
                 yc <- y_off
@@ -393,8 +388,7 @@ grpnet <- function(
                 rsq <- 0.0
                 resid <- yc
                 resid_sum <- sum(weights * resid)
-                grad <- double(p)
-                X$mul(resid, weights, grad)
+                grad <- X$mul(resid, weights)
             } else {
                 X_means <- as.double(warm_start$X_means)
                 y_mean <- as.double(warm_start$y_mean)
@@ -421,10 +415,8 @@ grpnet <- function(
                 ones <- rep_len(1.0, n)
                 beta0 <- 0.0
                 eta <- as.double(offsets)
-                resid <- double(n)
-                glm$gradient(eta, resid)
-                grad <- double(p)
-                X$mul(resid, ones, grad)
+                resid <- glm$gradient(eta)
+                grad <- X$mul(resid, ones)
                 loss_null <- NULL
                 loss_full <- as.double(glm$loss_full())
             } else {

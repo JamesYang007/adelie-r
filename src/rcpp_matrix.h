@@ -51,8 +51,9 @@ public:
         const Eigen::Map<colvec_index_t> subset_r(const_cast<index_t*>(subset.data()), subset.size());
         const Eigen::Map<colvec_index_t> indices_r(const_cast<index_t*>(indices.data()), indices.size());
         const Eigen::Map<colvec_value_t> values_r(const_cast<value_t*>(values.data()), values.size());
-        Eigen::Map<colvec_value_t> out_r(out.data(), out.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, bmul, _mat, subset_r, indices_r, values_r, out_r);
+        out = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(bmul, _mat, subset_r, indices_r, values_r)
+        );
     }
 
     void mul(
@@ -63,8 +64,9 @@ public:
     {
         const Eigen::Map<colvec_index_t> indices_r(const_cast<index_t*>(indices.data()), indices.size());
         const Eigen::Map<colvec_value_t> values_r(const_cast<value_t*>(values.data()), values.size());
-        Eigen::Map<colvec_value_t> out_r(out.data(), out.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, bmul, _mat, indices_r, values_r, out_r);
+        out = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(bmul, _mat, indices_r, values_r)
+        );
     }
 
     void to_dense(
@@ -72,13 +74,15 @@ public:
         Eigen::Ref<colmat_value_t> out
     ) override
     {
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, to_dense, _mat, i, p, out);
+        out = Rcpp::as<Eigen::Map<colmat_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(to_dense, _mat, i, p)
+        );
     }
     
     int cols() const override 
     {
-        Rcpp::IntegerVector out = [&]() {ADELIE_CORE_S4_PURE_OVERRIDE(int, cols, _mat);}();
-        return out[0]; 
+        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(cols, _mat);
+        return out_r[0]; 
     }
 };
 
@@ -108,8 +112,8 @@ public:
     {
         const Eigen::Map<colvec_value_t> v_r(const_cast<value_t*>(v.data()), v.size());
         const Eigen::Map<colvec_value_t> weights_r(const_cast<value_t*>(weights.data()), weights.size());
-        Rcpp::NumericVector out = [&]() {ADELIE_CORE_S4_PURE_OVERRIDE(value_t, cmul, _mat, j, v_r, weights_r);}();
-        return out[0];
+        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(cmul, _mat, j, v_r, weights_r);
+        return out_r[0];
     }
 
     void ctmul(
@@ -118,8 +122,9 @@ public:
         Eigen::Ref<vec_value_t> out
     ) override
     {
-        Eigen::Map<colvec_value_t> out_r(out.data(), out.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, ctmul, _mat, j, v, out_r);
+        out += Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(ctmul, _mat, j, v)
+        );
     }
 
     void bmul(
@@ -131,8 +136,9 @@ public:
     { 
         const Eigen::Map<colvec_value_t> v_r(const_cast<value_t*>(v.data()), v.size());
         const Eigen::Map<colvec_value_t> weights_r(const_cast<value_t*>(weights.data()), weights.size());
-        Eigen::Map<colvec_value_t> out_r(out.data(), out.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, bmul, _mat, j, q, v_r, weights_r, out_r);
+        out = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(bmul, _mat, j, q, v_r, weights_r)
+        );
     }
 
     void btmul(
@@ -142,8 +148,9 @@ public:
     ) override
     {
         const Eigen::Map<colvec_value_t> v_r(const_cast<value_t*>(v.data()), v.size());
-        Eigen::Map<colvec_value_t> out_r(out.data(), out.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, btmul, _mat, j, q, v_r, out_r);
+        out += Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(btmul, _mat, j, q, v_r)
+        );
     }
 
     void mul(
@@ -154,31 +161,34 @@ public:
     {
         const Eigen::Map<colvec_value_t> v_r(const_cast<value_t*>(v.data()), v.size());
         const Eigen::Map<colvec_value_t> weights_r(const_cast<value_t*>(weights.data()), weights.size());
-        Eigen::Map<colvec_value_t> out_r(out.data(), out.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, mul, _mat, v_r, weights_r, out_r);
+        out = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(mul, _mat, v_r, weights_r)
+        );
     }
 
     void cov(
         int j, int q,
         const Eigen::Ref<const vec_value_t>& sqrt_weights,
         Eigen::Ref<colmat_value_t> out,
-        Eigen::Ref<colmat_value_t> buffer
+        Eigen::Ref<colmat_value_t> 
     ) override
     {
         const Eigen::Map<colvec_value_t> sqrt_weights_r(const_cast<value_t*>(sqrt_weights.data()), sqrt_weights.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, cov, _mat, j, q, sqrt_weights_r, out, buffer);
+        out = Rcpp::as<Eigen::Map<colmat_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(cov, _mat, j, q, sqrt_weights_r)
+        );
     }
 
     int rows() const override
     {
-        Rcpp::IntegerVector out = [&]() {ADELIE_CORE_S4_PURE_OVERRIDE(int, rows, _mat);}();
-        return out[0];
+        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(rows, _mat);
+        return out_r[0];
     }
     
     int cols() const override
     {
-        Rcpp::IntegerVector out = [&]() {ADELIE_CORE_S4_PURE_OVERRIDE(int, cols, _mat);}();
-        return out[0];
+        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(cols, _mat);
+        return out_r[0];
     }
 
     /* Non-speed critical routines */
@@ -188,8 +198,9 @@ public:
         Eigen::Ref<rowmat_value_t> out
     ) override
     {
-        Eigen::Map<colmat_value_t> outT_r(out.data(), out.cols(), out.rows());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, sp_btmul, _mat, v, outT_r);
+        out = Rcpp::as<colmat_value_t>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(sp_btmul, _mat, v)
+        ).transpose();
     }
 };
 
@@ -241,33 +252,36 @@ public:
     int rows() const { return ptr->rows(); }
     int cols() const { return ptr->cols(); }
 
-    void mul(
+    vec_value_t mul(
         const Eigen::Map<vec_value_t>& v, 
-        const Eigen::Map<vec_value_t>& weights,
-        Eigen::Map<vec_value_t> out
+        const Eigen::Map<vec_value_t>& weights
     )
     {
-        ADELIE_CORE_PIMPL_OVERRIDE(mul, v, weights, out);
+        vec_value_t out(cols());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(mul, v, weights, out); }();
+        return out;
     }
 
-    void cov(
+    dense_64F_t cov(
         int j, int q,
-        const Eigen::Map<vec_value_t>& sqrt_weights,
-        Eigen::Map<dense_64F_t> out,
-        Eigen::Map<dense_64F_t> buffer
+        const Eigen::Map<vec_value_t>& sqrt_weights
     )
     {
-        ADELIE_CORE_PIMPL_OVERRIDE(cov, j, q, sqrt_weights, out, buffer);
+        dense_64F_t out(q, q);
+        dense_64F_t buffer(rows(), q);
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(cov, j, q, sqrt_weights, out, buffer); }();
+        return out;
     }
 
-    void sp_btmul(
-        const sp_mat_value_t& v,
-        Eigen::Map<dense_64F_t> outT
+    dense_64F_t sp_btmul(
+        const sp_mat_value_t& v
     )
     {
+        dense_64F_t outT(rows(), v.rows());
         using rowmat_value_t = ad::util::rowmat_type<value_t>;
         Eigen::Map<rowmat_value_t> out(outT.data(), outT.cols(), outT.rows());
-        ADELIE_CORE_PIMPL_OVERRIDE(sp_btmul, v, out);
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(sp_btmul, v, out); }();
+        return outT;
     }
 };
 

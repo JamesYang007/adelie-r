@@ -39,8 +39,9 @@ public:
     ) override
     {
         const Eigen::Map<colvec_value_t> eta_r(const_cast<value_t*>(eta.data()), eta.size());
-        Eigen::Map<colvec_value_t> grad_r(grad.data(), grad.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, gradient, _glm, eta_r, grad_r);
+        grad = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(gradient, _glm, eta_r)
+        );
     }
 
     void hessian(
@@ -51,23 +52,9 @@ public:
     {
         const Eigen::Map<colvec_value_t> eta_r(const_cast<value_t*>(eta.data()), eta.size());
         const Eigen::Map<colvec_value_t> grad_r(const_cast<value_t*>(grad.data()), grad.size());
-        Eigen::Map<colvec_value_t> hess_r(hess.data(), hess.size());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, hessian, _glm, eta_r, grad_r, hess_r);
-    }
-
-    void inv_hessian_gradient(
-        const Eigen::Ref<const vec_value_t>& eta,
-        const Eigen::Ref<const vec_value_t>& grad,
-        const Eigen::Ref<const vec_value_t>& hess,
-        Eigen::Ref<vec_value_t> inv_hess_grad
-    ) override
-    {
-        const Eigen::Map<colvec_value_t> eta_r(const_cast<value_t*>(eta.data()), eta.size());
-        const Eigen::Map<colvec_value_t> grad_r(const_cast<value_t*>(grad.data()), grad.size());
-        const Eigen::Map<colvec_value_t> hess_r(const_cast<value_t*>(hess.data()), hess.size());
-        Eigen::Map<colvec_value_t> inv_hess_grad_r(inv_hess_grad.data(), inv_hess_grad.size());
-        ADELIE_CORE_S4_OVERRIDE(void, inv_hessian_gradient, _glm, eta_r, grad_r, hess_r, inv_hess_grad_r);
-        return base_t::inv_hessian_gradient(eta, grad, hess, inv_hess_grad);
+        hess = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(hessian, _glm, eta_r, grad_r)
+        );
     }
 
     value_t loss(
@@ -75,14 +62,14 @@ public:
     ) override
     {
         const Eigen::Map<colvec_value_t> eta_r(const_cast<value_t*>(eta.data()), eta.size());
-        Rcpp::NumericVector out = [&]() {ADELIE_CORE_S4_PURE_OVERRIDE(value_t, loss, _glm, eta_r);}();
-        return out[0];
+        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss, _glm, eta_r);
+        return out_r[0];
     }
 
     value_t loss_full() override 
     {
-        Rcpp::NumericVector out = [&]() {ADELIE_CORE_S4_PURE_OVERRIDE(value_t, loss_full, _glm);}();
-        return out[0];
+        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss_full, _glm);
+        return out_r[0];
     }
 };
 
@@ -113,8 +100,9 @@ public:
     ) override
     {
         const Eigen::Map<colarr_value_t> etaT_r(const_cast<value_t*>(eta.data()), eta.cols(), eta.rows());
-        Eigen::Map<colarr_value_t> gradT_r(grad.data(), grad.cols(), grad.rows());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, gradient, _glm, etaT_r, gradT_r);
+        grad = Rcpp::as<Eigen::Map<colarr_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(gradient, _glm, etaT_r)
+        ).matrix().transpose().array();
     }
 
     void hessian(
@@ -125,23 +113,9 @@ public:
     {
         const Eigen::Map<colarr_value_t> etaT_r(const_cast<value_t*>(eta.data()), eta.cols(), eta.rows());
         const Eigen::Map<colarr_value_t> gradT_r(const_cast<value_t*>(grad.data()), grad.cols(), grad.rows());
-        Eigen::Map<colarr_value_t> hessT_r(hess.data(), hess.cols(), hess.rows());
-        ADELIE_CORE_S4_PURE_OVERRIDE(void, hessian, _glm, etaT_r, gradT_r, hessT_r);
-    }
-
-    void inv_hessian_gradient(
-        const Eigen::Ref<const rowarr_value_t>& eta,
-        const Eigen::Ref<const rowarr_value_t>& grad,
-        const Eigen::Ref<const rowarr_value_t>& hess,
-        Eigen::Ref<rowarr_value_t> inv_hess_grad
-    ) override
-    {
-        const Eigen::Map<colarr_value_t> etaT_r(const_cast<value_t*>(eta.data()), eta.cols(), eta.rows());
-        const Eigen::Map<colarr_value_t> gradT_r(const_cast<value_t*>(grad.data()), grad.cols(), grad.rows());
-        const Eigen::Map<colarr_value_t> hessT_r(const_cast<value_t*>(hess.data()), hess.cols(), hess.rows());
-        Eigen::Map<colarr_value_t> inv_hess_gradT_r(inv_hess_grad.data(), inv_hess_grad.cols(), inv_hess_grad.rows());
-        ADELIE_CORE_S4_OVERRIDE(void, inv_hessian_gradient, _glm, etaT_r, gradT_r, hessT_r, inv_hess_gradT_r);
-        return base_t::inv_hessian_gradient(eta, grad, hess, inv_hess_grad);
+        hess = Rcpp::as<Eigen::Map<colarr_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(hessian, _glm, etaT_r, gradT_r)
+        ).matrix().transpose().array();
     }
 
     value_t loss(
@@ -149,14 +123,14 @@ public:
     ) override
     {
         const Eigen::Map<colarr_value_t> etaT_r(const_cast<value_t*>(eta.data()), eta.cols(), eta.rows());
-        Rcpp::NumericVector out = [&]() {ADELIE_CORE_S4_PURE_OVERRIDE(value_t, loss, _glm, etaT_r);}();
-        return out[0];
+        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss, _glm, etaT_r);
+        return out_r[0];
     }
 
     value_t loss_full() override 
     {
-        Rcpp::NumericVector out = [&]() {ADELIE_CORE_S4_PURE_OVERRIDE(value_t, loss_full, _glm);}();
-        return out[0];
+        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss_full, _glm);
+        return out_r[0];
     }
 };
 
@@ -192,31 +166,13 @@ public:
     vec_value_t y() const { return ptr->y; }
     vec_value_t weights() const { return ptr->weights; }
 
-    void gradient(
-        const Eigen::Map<vec_value_t>& eta,
-        Eigen::Map<vec_value_t> grad
+    vec_value_t gradient(
+        const Eigen::Map<vec_value_t>& eta
     ) 
     {
-        ADELIE_CORE_PIMPL_OVERRIDE(gradient, eta, grad);
-    }
-
-    void hessian(
-        const Eigen::Map<vec_value_t>& eta,
-        const Eigen::Map<vec_value_t>& grad,
-        Eigen::Map<vec_value_t> hess
-    )
-    {
-        ADELIE_CORE_PIMPL_OVERRIDE(hessian, eta, grad, hess);
-    }
-
-    void inv_hessian_gradient(
-        const Eigen::Map<vec_value_t>& eta,
-        const Eigen::Map<vec_value_t>& grad,
-        const Eigen::Map<vec_value_t>& hess,
-        Eigen::Map<vec_value_t> inv_hess_grad
-    )
-    {
-        ADELIE_CORE_PIMPL_OVERRIDE(inv_hessian_gradient, eta, grad, hess, inv_hess_grad);
+        vec_value_t grad(eta.size());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(gradient, eta, grad); }();
+        return grad;
     }
 
     value_t loss(
@@ -249,40 +205,15 @@ public:
     colarr_value_t y() const { return ptr->y; }
     vec_value_t weights() const { return ptr->weights; }
 
-    void gradient(
-        const Eigen::Map<colarr_value_t>& etaT,
-        Eigen::Map<colarr_value_t> gradT
+    colarr_value_t gradient(
+        const Eigen::Map<colarr_value_t>& etaT
     ) 
     {
+        colarr_value_t gradT(etaT.rows(), etaT.cols());
         Eigen::Map<const rowarr_value_t> eta(etaT.data(), etaT.cols(), etaT.rows());
         Eigen::Map<rowarr_value_t> grad(gradT.data(), gradT.cols(), gradT.rows());
-        ADELIE_CORE_PIMPL_OVERRIDE(gradient, eta, grad);
-    }
-
-    void hessian(
-        const Eigen::Map<colarr_value_t>& etaT,
-        const Eigen::Map<colarr_value_t>& gradT,
-        Eigen::Map<colarr_value_t> hessT
-    )
-    {
-        Eigen::Map<const rowarr_value_t> eta(etaT.data(), etaT.cols(), etaT.rows());
-        Eigen::Map<const rowarr_value_t> grad(gradT.data(), gradT.cols(), gradT.rows());
-        Eigen::Map<rowarr_value_t> hess(hessT.data(), hessT.cols(), hessT.rows());
-        ADELIE_CORE_PIMPL_OVERRIDE(hessian, eta, grad, hess);
-    }
-
-    void inv_hessian_gradient(
-        const Eigen::Map<colarr_value_t>& etaT,
-        const Eigen::Map<colarr_value_t>& gradT,
-        const Eigen::Map<colarr_value_t>& hessT,
-        Eigen::Map<colarr_value_t> inv_hess_gradT
-    )
-    {
-        Eigen::Map<const rowarr_value_t> eta(etaT.data(), etaT.cols(), etaT.rows());
-        Eigen::Map<const rowarr_value_t> grad(gradT.data(), gradT.cols(), gradT.rows());
-        Eigen::Map<const rowarr_value_t> hess(hessT.data(), hessT.cols(), hessT.rows());
-        Eigen::Map<rowarr_value_t> inv_hess_grad(inv_hess_gradT.data(), inv_hess_gradT.cols(), inv_hess_gradT.rows());
-        ADELIE_CORE_PIMPL_OVERRIDE(inv_hessian_gradient, eta, grad, hess, inv_hess_grad);
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(gradient, eta, grad); }();
+        return gradT;
     }
 
     value_t loss(
