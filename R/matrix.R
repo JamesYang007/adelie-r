@@ -13,7 +13,11 @@ matrix.block_diag <- function(
         mats_wrap[[i]] <- mat
     }
     mats <- mats_wrap
-    out <- make_r_matrix_cov_block_diag_64(mats, n_threads)
+    input <- list(
+        "mats"=mats, 
+        "n_threads"=n_threads
+    )
+    out <- new(RMatrixCovBlockDiag64, input)
     attr(out, "_mats") <- mats
     out
 }
@@ -35,10 +39,13 @@ matrix.concatenate <- function(
     }
     mats <- mats_wrap
     dispatcher <- c(
-        make_r_matrix_naive_rconcatenate_64,
-        make_r_matrix_naive_cconcatenate_64
+        RMatrixNaiveRConcatenate64,
+        RMatrixNaiveCConcatenate64
     )
-    out <- dispatcher[[axis+1]](mats)
+    input <- list(
+        "mats"=mats
+    )
+    out <- new(dispatcher[[axis+1]], input)
     attr(out, "_mats") <- mats
     out
 }
@@ -52,10 +59,14 @@ matrix.dense <- function(
 {
     mat <- as.matrix(mat)
     dispatcher <- c(
-        "naive" = make_r_matrix_naive_dense_64F,
-        "cov" = make_r_matrix_cov_dense_64F
+        "naive" = RMatrixNaiveDense64F,
+        "cov" = RMatrixCovDense64F
     )
-    out <- dispatcher[[method]](mat, n_threads)
+    input <- list(
+        "mat"=mat, 
+        "n_threads"=n_threads
+    )
+    out <- new(dispatcher[[method]], input)
     attr(out, "_mat") <- mat
     out
 }
@@ -116,7 +127,13 @@ matrix.interaction <- function(
     mode(pairsT) <- "integer"
     levels <- as.integer(levels)
 
-    out <- make_r_matrix_naive_interaction_dense_64F(mat, pairsT, levels, n_threads)
+    input <- list(
+        "mat"=mat, 
+        "pairsT"=pairsT, 
+        "levels"=levels, 
+        "n_threads"=n_threads
+    )
+    out <- new(RMatrixNaiveInteractionDense64F, input)
     attr(out, "_mat") <- mat
     attr(out, "_pairs") <- t(pairsT)
     attr(out, "_levels") <- levels
@@ -132,9 +149,19 @@ matrix.kronecker_eye <- function(
 {
     if (is.matrix(mat) || is.array((mat)) || is.data.frame((mat))) {
         mat <- as.matrix(mat)
-        out <- make_r_matrix_naive_kronecker_eye_dense_64F(mat, K, n_threads)
+        input <- list(
+            "mat"=mat,
+            "K"=K,
+            "n_threads"=n_threads
+        )
+        out <- new(RMatrixNaiveKroneckerEyeDense64F, input)
     } else {
-        out <- make_r_matrix_naive_kronecker_eye_64(mat, K, n_threads)
+        input <- list(
+            "mat"=mat,
+            "K"=K,
+            "n_threads"=n_threads
+        )
+        out <- new(RMatrixNaiveKroneckerEye64, input)
     }
     attr(out, "_mat") <- mat
     out
@@ -152,7 +179,12 @@ matrix.one_hot <- function(
         levels <- integer(d)
     }
     levels <- as.integer(levels)
-    out <- make_r_matrix_naive_one_hot_dense_64F(mat, levels, n_threads)
+    input <- list(
+        "mat"=mat, 
+        "levels"=levels, 
+        "n_threads"=n_threads
+    )
+    out <- new(RMatrixNaiveOneHotDense64F, input)
     attr(out, "_mat") <- mat
     attr(out, "_levels") <- levels
     out
@@ -165,7 +197,11 @@ matrix.lazy_cov <- function(
 )
 {
     mat <- as.matrix(mat)
-    out <- make_r_matrix_cov_lazy_cov_64F(mat, n_threads)
+    input <- list(
+        "mat"=mat, 
+        "n_threads"=n_threads
+    )
+    out <- new(RMatrixCovLazyCov64F, input)
     attr(out, "_mat") <- mat
     out
 }
@@ -177,7 +213,11 @@ matrix.snp_phased_ancestry <- function(
 )
 {
     if (!io$is_read) { io$read() }
-    out <- make_r_matrix_naive_snp_phased_ancestry_64(io, n_threads)
+    input <- list(
+        "io"=io, 
+        "n_threads"=n_threads
+    )
+    out <- new(RMatrixNaiveSNPPhasedAncestry64, input)
     attr(out, "_io") <- io
     out
 }
@@ -189,7 +229,11 @@ matrix.snp_unphased <- function(
 )
 {
     if (!io$is_read) { io$read() }
-    out <- make_r_matrix_naive_snp_unphased_64(io, n_threads)
+    input <- list(
+        "io"=io, 
+        "n_threads"=n_threads
+    )
+    out <- new(RMatrixNaiveSNPUnphased64, input)
     attr(out, "_io") <- io
     out
 }
@@ -203,18 +247,19 @@ matrix.sparse <- function(
 {  
     mat <- as(mat, "dgCMatrix")
     dispatcher <- c(
-        "naive" = make_r_matrix_naive_sparse_64F,
-        "cov" = make_r_matrix_cov_sparse_64F
+        "naive" = RMatrixNaiveSparse64F,
+        "cov" = RMatrixCovSparse64F
     )
-    out <- dispatcher[[method]](
-        nrow(mat),
-        ncol(mat), 
-        length(mat@i),
-        mat@p,
-        mat@i,
-        mat@x,
-        n_threads
+    input <- list(
+        "rows"=nrow(mat),
+        "cols"=ncol(mat), 
+        "nnz"=length(mat@i),
+        "outer"=mat@p,
+        "inner"=mat@i,
+        "value"=mat@x,
+        "n_threads"=n_threads
     )
+    out <- new(dispatcher[[method]], input)
     attr(out, "mat") <- mat
     out
 }
@@ -259,7 +304,13 @@ matrix.standardize <- function(
 
     centers <- as.numeric(centers)
     scales <- as.numeric(scales)
-    out <- make_r_matrix_naive_standardize_64(mat, centers, scales, n_threads)
+    input <- list(
+        "mat"=mat, 
+        "centers"=centers, 
+        "scales"=scales, 
+        "n_threads"=n_threads
+    )
+    out <- new(RMatrixNaiveStandardize64, input)
     attr(out, "_mat") <- mat
     attr(out, "_centers") <- centers
     attr(out, "_scales") <- scales
@@ -275,11 +326,16 @@ matrix.subset <- function(
 )
 {
     dispatcher <- c(
-        make_r_matrix_naive_rsubset_64,
-        make_r_matrix_naive_csubset_64
+        RMatrixNaiveRSubset64,
+        RMatrixNaiveCSubset64
     )
     indices <- as.integer(indices)
-    out <- dispatcher[[axis+1]](mat, indices, n_threads)
+    input <- list(
+        "mat"=mat, 
+        "subset"=indices, 
+        "n_threads"=n_threads
+    )
+    out <- new(dispatcher[[axis+1]], input)
     attr(out, "_mat") <- mat
     attr(out, "_indices") <- indices
     out

@@ -26,33 +26,6 @@ render_inputs_ <- function(y, weights)
 }
 
 #' @export
-glm.gaussian <- function(y, weights=NULL, opt=TRUE)
-{
-    input <- render_inputs_(y, weights)
-    y <- input[["y"]]
-    weights <- input[["weights"]]
-    out <- make_r_glm_gaussian_64(y, weights)
-    attr(out, "_y") <- y
-    attr(out, "_weights") <- weights
-    attr(out, "opt") <- opt
-    out
-}
-
-#' @export
-glm.multigaussian <- function(y, weights=NULL, opt=TRUE)
-{
-    input <- render_inputs_(y, weights)
-    y <- input[["y"]]
-    weights <- input[["weights"]]
-    yT <- t(y)
-    out <- make_r_glm_multigaussian_64(yT, weights)
-    attr(out, "_yT") <- yT
-    attr(out, "_weights") <- weights
-    attr(out, "opt") <- opt
-    out
-}
-
-#' @export
 glm.binomial <- function(y, weights=NULL, link="logit")
 {
 
@@ -60,10 +33,10 @@ glm.binomial <- function(y, weights=NULL, link="logit")
     y <- input[["y"]]
     weights <- input[["weights"]]
     dispatcher <- c(
-        "logit" = make_r_glm_binomial_logit_64,
-        "probit" = make_r_glm_binomial_probit_64
+        "logit" = RGlmBinomialLogit64,
+        "probit" = RGlmBinomialProbit64
     )
-    out <- dispatcher[[link]](y, weights)
+    out <- new(dispatcher[[link]], input)
     attr(out, "_y") <- y
     attr(out, "_weights") <- weights
     out
@@ -77,12 +50,47 @@ glm.cox <- function(start, stop, status, weights=NULL, tie_method="efron")
     stop <- as.double(stop)
     status <- input[["y"]]
     weights <- input[["weights"]]
-    out <- make_r_glm_cox_64(start, stop, status, weights, tie_method)
+    input <- list(
+        "start"=start,
+        "stop"=stop,
+        "status"=status,
+        "weights"=weights,
+        "tie_method"=tie_method
+    )
+    out <- new(RGlmCox64, input)
     attr(out, "_start") <- start
     attr(out, "_stop") <- stop
     attr(out, "_status") <- status
     attr(out, "_weights") <- weights
     attr(out, "_tie_method") <- tie_method
+    out
+}
+
+#' @export
+glm.gaussian <- function(y, weights=NULL, opt=TRUE)
+{
+    input <- render_inputs_(y, weights)
+    y <- input[["y"]]
+    weights <- input[["weights"]]
+    out <- new(RGlmGaussian64, input)
+    attr(out, "_y") <- y
+    attr(out, "_weights") <- weights
+    attr(out, "opt") <- opt
+    out
+}
+
+#' @export
+glm.multigaussian <- function(y, weights=NULL, opt=TRUE)
+{
+    input <- render_inputs_(y, weights)
+    y <- input[["y"]]
+    weights <- input[["weights"]]
+    yT <- t(y)
+    input <- list("yT"=yT, "weights"=weights)
+    out <- new(RGlmMultiGaussian64, input)
+    attr(out, "_yT") <- yT
+    attr(out, "_weights") <- weights
+    attr(out, "opt") <- opt
     out
 }
 
@@ -93,7 +101,8 @@ glm.multinomial <- function(y, weights=NULL)
     y <- input[["y"]]
     weights <- input[["weights"]]
     yT <- t(y)
-    out <- make_r_glm_multinomial_64(yT, weights)
+    input <- list("yT"=yT, "weights"=weights)
+    out <- new(RGlmMultinomial64, input)
     attr(out, "_yT") <- yT
     attr(out, "_weights") <- weights
     out
@@ -105,7 +114,7 @@ glm.poisson <- function(y, weights=NULL)
     input <- render_inputs_(y, weights)
     y <- input[["y"]]
     weights <- input[["weights"]]
-    out <- make_r_glm_poisson_64(y, weights)
+    out <- new(RGlmPoisson64, input)
     attr(out, "_y") <- y
     attr(out, "_weights") <- weights
     out

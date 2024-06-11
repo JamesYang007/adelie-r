@@ -12,7 +12,7 @@ LinkingTo:
     Rcpp,
     RcppEigen
 NeedsCompilation: yes
-SystemRequirements: C++17
+SystemRequirements: GNU make and C++17
 Imports: 
     Matrix,
     r2r,

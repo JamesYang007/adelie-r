@@ -1,23 +1,5 @@
 #include "rcpp_io.h"
 
-/* Factory functions */
-
-auto make_r_io_snp_unphased(
-    const std::string& filename,
-    const std::string& read_mode
-)
-{
-    return r_io_snp_unphased_t(filename, read_mode);
-}
-
-auto make_r_io_snp_phased_ancestry(
-    const std::string& filename,
-    const std::string& read_mode
-)
-{
-    return r_io_snp_phased_ancestry_t(filename, read_mode);
-}
-
 RCPP_MODULE(adelie_core_io)
 {
     Rcpp::class_<io_snp_base_t>("IOSNPBase")
@@ -50,13 +32,4 @@ RCPP_MODULE(adelie_core_io)
         .constructor<std::string, std::string>()
         .method("write", &r_io_snp_phased_ancestry_t::write)
         ;
-
-    Rcpp::function(
-        "make_r_io_snp_unphased",
-        &make_r_io_snp_unphased
-    );
-    Rcpp::function(
-        "make_r_io_snp_phased_ancestry",
-        &make_r_io_snp_phased_ancestry
-    );
 }
