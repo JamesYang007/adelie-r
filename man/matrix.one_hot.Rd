@@ -9,7 +9,7 @@ matrix.one_hot(mat, levels = NULL, n_threads = 1)
 \arguments{
 \item{mat}{The dense matrix.}
 
-\item{levels}{Number of levels.}
+\item{levels}{Levels.}
 
 \item{n_threads}{Number of threads.}
 }

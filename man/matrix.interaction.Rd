@@ -13,6 +13,8 @@ matrix.interaction(mat, intr_keys, intr_values, levels = NULL, n_threads = 1)
 
 \item{intr_values}{List of list of feature indices.}
 
+\item{levels}{Levels.}
+
 \item{n_threads}{Number of threads.}
 }
 \description{

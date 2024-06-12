@@ -90,6 +90,7 @@ matrix.dense <- function(
 #' @param   mat     The dense matrix.
 #' @param   intr_keys   List of feature indices.
 #' @param   intr_values List of list of feature indices.
+#' @param   levels      Levels.
 #' @param   n_threads   Number of threads.
 #' @export
 matrix.interaction <- function(
@@ -215,7 +216,7 @@ matrix.lazy_cov <- function(
 #' Creates a one-hot encoded matrix.
 #' 
 #' @param   mat     The dense matrix.
-#' @param   levels      Number of levels.
+#' @param   levels      Levels.
 #' @param   n_threads   Number of threads.
 #' @export
 matrix.one_hot <- function(
