@@ -57,6 +57,37 @@ solve_ <- function(
     state
 }
 
+#' Solves group elastic net via naive method.
+#' 
+#' @param   X   Feature matrix.
+#' @param   glm     GLM object.
+#' @param   groups  Groups.
+#' @param   alpha   Elastic net parameter.
+#' @param   penalty Penalty factor.
+#' @param   offsets Offsets.
+#' @param   lmda_path   The regularization path.
+#' @param   irls_max_iters  Maximum number of IRLS iterations.
+#' @param   irls_tol  IRLS convergence tolerance.
+#' @param   max_iters   Maximum number of coordinate descents.
+#' @param   tol     Coordinate descent convergence tolerance.
+#' @param   adev_tol    Percent deviance explained tolerance.
+#' @param   ddev_tol    Difference in percent deviance explained tolerance.
+#' @param   newton_tol  Convergence tolerance for the BCD update.
+#' @param   newton_max_iters    Maximum number of iterations for the BCD update.
+#' @param   n_threads   Number of threads.
+#' @param   early_exit  \code{TRUE} if the function should early exit.
+#' @param   intercept   \code{TRUE} to fit with intercept.
+#' @param   screen_rule Screen rule.
+#' @param   min_ratio   Ratio between largest and smallest regularization.
+#' @param   lmda_path_size Number of regularizations.
+#' @param   max_screen_size Maximum number of screen groups.
+#' @param   max_active_size Maximum number of active groups.
+#' @param   pivot_subset_ratio  Subset ratio of pivot rule.
+#' @param   pivot_subset_min    Minimum subset of pivot rule.
+#' @param   pivot_slack_ratio   Slack ratio of pivot rule.
+#' @param   check_state     Check state.
+#' @param   progress_bar    Progress bar.
+#' @param   warm_start      Warm start.
 #' @export
 grpnet <- function(
     X,

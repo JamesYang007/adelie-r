@@ -1,3 +1,7 @@
+#' Creates a block-diagonal matrix.
+#' 
+#' @param   mats    List of matrices.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.block_diag <- function(
     mats,
@@ -22,6 +26,11 @@ matrix.block_diag <- function(
     out
 }
 
+#' Creates a concatenation of the matrices.
+#' 
+#' @param   mats    List of matrices.
+#' @param   axis    The axis along which the matrices will be joined.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.concatenate <- function(
     mats, 
@@ -50,6 +59,11 @@ matrix.concatenate <- function(
     out
 }
 
+#' Creates a viewer of a dense matrix.
+#' 
+#' @param   mat     The dense matrix.
+#' @param   method  Method type.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.dense <- function(
     mat,
@@ -71,6 +85,12 @@ matrix.dense <- function(
     out
 }
 
+#' Creates a matrix with pairwise interactions.
+#' 
+#' @param   mat     The dense matrix.
+#' @param   intr_keys   List of feature indices.
+#' @param   intr_values List of list of feature indices.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.interaction <- function(
     mat,
@@ -140,6 +160,11 @@ matrix.interaction <- function(
     out
 }
 
+#' Creates a Kronecker product with identity matrix.
+#'
+#' @param   mat     The matrix to view as a Kronecker product.
+#' @param   K       Dimension of the identity matrix.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.kronecker_eye <- function(
     mat,
@@ -167,6 +192,31 @@ matrix.kronecker_eye <- function(
     out
 }
 
+#' Creates a lazy covariance matrix.
+#' 
+#' @param   mat     The data matrix.
+#' @param   n_threads   Number of threads.
+#' @export
+matrix.lazy_cov <- function(
+    mat,
+    n_threads =1
+)
+{
+    mat <- as.matrix(mat)
+    input <- list(
+        "mat"=mat, 
+        "n_threads"=n_threads
+    )
+    out <- new(RMatrixCovLazyCov64F, input)
+    attr(out, "_mat") <- mat
+    out
+}
+
+#' Creates a one-hot encoded matrix.
+#' 
+#' @param   mat     The dense matrix.
+#' @param   levels      Number of levels.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.one_hot <- function(
     mat,
@@ -190,22 +240,10 @@ matrix.one_hot <- function(
     out
 }
 
-#' @export
-matrix.lazy_cov <- function(
-    mat,
-    n_threads =1
-)
-{
-    mat <- as.matrix(mat)
-    input <- list(
-        "mat"=mat, 
-        "n_threads"=n_threads
-    )
-    out <- new(RMatrixCovLazyCov64F, input)
-    attr(out, "_mat") <- mat
-    out
-}
-
+#' Creates a SNP phased, ancestry matrix.
+#' 
+#' @param   io      IO handler.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.snp_phased_ancestry <- function(
     io,
@@ -222,6 +260,10 @@ matrix.snp_phased_ancestry <- function(
     out
 }
 
+#' Creates a SNP unphased matrix.
+#' 
+#' @param   io      IO handler.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.snp_unphased <- function(
     io,
@@ -238,6 +280,11 @@ matrix.snp_unphased <- function(
     out
 }
 
+#' Creates a viewer of a sparse matrix.
+#' 
+#' @param   mat     The sparse matrix to view.
+#' @param   method  Method type.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.sparse <- function(
     mat,
@@ -264,6 +311,13 @@ matrix.sparse <- function(
     out
 }
 
+#' Creates a standardized matrix.
+#' 
+#' @param   mat     The underlying matrix.
+#' @param   centers     The center values.
+#' @param   scales     The scale values.
+#' @param   ddof        Degrees of freedom.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.standardize <- function(
     mat,
@@ -309,6 +363,12 @@ matrix.standardize <- function(
     out
 }
 
+#' Creates a subset of the matrix along an axis.
+#' 
+#' @param   mat     The matrix to subset.
+#' @param   indices     Array of indices to subset the matrix.
+#' @param   axis        The axis along which to subset.
+#' @param   n_threads   Number of threads.
 #' @export
 matrix.subset <- function(
     mat,

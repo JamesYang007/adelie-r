@@ -25,6 +25,11 @@ render_inputs_ <- function(y, weights)
     )
 }
 
+#' Creates a Binomial GLM family object.
+#' 
+#' @param   y     Response vector.
+#' @param   weights Observation weights. 
+#' @param   link    The link function type.
 #' @export
 glm.binomial <- function(y, weights=NULL, link="logit")
 {
@@ -42,6 +47,13 @@ glm.binomial <- function(y, weights=NULL, link="logit")
     out
 }
 
+#' Creates a Cox GLM family object.
+#' 
+#' @param   start     Start time vector.
+#' @param   stop     Stop time vector.
+#' @param   status     Status vector.
+#' @param   weights Observation weights. 
+#' @param tie_method    The tie-breaking method.
 #' @export
 glm.cox <- function(start, stop, status, weights=NULL, tie_method="efron")
 {
@@ -66,6 +78,11 @@ glm.cox <- function(start, stop, status, weights=NULL, tie_method="efron")
     out
 }
 
+#' Creates a Gaussian GLM family object.
+#' 
+#' @param   y     Response vector.
+#' @param   weights Observation weights. 
+#' @param   opt     If \code{TRUE}, an optimized routine is run.
 #' @export
 glm.gaussian <- function(y, weights=NULL, opt=TRUE)
 {
@@ -79,6 +96,11 @@ glm.gaussian <- function(y, weights=NULL, opt=TRUE)
     out
 }
 
+#' Creates a MultiGaussian GLM family object.
+#' 
+#' @param   y     Response vector.
+#' @param   weights Observation weights. 
+#' @param   opt     If \code{TRUE}, an optimized routine is run.
 #' @export
 glm.multigaussian <- function(y, weights=NULL, opt=TRUE)
 {
@@ -94,6 +116,10 @@ glm.multigaussian <- function(y, weights=NULL, opt=TRUE)
     out
 }
 
+#' Creates a Multinomial GLM family object.
+#' 
+#' @param   y     Response vector.
+#' @param   weights Observation weights. 
 #' @export
 glm.multinomial <- function(y, weights=NULL)
 {
@@ -108,6 +134,10 @@ glm.multinomial <- function(y, weights=NULL)
     out
 }
 
+#' Creates a Poisson GLM family object.
+#' 
+#' @param   y     Response vector.
+#' @param   weights Observation weights. 
 #' @export
 glm.poisson <- function(y, weights=NULL)
 {
