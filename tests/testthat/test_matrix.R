@@ -76,7 +76,7 @@ test_that("matrix.snp_phased_ancestry", {
     n <- 123
     s <- 423
     A <- 8
-    filename <- "/tmp/snp_phased_ancestry_dummy.snpdat"
+    filename <- "snp_phased_ancestry_dummy.snpdat"
     handle <- io.snp_phased_ancestry(filename)
     calldata <- matrix(
         as.integer(sample.int(
@@ -96,12 +96,13 @@ test_that("matrix.snp_phased_ancestry", {
     )
     handle$write(calldata, ancestries, A, 1)
     expect_error(matrix.snp_phased_ancestry(handle), NA)
+    file.remove(filename)
 })
 
 test_that("matrix.snp_unphased", {
     n <- 123
     s <- 423
-    filename <- "/tmp/snp_unphased_dummy.snpdat"
+    filename <- "snp_unphased_dummy.snpdat"
     handle <- io.snp_unphased(filename)
     mat <- matrix(
         as.integer(sample.int(

@@ -12,10 +12,6 @@
     } while (false)
 #endif
 
-#if defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments" 
-#endif
 #ifndef ADELIE_CORE_S4_PURE_OVERRIDE
 #define ADELIE_CORE_S4_PURE_OVERRIDE(name, object, ...) \
     [&]() { \
@@ -23,9 +19,6 @@
         Rcpp::Function f = global[#name]; \
         return f(object, ## __VA_ARGS__); \
     }()
-#endif
-#if defined(__clang__)
-#pragma GCC diagnostic pop
 #endif
 
 #ifndef ADELIE_CORE_PIMPL_OVERRIDE
