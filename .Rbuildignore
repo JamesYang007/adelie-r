@@ -7,7 +7,6 @@
 ^docs$
 ^pkgdown$
 ^README\.md$
-^tests/*
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.github$
@@ -41,3 +40,5 @@
 ^inst/adelie/adelie/src/*\.cpp$
 ^inst/adelie/\.git$
 ^LICENSE\.md$
+^doc$
+^Meta$

@@ -1,5 +1,5 @@
 Package: adelie
-Title: A fast and flexible group elastic net solver
+Title: A Fast and Flexible Group Elastic Net Solver
 Version: 0.0.0.9000
 Authors@R: c(
     person("James", "Yang", , "jy2816@stanford.edu", role = c("aut", "cre")),
@@ -26,5 +26,8 @@ Suggests:
     latex2exp,
     cowplot,
     gridExtra,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
+VignetteBuilder: knitr
