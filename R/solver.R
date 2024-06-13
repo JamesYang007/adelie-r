@@ -61,6 +61,7 @@ solve_ <- function(
 #' 
 #' @param   X   Feature matrix.
 #' @param   glm     GLM object.
+#' @param   constraints Constraints.
 #' @param   groups  Groups.
 #' @param   alpha   Elastic net parameter.
 #' @param   penalty Penalty factor.
@@ -92,6 +93,7 @@ solve_ <- function(
 grpnet <- function(
     X,
     glm,
+    constraints = NULL,
     groups = NULL,
     alpha = 1,
     penalty = NULL,
@@ -160,6 +162,7 @@ grpnet <- function(
 
     solver_args <- list(
         X=X_raw,
+        constraints=constraints,
         alpha=alpha,
         offsets=offsets,
         lmda_path=lmda_path,
@@ -240,6 +243,15 @@ grpnet <- function(
             screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
             screen_beta <- double(sum(group_sizes[screen_set + 1]))
             screen_is_active <- as.integer(rep_len(1, length(screen_set)))
+            screen_dual_size <- 0
+            if (!is.null(constraints)) {
+                screen_dual_size <- as.integer(sum(
+                    sapply(screen_set, function(k) {
+                        ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
+                    })
+                ))
+            }
+            screen_dual <- double(screen_dual_size)
             active_set_size <- length(screen_set)
             active_set <- integer(G)
             if (active_set_size > 0) {
@@ -251,6 +263,7 @@ grpnet <- function(
             screen_set <- as.integer(warm_start$screen_set)
             screen_beta <- as.double(warm_start$screen_beta)
             screen_is_active <- as.integer(warm_start$screen_is_active)
+            screen_dual <- as.double(warm_start$screen_dual)
             active_set_size <- as.integer(warm_start$active_set_size)
             active_set <- as.integer(warm_start$active_set)
         }
@@ -263,6 +276,7 @@ grpnet <- function(
         solver_args[["screen_set"]] <- screen_set
         solver_args[["screen_beta"]] <- screen_beta
         solver_args[["screen_is_active"]] <- screen_is_active
+        solver_args[["screen_dual"]] <- screen_dual
         solver_args[["active_set_size"]] <- active_set_size
         solver_args[["active_set"]] <- active_set
 
@@ -378,6 +392,15 @@ grpnet <- function(
             screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
             screen_beta <- double(sum(group_sizes[screen_set + 1]))
             screen_is_active <- as.integer(rep_len(1, length(screen_set)))
+            screen_dual_size <- 0
+            if (!is.null(constraints)) {
+                screen_dual_size <- as.integer(sum(
+                    sapply(screen_set, function(k) {
+                        ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
+                    })
+                ))
+            }
+            screen_dual <- double(screen_dual_size)
             active_set_size <- length(screen_set)
             active_set <- integer(G)
             if (active_set_size > 0) {
@@ -389,6 +412,7 @@ grpnet <- function(
             screen_set <- as.integer(warm_start$screen_set)
             screen_beta <- as.double(warm_start$screen_beta)
             screen_is_active <- as.integer(warm_start$screen_is_active)
+            screen_dual <- as.double(warm_start$screen_dual)
             active_set_size <- as.integer(warm_start$active_set_size)
             active_set <- as.integer(warm_start$active_set)
         }
@@ -401,6 +425,7 @@ grpnet <- function(
         solver_args[["screen_set"]] <- screen_set
         solver_args[["screen_beta"]] <- screen_beta
         solver_args[["screen_is_active"]] <- screen_is_active
+        solver_args[["screen_dual"]] <- screen_dual
         solver_args[["active_set_size"]] <- active_set_size
         solver_args[["active_set"]] <- active_set
 

@@ -7,6 +7,7 @@
 grpnet(
   X,
   glm,
+  constraints = NULL,
   groups = NULL,
   alpha = 1,
   penalty = NULL,
@@ -40,6 +41,8 @@ grpnet(
 \item{X}{Feature matrix.}
 
 \item{glm}{GLM object.}
+
+\item{constraints}{Constraints.}
 
 \item{groups}{Groups.}
 

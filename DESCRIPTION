@@ -1,8 +1,10 @@
 Package: adelie
 Title: A fast and flexible group elastic net solver
 Version: 0.0.0.9000
-Authors@R: 
-    person("James", "Yang", , "jy2816@stanford.edu", role = c("aut", "cre"))
+Authors@R: c(
+    person("James", "Yang", , "jy2816@stanford.edu", role = c("aut", "cre")),
+    person("Trevor", "Hastie", , "hastie@stanford.edu", role = c("aut")),
+    person("Balasubramanian", "Narasimhan", , "naras@stanford.edu", role = c("aut")))
 Description: R bindings for the Python package adelie.
 License: MIT + file LICENSE
 Encoding: UTF-8

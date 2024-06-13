@@ -14,23 +14,6 @@ Rcpp::List r_solve_gaussian_naive_64(
 {
     using sw_t = ad::util::Stopwatch;
 
-    const auto update_coefficients_f = [](
-        const auto& L,
-        const auto& v,
-        auto l1,
-        auto l2,
-        auto tol,
-        size_t max_iters,
-        auto& x,
-        auto& iters,
-        auto& buffer1,
-        auto& buffer2
-    ){
-        ad::solver::gaussian::pin::update_coefficients(
-            L, v, l1, l2, tol, max_iters, x, iters, buffer1, buffer2
-        );
-    };
-
     auto pb = ad::util::tq::trange(0);
     pb.set_display(display_progress_bar);
     pb.set_ostream(Rcpp::Rcerr);
@@ -47,7 +30,7 @@ Rcpp::List r_solve_gaussian_naive_64(
         ad::solver::gaussian::naive::solve(
             static_cast<state_gaussian_naive_64_t&>(state), 
             pb, [](){ return false; },
-            update_coefficients_f, check_user_interrupt
+            check_user_interrupt
         );
     } catch(const std::exception& e) {
         error = e.what(); 
@@ -69,23 +52,6 @@ Rcpp::List r_solve_glm_naive_64(
 {
     using sw_t = ad::util::Stopwatch;
 
-    const auto update_coefficients_f = [](
-        const auto& L,
-        const auto& v,
-        auto l1,
-        auto l2,
-        auto tol,
-        size_t max_iters,
-        auto& x,
-        auto& iters,
-        auto& buffer1,
-        auto& buffer2
-    ){
-        ad::solver::gaussian::pin::update_coefficients(
-            L, v, l1, l2, tol, max_iters, x, iters, buffer1, buffer2
-        );
-    };
-
     auto pb = ad::util::tq::trange(0);
     pb.set_display(display_progress_bar);
     pb.set_ostream(Rcpp::Rcerr);
@@ -102,7 +68,7 @@ Rcpp::List r_solve_glm_naive_64(
         ad::solver::glm::naive::solve(
             static_cast<state_glm_naive_64_t&>(state), 
             *glm.ptr, pb, [](){ return false; },
-            update_coefficients_f, check_user_interrupt
+            check_user_interrupt
         );
     } catch(const std::exception& e) {
         error = e.what(); 
@@ -123,23 +89,6 @@ Rcpp::List r_solve_multigaussian_naive_64(
 {
     using sw_t = ad::util::Stopwatch;
 
-    const auto update_coefficients_f = [](
-        const auto& L,
-        const auto& v,
-        auto l1,
-        auto l2,
-        auto tol,
-        size_t max_iters,
-        auto& x,
-        auto& iters,
-        auto& buffer1,
-        auto& buffer2
-    ){
-        ad::solver::gaussian::pin::update_coefficients(
-            L, v, l1, l2, tol, max_iters, x, iters, buffer1, buffer2
-        );
-    };
-
     auto pb = ad::util::tq::trange(0);
     pb.set_display(display_progress_bar);
     pb.set_ostream(Rcpp::Rcerr);
@@ -156,7 +105,7 @@ Rcpp::List r_solve_multigaussian_naive_64(
         ad::solver::multigaussian::naive::solve(
             static_cast<state_multigaussian_naive_64_t&>(state), 
             pb, [](){ return false; },
-            update_coefficients_f, check_user_interrupt
+            check_user_interrupt
         );
     } catch(const std::exception& e) {
         error = e.what(); 
@@ -178,23 +127,6 @@ Rcpp::List r_solve_multiglm_naive_64(
 {
     using sw_t = ad::util::Stopwatch;
 
-    const auto update_coefficients_f = [](
-        const auto& L,
-        const auto& v,
-        auto l1,
-        auto l2,
-        auto tol,
-        size_t max_iters,
-        auto& x,
-        auto& iters,
-        auto& buffer1,
-        auto& buffer2
-    ){
-        ad::solver::gaussian::pin::update_coefficients(
-            L, v, l1, l2, tol, max_iters, x, iters, buffer1, buffer2
-        );
-    };
-
     auto pb = ad::util::tq::trange(0);
     pb.set_display(display_progress_bar);
     pb.set_ostream(Rcpp::Rcerr);
@@ -211,7 +143,7 @@ Rcpp::List r_solve_multiglm_naive_64(
         ad::solver::multiglm::naive::solve(
             static_cast<state_multiglm_naive_64_t&>(state), 
             *glm.ptr, pb, [](){ return false; },
-            update_coefficients_f, check_user_interrupt
+            check_user_interrupt
         );
     } catch(const std::exception& e) {
         error = e.what(); 

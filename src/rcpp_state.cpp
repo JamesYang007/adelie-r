@@ -1,3 +1,4 @@
+#include "rcpp_constraint.h"
 #include "rcpp_state.h"
 #include "rcpp_matrix.h"
 #include <adelie_core/matrix/matrix_naive_base.hpp>
@@ -63,6 +64,7 @@ using safe_bool_t = int;
 using vec_value_t = ad::util::colvec_type<value_t>;
 using vec_index_t = ad::util::colvec_type<index_t>;
 using vec_bool_t = ad::util::colvec_type<bool_t>;
+using dyn_vec_constraint_t = std::vector<constraint_base_64_t*>;
 
 auto make_r_state_gaussian_naive_64(Rcpp::List args)
 {
@@ -72,6 +74,10 @@ auto make_r_state_gaussian_naive_64(Rcpp::List args)
     value_t y_var = args["y_var"];
     const Eigen::Map<vec_value_t> resid = args["resid"];
     value_t resid_sum = args["resid_sum"];
+    const Rcpp::List constraints_r = args["constraints"];
+    dyn_vec_constraint_t constraints;
+    constraints.reserve(constraints_r.size());
+    for (auto c : constraints_r) constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
     const Eigen::Map<vec_index_t> groups = args["groups"];
     const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
     value_t alpha = args["alpha"];
@@ -101,17 +107,18 @@ auto make_r_state_gaussian_naive_64(Rcpp::List args)
     const Eigen::Map<vec_index_t> screen_set = args["screen_set"];
     const Eigen::Map<vec_value_t> screen_beta = args["screen_beta"]; 
     const Eigen::Map<vec_bool_t> screen_is_active = args["screen_is_active"];
+    const Eigen::Map<vec_value_t> screen_dual = args["screen_dual"];
     size_t active_set_size = args["active_set_size"];
     const Eigen::Map<vec_index_t> active_set = args["active_set"];
     value_t rsq = args["rsq"];
     value_t lmda = args["lmda"];
     const Eigen::Map<vec_value_t> grad = args["grad"];
     return new r_state_gaussian_naive_64_t(
-        *X->ptr, X_means, y_mean, y_var, resid, resid_sum, groups, group_sizes, alpha, penalty, weights, lmda_path,
+        *X->ptr, X_means, y_mean, y_var, resid, resid_sum, constraints, groups, group_sizes, alpha, penalty, weights, lmda_path,
         lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, max_iters, tol, adev_tol, ddev_tol, 
         newton_tol, newton_max_iters, early_exit, setup_lmda_max, setup_lmda_path, intercept, n_threads,
-        screen_set, screen_beta, screen_is_active, active_set_size, active_set, rsq, lmda, grad
+        screen_set, screen_beta, screen_is_active, screen_dual, active_set_size, active_set, rsq, lmda, grad
     );
 }
 
@@ -120,6 +127,10 @@ auto make_r_state_glm_naive_64(Rcpp::List args)
     r_matrix_naive_base_64_t* X = args["X"];
     const Eigen::Map<vec_value_t> eta = args["eta"];
     const Eigen::Map<vec_value_t> resid = args["resid"];
+    const Rcpp::List constraints_r = args["constraints"];
+    dyn_vec_constraint_t constraints;
+    constraints.reserve(constraints_r.size());
+    for (auto c : constraints_r) constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
     const Eigen::Map<vec_index_t> groups = args["groups"]; 
     const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
     value_t alpha = args["alpha"]; 
@@ -154,18 +165,19 @@ auto make_r_state_glm_naive_64(Rcpp::List args)
     const Eigen::Map<vec_index_t> screen_set = args["screen_set"];
     const Eigen::Map<vec_value_t> screen_beta = args["screen_beta"];
     const Eigen::Map<vec_bool_t> screen_is_active = args["screen_is_active"];
+    const Eigen::Map<vec_value_t> screen_dual = args["screen_dual"];
     size_t active_set_size = args["active_set_size"];
     const Eigen::Map<vec_index_t> active_set = args["active_set"];
     value_t beta0 = args["beta0"];
     value_t lmda = args["lmda"];
     const Eigen::Map<vec_value_t> grad = args["grad"];
     return new r_state_glm_naive_64_t(
-        *X->ptr, eta, resid, groups, group_sizes, alpha, penalty, offsets, lmda_path,
+        *X->ptr, eta, resid, constraints, groups, group_sizes, alpha, penalty, offsets, lmda_path,
         loss_null, loss_full, lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, 
         irls_max_iters, irls_tol, max_iters, tol, adev_tol, ddev_tol, newton_tol, newton_max_iters,
         early_exit, setup_loss_null, setup_lmda_max, setup_lmda_path, intercept, n_threads,
-        screen_set, screen_beta, screen_is_active, active_set_size, active_set, beta0, lmda, grad
+        screen_set, screen_beta, screen_is_active, screen_dual, active_set_size, active_set, beta0, lmda, grad
     );
 }
 
@@ -180,6 +192,10 @@ auto make_r_state_multigaussian_naive_64(Rcpp::List args)
     value_t y_var = args["y_var"];
     const Eigen::Map<vec_value_t> resid = args["resid"];
     value_t resid_sum = args["resid_sum"];
+    const Rcpp::List constraints_r = args["constraints"];
+    dyn_vec_constraint_t constraints;
+    constraints.reserve(constraints_r.size());
+    for (auto c : constraints_r) constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
     const Eigen::Map<vec_index_t> groups = args["groups"];
     const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
     value_t alpha = args["alpha"]; 
@@ -209,6 +225,7 @@ auto make_r_state_multigaussian_naive_64(Rcpp::List args)
     const Eigen::Map<vec_index_t> screen_set = args["screen_set"];
     const Eigen::Map<vec_value_t> screen_beta = args["screen_beta"]; 
     const Eigen::Map<vec_bool_t> screen_is_active = args["screen_is_active"];
+    const Eigen::Map<vec_value_t> screen_dual = args["screen_dual"];
     size_t active_set_size = args["active_set_size"];
     const Eigen::Map<vec_index_t> active_set = args["active_set"];
     value_t rsq = args["rsq"];
@@ -216,11 +233,11 @@ auto make_r_state_multigaussian_naive_64(Rcpp::List args)
     const Eigen::Map<vec_value_t> grad = args["grad"];
     return new r_state_multigaussian_naive_64_t(
         group_type, n_classes, multi_intercept,
-        *X->ptr, X_means, y_mean, y_var, resid, resid_sum, groups, group_sizes, alpha, penalty, weights, lmda_path,
+        *X->ptr, X_means, y_mean, y_var, resid, resid_sum, constraints, groups, group_sizes, alpha, penalty, weights, lmda_path,
         lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, max_iters, tol, adev_tol, ddev_tol, 
         newton_tol, newton_max_iters, early_exit, setup_lmda_max, setup_lmda_path, intercept, n_threads,
-        screen_set, screen_beta, screen_is_active, active_set_size, active_set, rsq, lmda, grad
+        screen_set, screen_beta, screen_is_active, screen_dual, active_set_size, active_set, rsq, lmda, grad
     );
 }
 
@@ -232,6 +249,10 @@ auto make_r_state_multiglm_naive_64(Rcpp::List args)
     r_matrix_naive_base_64_t* X = args["X"];
     const Eigen::Map<vec_value_t> eta = args["eta"];
     const Eigen::Map<vec_value_t> resid = args["resid"];
+    const Rcpp::List constraints_r = args["constraints"];
+    dyn_vec_constraint_t constraints;
+    constraints.reserve(constraints_r.size());
+    for (auto c : constraints_r) constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
     const Eigen::Map<vec_index_t> groups = args["groups"]; 
     const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
     value_t alpha = args["alpha"]; 
@@ -266,6 +287,7 @@ auto make_r_state_multiglm_naive_64(Rcpp::List args)
     const Eigen::Map<vec_index_t> screen_set = args["screen_set"];
     const Eigen::Map<vec_value_t> screen_beta = args["screen_beta"];
     const Eigen::Map<vec_bool_t> screen_is_active = args["screen_is_active"];
+    const Eigen::Map<vec_value_t> screen_dual = args["screen_dual"];
     size_t active_set_size = args["active_set_size"];
     const Eigen::Map<vec_index_t> active_set = args["active_set"];
     value_t beta0 = args["beta0"];
@@ -273,12 +295,12 @@ auto make_r_state_multiglm_naive_64(Rcpp::List args)
     const Eigen::Map<vec_value_t> grad = args["grad"];
     return new r_state_multiglm_naive_64_t(
         group_type, n_classes, multi_intercept,
-        *X->ptr, eta, resid, groups, group_sizes, alpha, penalty, offsets, lmda_path,
+        *X->ptr, eta, resid, constraints, groups, group_sizes, alpha, penalty, offsets, lmda_path,
         loss_null, loss_full, lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
         pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, 
         irls_max_iters, irls_tol, max_iters, tol, adev_tol, ddev_tol, newton_tol, newton_max_iters,
         early_exit, setup_loss_null, setup_lmda_max, setup_lmda_path, intercept, n_threads,
-        screen_set, screen_beta, screen_is_active, active_set_size, active_set, beta0, lmda, grad
+        screen_set, screen_beta, screen_is_active, screen_dual, active_set_size, active_set, beta0, lmda, grad
     );
 }
 

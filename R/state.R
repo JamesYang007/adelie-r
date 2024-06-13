@@ -1,3 +1,14 @@
+render_constraints_ <- function(
+    n_groups,
+    constraints
+)
+{
+    if (is.null(constraints)) {
+        constraints <- lapply(1:n_groups, function(i) new(RConstraintBase64))
+    }
+    constraints
+}
+
 render_gaussian_inputs_ <- function(
     groups,
     lmda_max,
@@ -104,6 +115,7 @@ state.gaussian_naive <- function(
     y_var,
     resid,
     resid_sum,
+    constraints,
     groups,
     group_sizes,
     alpha,
@@ -113,6 +125,7 @@ state.gaussian_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
+    screen_dual,
     active_set_size,
     active_set,
     rsq,
@@ -161,6 +174,7 @@ state.gaussian_naive <- function(
     }
 
     glm <- glm.gaussian(y=y, weights=weights)
+    constraints <- render_constraints_(length(groups), constraints)
     input <- list(
         "X"=X,
         "X_means"=X_means,
@@ -168,6 +182,7 @@ state.gaussian_naive <- function(
         "y_var"=y_var,
         "resid"=resid,
         "resid_sum"=resid_sum,
+        "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
         "alpha"=alpha,
@@ -197,6 +212,7 @@ state.gaussian_naive <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
+        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "rsq"=rsq,
@@ -211,12 +227,6 @@ state.gaussian_naive <- function(
     attr(out, "_group_sizes") <- group_sizes
     attr(out, "_penalty") <- penalty
     attr(out, "_offsets") <- offsets
-    attr(out, "_lmda_path") <- lmda_path
-    attr(out, "_screen_set") <- screen_set
-    attr(out, "_screen_beta") <- screen_beta
-    attr(out, "_screen_is_active") <- screen_is_active
-    attr(out, "_active_set") <- active_set
-    attr(out, "_grad") <- grad
     out
 }
 
@@ -227,6 +237,7 @@ state.multigaussian_naive <- function(
     y_var,
     resid,
     resid_sum,
+    constraints,
     groups,
     group_sizes,
     alpha,
@@ -236,6 +247,7 @@ state.multigaussian_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
+    screen_dual,
     active_set_size,
     active_set,
     rsq,
@@ -295,6 +307,7 @@ state.multigaussian_naive <- function(
     glm <- glm.multigaussian(y=y, weights=weights)
     X_expanded <- X
     weights_expanded <- rep(weights, each=n_classes) / n_classes
+    constraints <- render_constraints_(length(groups), constraints)
 
     input <- list(
         "group_type"=group_type,
@@ -310,6 +323,7 @@ state.multigaussian_naive <- function(
         "y_var"=y_var,
         "resid"=resid,
         "resid_sum"=resid_sum,
+        "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
         "alpha"=alpha,
@@ -339,6 +353,7 @@ state.multigaussian_naive <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
+        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "rsq"=rsq,
@@ -355,12 +370,6 @@ state.multigaussian_naive <- function(
     attr(out, "_penalty") <- penalty
     attr(out, "_weights_expanded") <- weights_expanded
     attr(out, "_offsets") <- offsets
-    attr(out, "_lmda_path") <- lmda_path
-    attr(out, "_screen_set") <- screen_set
-    attr(out, "_screen_beta") <- screen_beta
-    attr(out, "_screen_is_active") <- screen_is_active
-    attr(out, "_active_set") <- active_set
-    attr(out, "_grad") <- grad
     out
 }
 
@@ -381,6 +390,7 @@ render_glm_naive_inputs_ <- function(
 state.glm_naive <- function(
     X,
     glm,
+    constraints,
     groups,
     group_sizes,
     alpha,
@@ -389,6 +399,7 @@ state.glm_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
+    screen_dual,
     active_set_size,
     active_set,
     beta0,
@@ -444,11 +455,13 @@ state.glm_naive <- function(
     if (is.matrix(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
+    constraints <- render_constraints_(length(groups), constraints)
 
     input <- list(
         "X"=X,
         "eta"=eta,
         "resid"=resid,
+        "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
         "alpha"=alpha,
@@ -483,6 +496,7 @@ state.glm_naive <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
+        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "beta0"=beta0,
@@ -496,18 +510,13 @@ state.glm_naive <- function(
     attr(out, "_group_sizes") <- group_sizes
     attr(out, "_penalty") <- penalty
     attr(out, "_offsets") <- offsets
-    attr(out, "_lmda_path") <- lmda_path
-    attr(out, "_screen_set") <- screen_set
-    attr(out, "_screen_beta") <- screen_beta
-    attr(out, "_screen_is_active") <- screen_is_active
-    attr(out, "_active_set") <- active_set
-    attr(out, "_grad") <- grad
     out
 }
 
 state.multiglm_naive <- function(
     X,
     glm,
+    constraints,
     groups,
     group_sizes,
     alpha,
@@ -516,6 +525,7 @@ state.multiglm_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
+    screen_dual,
     active_set_size,
     active_set,
     lmda,
@@ -579,6 +589,7 @@ state.multiglm_naive <- function(
     X <- inputs[["X"]]
     offsets <- inputs[["offsets"]]
     group_type <- inputs[["group_type"]]
+    constraints <- render_constraints_(length(groups), constraints)
 
     X_expanded <- X
     input <- list(
@@ -588,6 +599,7 @@ state.multiglm_naive <- function(
         "X"=X_expanded,
         "eta"=eta,
         "resid"=resid,
+        "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
         "alpha"=alpha,
@@ -622,6 +634,7 @@ state.multiglm_naive <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
+        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "beta0"=0.0,
@@ -636,11 +649,5 @@ state.multiglm_naive <- function(
     attr(out, "_group_sizes") <- group_sizes
     attr(out, "_penalty") <- penalty
     attr(out, "_offsets") <- offsets
-    attr(out, "_lmda_path") <- lmda_path
-    attr(out, "_screen_set") <- screen_set
-    attr(out, "_screen_beta") <- screen_beta
-    attr(out, "_screen_is_active") <- screen_is_active
-    attr(out, "_active_set") <- active_set
-    attr(out, "_grad") <- grad
     out
 }

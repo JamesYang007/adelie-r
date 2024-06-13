@@ -13,6 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 
 RcppExport SEXP _rcpp_module_boot_adelie_core_configs();
+RcppExport SEXP _rcpp_module_boot_adelie_core_constraint();
 RcppExport SEXP _rcpp_module_boot_adelie_core_glm();
 RcppExport SEXP _rcpp_module_boot_adelie_core_io();
 RcppExport SEXP _rcpp_module_boot_adelie_core_matrix();
@@ -21,6 +22,7 @@ RcppExport SEXP _rcpp_module_boot_adelie_core_state();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_adelie_core_configs", (DL_FUNC) &_rcpp_module_boot_adelie_core_configs, 0},
+    {"_rcpp_module_boot_adelie_core_constraint", (DL_FUNC) &_rcpp_module_boot_adelie_core_constraint, 0},
     {"_rcpp_module_boot_adelie_core_glm", (DL_FUNC) &_rcpp_module_boot_adelie_core_glm, 0},
     {"_rcpp_module_boot_adelie_core_io", (DL_FUNC) &_rcpp_module_boot_adelie_core_io, 0},
     {"_rcpp_module_boot_adelie_core_matrix", (DL_FUNC) &_rcpp_module_boot_adelie_core_matrix, 0},

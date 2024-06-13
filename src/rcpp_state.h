@@ -1,6 +1,7 @@
 #pragma once
 #include "decl.h"
 #include "rcpp_matrix.h"
+#include "rcpp_constraint.h"
 #include <adelie_core/state/state_gaussian_naive.hpp>
 #include <adelie_core/state/state_glm_naive.hpp>
 #include <adelie_core/state/state_multigaussian_naive.hpp>
@@ -9,18 +10,20 @@
 // TODO: port over the following
 // - gaussian_cov
 
-using state_base_64_t = ad::state::StateBase<double, int, int, int>;
+using state_base_64_t = ad::state::StateBase<
+    constraint_base_64_t, double, int, int, int
+>;
 using state_gaussian_naive_64_t = ad::state::StateGaussianNaive<
-    matrix_naive_base_64_t, double, int, int, int
+    constraint_base_64_t, matrix_naive_base_64_t, double, int, int, int
 >;
 using state_multigaussian_naive_64_t = ad::state::StateMultiGaussianNaive<
-    matrix_naive_base_64_t, double, int, int, int
+    constraint_base_64_t, matrix_naive_base_64_t, double, int, int, int
 >;
 using state_glm_naive_64_t = ad::state::StateGlmNaive<
-    matrix_naive_base_64_t, double, int, int, int
+    constraint_base_64_t, matrix_naive_base_64_t, double, int, int, int
 >;
 using state_multiglm_naive_64_t = ad::state::StateMultiGlmNaive<
-    matrix_naive_base_64_t, double, int, int, int
+    constraint_base_64_t, matrix_naive_base_64_t, double, int, int, int
 >;
 
 class RStateBase64: public state_base_64_t 
