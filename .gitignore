@@ -1,5 +1,6 @@
 *.RData
 *.Rhistory
+*Rprof.out
 *_snaps*
 .vscode
 research
