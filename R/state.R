@@ -4,7 +4,7 @@ render_constraints_ <- function(
 )
 {
     if (is.null(constraints)) {
-        constraints <- lapply(1:n_groups, function(i) new(RConstraintBase64))
+        constraints <- replicate(n_groups, NULL, FALSE)
     }
     constraints
 }

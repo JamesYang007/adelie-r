@@ -77,7 +77,13 @@ auto make_r_state_gaussian_naive_64(Rcpp::List args)
     const Rcpp::List constraints_r = args["constraints"];
     dyn_vec_constraint_t constraints;
     constraints.reserve(constraints_r.size());
-    for (auto c : constraints_r) constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+    for (auto c : constraints_r) {
+        if (c == R_NilValue) {
+            constraints.push_back(nullptr);
+        } else {
+            constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+        }
+    }
     const Eigen::Map<vec_index_t> groups = args["groups"];
     const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
     value_t alpha = args["alpha"];
@@ -130,7 +136,13 @@ auto make_r_state_glm_naive_64(Rcpp::List args)
     const Rcpp::List constraints_r = args["constraints"];
     dyn_vec_constraint_t constraints;
     constraints.reserve(constraints_r.size());
-    for (auto c : constraints_r) constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+    for (auto c : constraints_r) {
+        if (c == R_NilValue) {
+            constraints.push_back(nullptr);
+        } else {
+            constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+        }
+    }
     const Eigen::Map<vec_index_t> groups = args["groups"]; 
     const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
     value_t alpha = args["alpha"]; 
@@ -195,7 +207,13 @@ auto make_r_state_multigaussian_naive_64(Rcpp::List args)
     const Rcpp::List constraints_r = args["constraints"];
     dyn_vec_constraint_t constraints;
     constraints.reserve(constraints_r.size());
-    for (auto c : constraints_r) constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+    for (auto c : constraints_r) {
+        if (c == R_NilValue) {
+            constraints.push_back(nullptr);
+        } else {
+            constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+        }
+    }
     const Eigen::Map<vec_index_t> groups = args["groups"];
     const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
     value_t alpha = args["alpha"]; 
@@ -252,7 +270,13 @@ auto make_r_state_multiglm_naive_64(Rcpp::List args)
     const Rcpp::List constraints_r = args["constraints"];
     dyn_vec_constraint_t constraints;
     constraints.reserve(constraints_r.size());
-    for (auto c : constraints_r) constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+    for (auto c : constraints_r) {
+        if (c == R_NilValue) {
+            constraints.push_back(nullptr);
+        } else {
+            constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+        }
+    }
     const Eigen::Map<vec_index_t> groups = args["groups"]; 
     const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
     value_t alpha = args["alpha"]; 

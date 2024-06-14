@@ -42,4 +42,4 @@
 ^LICENSE\.md$
 ^doc$
 ^Meta$
-^*Rprof\.out$
+^.*Rprof\.out$
