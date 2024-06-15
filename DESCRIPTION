@@ -2,10 +2,15 @@ Package: adelie
 Title: A Fast and Flexible Group Elastic Net Solver
 Version: 0.0.0.9000
 Authors@R: c(
-    person("James", "Yang", , "jy2816@stanford.edu", role = c("aut", "cre")),
-    person("Trevor", "Hastie", , "hastie@stanford.edu", role = c("aut")),
+    person("James", "Yang", , "jamesyang916@gmail.com", role = c("aut", "cre", "cph")),
+    person("Trevor", "Hastie", , "hastie@stanford.edu", role = c("aut", "cph", "fnd")),
     person("Balasubramanian", "Narasimhan", , "naras@stanford.edu", role = c("aut")))
-Description: R bindings for the Python package adelie.
+Description: R bindings for the Python package 'adelie'.
+    These bindings offer a general purpose group elastic net solver, 
+    a wide range of matrix classes that can exploit special structure 
+    to allow large-scale inputs, and an assortment of 
+    generalized linear model classes for fitting various types of data. 
+    The package is an implementation of Yang, J. and Hastie, T. (2024) <arXiv:2405.08631>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -31,3 +36,5 @@ Suggests:
     rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+URL: https://github.com/JamesYang007/adelie-r
+BugReports: https://github.com/JamesYang007/adelie-r/issues
