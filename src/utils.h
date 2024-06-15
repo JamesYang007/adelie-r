@@ -17,7 +17,7 @@
     [&]() { \
         Rcpp::Environment global = Rcpp::Environment::global_env(); \
         Rcpp::Function f = global[#name]; \
-        return f(object, ## __VA_ARGS__); \
+        return f(object __VA_OPT__(,) __VA_ARGS__); \
     }()
 #endif
 

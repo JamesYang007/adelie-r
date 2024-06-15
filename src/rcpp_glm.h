@@ -68,7 +68,7 @@ public:
 
     value_t loss_full() override 
     {
-        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss_full, _glm);
+        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss_full, _glm,);
         return out_r[0];
     }
 };
@@ -129,7 +129,7 @@ public:
 
     value_t loss_full() override 
     {
-        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss_full, _glm);
+        Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss_full, _glm,);
         return out_r[0];
     }
 };

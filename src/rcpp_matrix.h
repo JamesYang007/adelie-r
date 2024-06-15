@@ -81,7 +81,7 @@ public:
     
     int cols() const override 
     {
-        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(cols, _mat);
+        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(cols, _mat,);
         return out_r[0]; 
     }
 };
@@ -181,13 +181,13 @@ public:
 
     int rows() const override
     {
-        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(rows, _mat);
+        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(rows, _mat,);
         return out_r[0];
     }
     
     int cols() const override
     {
-        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(cols, _mat);
+        Rcpp::IntegerVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(cols, _mat,);
         return out_r[0];
     }
 
