@@ -30,6 +30,11 @@ render_inputs_ <- function(y, weights)
 #' @param   y     Response vector.
 #' @param   weights Observation weights. 
 #' @param   link    The link function type.
+#' @returns Binomial GLM object.
+#' @examples
+#' n <- 100
+#' y <- rbinom(n, 1, 0.5)
+#' obj <- glm.binomial(y)
 #' @export
 glm.binomial <- function(y, weights=NULL, link="logit")
 {
@@ -54,6 +59,13 @@ glm.binomial <- function(y, weights=NULL, link="logit")
 #' @param   status     Status vector.
 #' @param   weights Observation weights. 
 #' @param tie_method    The tie-breaking method.
+#' @returns Cox GLM object.
+#' @examples
+#' n <- 100
+#' start <- sample.int(20, size=n, replace=TRUE)
+#' stop <- start + 1 + sample.int(5, size=n, replace=TRUE)
+#' status <- rbinom(n, 1, 0.5)
+#' obj <- glm.cox(start, stop, status)
 #' @export
 glm.cox <- function(start, stop, status, weights=NULL, tie_method="efron")
 {
@@ -83,6 +95,11 @@ glm.cox <- function(start, stop, status, weights=NULL, tie_method="efron")
 #' @param   y     Response vector.
 #' @param   weights Observation weights. 
 #' @param   opt     If \code{TRUE}, an optimized routine is run.
+#' @returns Gaussian GLM
+#' @examples
+#' n <- 100
+#' y <- rnorm(n)
+#' obj <- glm.gaussian(y)
 #' @export
 glm.gaussian <- function(y, weights=NULL, opt=TRUE)
 {
@@ -101,6 +118,12 @@ glm.gaussian <- function(y, weights=NULL, opt=TRUE)
 #' @param   y     Response vector.
 #' @param   weights Observation weights. 
 #' @param   opt     If \code{TRUE}, an optimized routine is run.
+#' @returns MultiGaussian GLM object.
+#' @examples
+#' n <- 100
+#' K <- 5
+#' y <- matrix(rnorm(n*K), n, K)
+#' obj <- glm.multigaussian(y)
 #' @export
 glm.multigaussian <- function(y, weights=NULL, opt=TRUE)
 {
@@ -120,6 +143,12 @@ glm.multigaussian <- function(y, weights=NULL, opt=TRUE)
 #' 
 #' @param   y     Response vector.
 #' @param   weights Observation weights. 
+#' @returns Multinomial GLM object.
+#' @examples
+#' n <- 100
+#' K <- 5
+#' y <- t(rmultinom(n, 1, rep(1/K, K)))
+#' obj <- glm.multinomial(y)
 #' @export
 glm.multinomial <- function(y, weights=NULL)
 {
@@ -138,6 +167,11 @@ glm.multinomial <- function(y, weights=NULL)
 #' 
 #' @param   y     Response vector.
 #' @param   weights Observation weights. 
+#' @returns Poisson GLM object.
+#' @examples
+#' n <- 100
+#' y <- rpois(n, 1)
+#' obj <- glm.poisson(y)
 #' @export
 glm.poisson <- function(y, weights=NULL)
 {

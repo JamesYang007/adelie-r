@@ -11,6 +11,15 @@ glm.multinomial(y, weights = NULL)
 
 \item{weights}{Observation weights.}
 }
+\value{
+Multinomial GLM object.
+}
 \description{
 Creates a Multinomial GLM family object.
+}
+\examples{
+n <- 100
+K <- 5
+y <- t(rmultinom(n, 1, rep(1/K, K)))
+obj <- glm.multinomial(y)
 }

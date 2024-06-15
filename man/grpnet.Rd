@@ -98,6 +98,9 @@ grpnet(
 
 \item{warm_start}{Warm start.}
 }
+\value{
+State of the solver.
+}
 \description{
 Solves group elastic net via naive method.
 }

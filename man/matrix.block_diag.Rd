@@ -11,6 +11,18 @@ matrix.block_diag(mats, n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+Block-diagonal matrix.
+}
 \description{
 Creates a block-diagonal matrix.
+}
+\examples{
+n <- 100
+ps <- c(10, 20, 30)
+mats <- lapply(ps, function(p) {
+    X <- matrix(rnorm(n * p), n, p)
+    matrix.dense(t(X) \%*\% X, method="cov")
+})
+out <- matrix.block_diag(mats)
 }

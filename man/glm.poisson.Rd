@@ -11,6 +11,14 @@ glm.poisson(y, weights = NULL)
 
 \item{weights}{Observation weights.}
 }
+\value{
+Poisson GLM object.
+}
 \description{
 Creates a Poisson GLM family object.
+}
+\examples{
+n <- 100
+y <- rpois(n, 1)
+obj <- glm.poisson(y)
 }

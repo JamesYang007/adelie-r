@@ -17,6 +17,15 @@ matrix.standardize(mat, centers = NULL, scales = NULL, ddof = 0, n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+Standardized matrix.
+}
 \description{
 Creates a standardized matrix.
+}
+\examples{
+n <- 100
+p <- 20
+X <- matrix(rnorm(n * p), n, p)
+out <- matrix.standardize(matrix.dense(X))
 }

@@ -13,6 +13,18 @@ matrix.kronecker_eye(mat, K, n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+Kronecker product with identity matrix.
+}
 \description{
 Creates a Kronecker product with identity matrix.
+}
+\examples{
+n <- 100
+p <- 20
+K <- 2
+mat <- matrix(rnorm(n * p), n, p)
+out <- matrix.kronecker_eye(mat, K)
+mat <- matrix.dense(mat)
+out <- matrix.kronecker_eye(mat, K)
 }

@@ -13,6 +13,15 @@ glm.multigaussian(y, weights = NULL, opt = TRUE)
 
 \item{opt}{If \code{TRUE}, an optimized routine is run.}
 }
+\value{
+MultiGaussian GLM object.
+}
 \description{
 Creates a MultiGaussian GLM family object.
+}
+\examples{
+n <- 100
+K <- 5
+y <- matrix(rnorm(n*K), n, K)
+obj <- glm.multigaussian(y)
 }

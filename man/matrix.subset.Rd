@@ -15,6 +15,17 @@ matrix.subset(mat, indices, axis = 0, n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+Subset of the matrix along an axis.
+}
 \description{
 Creates a subset of the matrix along an axis.
+}
+\examples{
+n <- 100
+p <- 20
+X <- matrix.dense(matrix(rnorm(n * p), n, p))
+indices <- c(1, 3, 10)
+out <- matrix.subset(X, indices, axis=0)
+out <- matrix.subset(X, indices, axis=1)
 }

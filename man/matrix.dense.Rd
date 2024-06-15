@@ -13,6 +13,17 @@ matrix.dense(mat, method = "naive", n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+Dense matrix.
+}
 \description{
 Creates a viewer of a dense matrix.
+}
+\examples{
+n <- 100
+p <- 20
+X_dense <- matrix(rnorm(n * p), n, p)
+out <- matrix.dense(X_dense, method="naive")
+A_dense <- t(X_dense) \%*\% X_dense
+out <- matrix.dense(A_dense, method="cov")
 }

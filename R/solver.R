@@ -89,6 +89,7 @@ solve_ <- function(
 #' @param   check_state     Check state.
 #' @param   progress_bar    Progress bar.
 #' @param   warm_start      Warm start.
+#' @returns State of the solver.
 #'
 #' @examples
 #' set.seed(0)

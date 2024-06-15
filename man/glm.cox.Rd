@@ -17,6 +17,16 @@ glm.cox(start, stop, status, weights = NULL, tie_method = "efron")
 
 \item{tie_method}{The tie-breaking method.}
 }
+\value{
+Cox GLM object.
+}
 \description{
 Creates a Cox GLM family object.
+}
+\examples{
+n <- 100
+start <- sample.int(20, size=n, replace=TRUE)
+stop <- start + 1 + sample.int(5, size=n, replace=TRUE)
+status <- rbinom(n, 1, 0.5)
+obj <- glm.cox(start, stop, status)
 }

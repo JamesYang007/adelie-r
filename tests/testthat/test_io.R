@@ -5,7 +5,7 @@
 test_that("io.snp_unphased", {
     n <- 123
     s <- 423
-    filename <- "snp_unphased_dummy.snpdat"
+    filename <- paste(tempdir(), "snp_unphased_dummy.snpdat", sep="/")
     handle <- io.snp_unphased(filename)
     mat <- matrix(
         as.integer(sample.int(
@@ -28,7 +28,7 @@ test_that("io.snp_phased_ancestry", {
     n <- 123
     s <- 423
     A <- 8
-    filename <- "snp_phased_ancestry_dummy.snpdat"
+    filename <- paste(tempdir(), "snp_phased_ancestry_dummy.snpdat", sep="/")
     handle <- io.snp_phased_ancestry(filename)
     calldata <- matrix(
         as.integer(sample.int(

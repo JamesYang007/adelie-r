@@ -13,6 +13,15 @@ matrix.one_hot(mat, levels = NULL, n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+One-hot encoded matrix.
+}
 \description{
 Creates a one-hot encoded matrix.
+}
+\examples{
+n <- 100
+p <- 20
+mat <- matrix(rnorm(n * p), n, p)
+out <- matrix.one_hot(mat)
 }

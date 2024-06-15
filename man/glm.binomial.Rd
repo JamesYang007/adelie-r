@@ -13,6 +13,14 @@ glm.binomial(y, weights = NULL, link = "logit")
 
 \item{link}{The link function type.}
 }
+\value{
+Binomial GLM object.
+}
 \description{
 Creates a Binomial GLM family object.
+}
+\examples{
+n <- 100
+y <- rbinom(n, 1, 0.5)
+obj <- glm.binomial(y)
 }

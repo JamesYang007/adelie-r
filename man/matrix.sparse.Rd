@@ -13,6 +13,19 @@ matrix.sparse(mat, method = "naive", n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+Sparse matrix.
+}
 \description{
 Creates a viewer of a sparse matrix.
+}
+\examples{
+n <- 100
+p <- 20
+X_dense <- matrix(rnorm(n * p), n, p)
+X_sp <- as(X_dense, "dgCMatrix")
+out <- matrix.sparse(X_sp, method="naive")
+A_dense <- t(X_dense) \%*\% X_dense
+A_sp <- as(A_dense, "dgCMatrix")
+out <- matrix.sparse(A_sp, method="cov")
 }

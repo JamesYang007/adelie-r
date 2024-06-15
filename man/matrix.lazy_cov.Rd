@@ -11,6 +11,15 @@ matrix.lazy_cov(mat, n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+Lazy covariance matrix.
+}
 \description{
 Creates a lazy covariance matrix.
+}
+\examples{
+n <- 100
+p <- 20
+mat <- matrix(rnorm(n * p), n, p)
+out <- matrix.lazy_cov(mat)
 }

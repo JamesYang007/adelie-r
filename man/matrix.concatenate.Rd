@@ -13,6 +13,23 @@ matrix.concatenate(mats, axis = 0, n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+Concatenation of matrices.
+}
 \description{
 Creates a concatenation of the matrices.
+}
+\examples{
+n <- 100
+ps <- c(10, 20, 30)
+mats <- lapply(ps, function(p) { 
+    matrix.dense(matrix(rnorm(n * p), n, p))
+})
+out <- matrix.concatenate(mats, axis=1)
+ns <- c(10, 20, 30)
+p <- 100
+mats <- lapply(ns, function(n) { 
+    matrix.dense(matrix(rnorm(n * p), n, p))
+})
+out <- matrix.concatenate(mats, axis=0)
 }

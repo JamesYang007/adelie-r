@@ -13,6 +13,14 @@ glm.gaussian(y, weights = NULL, opt = TRUE)
 
 \item{opt}{If \code{TRUE}, an optimized routine is run.}
 }
+\value{
+Gaussian GLM
+}
 \description{
 Creates a Gaussian GLM family object.
+}
+\examples{
+n <- 100
+y <- rnorm(n)
+obj <- glm.gaussian(y)
 }

@@ -2,6 +2,15 @@
 #' 
 #' @param   mats    List of matrices.
 #' @param   n_threads   Number of threads.
+#' @returns Block-diagonal matrix.
+#' @examples
+#' n <- 100
+#' ps <- c(10, 20, 30)
+#' mats <- lapply(ps, function(p) {
+#'     X <- matrix(rnorm(n * p), n, p)
+#'     matrix.dense(t(X) %*% X, method="cov")
+#' })
+#' out <- matrix.block_diag(mats)
 #' @export
 matrix.block_diag <- function(
     mats,
@@ -31,6 +40,21 @@ matrix.block_diag <- function(
 #' @param   mats    List of matrices.
 #' @param   axis    The axis along which the matrices will be joined.
 #' @param   n_threads   Number of threads.
+#' @returns Concatenation of matrices.
+#' @examples
+#' n <- 100
+#' ps <- c(10, 20, 30)
+#' mats <- lapply(ps, function(p) { 
+#'     matrix.dense(matrix(rnorm(n * p), n, p))
+#' })
+#' out <- matrix.concatenate(mats, axis=1)
+
+#' ns <- c(10, 20, 30)
+#' p <- 100
+#' mats <- lapply(ns, function(n) { 
+#'     matrix.dense(matrix(rnorm(n * p), n, p))
+#' })
+#' out <- matrix.concatenate(mats, axis=0)
 #' @export
 matrix.concatenate <- function(
     mats, 
@@ -64,6 +88,14 @@ matrix.concatenate <- function(
 #' @param   mat     The dense matrix.
 #' @param   method  Method type.
 #' @param   n_threads   Number of threads.
+#' @returns Dense matrix.
+#' @examples
+#' n <- 100
+#' p <- 20
+#' X_dense <- matrix(rnorm(n * p), n, p)
+#' out <- matrix.dense(X_dense, method="naive")
+#' A_dense <- t(X_dense) %*% X_dense
+#' out <- matrix.dense(A_dense, method="cov")
 #' @export
 matrix.dense <- function(
     mat,
@@ -92,6 +124,16 @@ matrix.dense <- function(
 #' @param   intr_values List of list of feature indices.
 #' @param   levels      Levels.
 #' @param   n_threads   Number of threads.
+#' @returns Pairwise interaction matrix.
+#' @examples
+#' n <- 10
+#' p <- 20
+#' X_dense <- matrix(rnorm(n * p), n, p)
+#' X_dense[,1] <- rbinom(n, 4, 0.5)
+#' intr_keys <- c(0, 1)
+#' intr_values <- list(NULL, c(0, 2))
+#' levels <- c(c(5), rep(0, p-1))
+#' out <- matrix.interaction(X_dense, intr_keys, intr_values, levels)
 #' @export
 matrix.interaction <- function(
     mat,
@@ -166,6 +208,15 @@ matrix.interaction <- function(
 #' @param   mat     The matrix to view as a Kronecker product.
 #' @param   K       Dimension of the identity matrix.
 #' @param   n_threads   Number of threads.
+#' @returns Kronecker product with identity matrix.
+#' @examples
+#' n <- 100
+#' p <- 20
+#' K <- 2
+#' mat <- matrix(rnorm(n * p), n, p)
+#' out <- matrix.kronecker_eye(mat, K)
+#' mat <- matrix.dense(mat)
+#' out <- matrix.kronecker_eye(mat, K)
 #' @export
 matrix.kronecker_eye <- function(
     mat,
@@ -197,6 +248,12 @@ matrix.kronecker_eye <- function(
 #' 
 #' @param   mat     The data matrix.
 #' @param   n_threads   Number of threads.
+#' @returns Lazy covariance matrix.
+#' @examples
+#' n <- 100
+#' p <- 20
+#' mat <- matrix(rnorm(n * p), n, p)
+#' out <- matrix.lazy_cov(mat)
 #' @export
 matrix.lazy_cov <- function(
     mat,
@@ -218,6 +275,12 @@ matrix.lazy_cov <- function(
 #' @param   mat     The dense matrix.
 #' @param   levels      Levels.
 #' @param   n_threads   Number of threads.
+#' @returns One-hot encoded matrix.
+#' @examples
+#' n <- 100
+#' p <- 20
+#' mat <- matrix(rnorm(n * p), n, p)
+#' out <- matrix.one_hot(mat)
 #' @export
 matrix.one_hot <- function(
     mat,
@@ -245,6 +308,32 @@ matrix.one_hot <- function(
 #' 
 #' @param   io      IO handler.
 #' @param   n_threads   Number of threads.
+#' @returns SNP phased, ancestry matrix.
+#' @examples
+#' n <- 123
+#' s <- 423
+#' A <- 8
+#' filename <- paste(tempdir(), "snp_phased_ancestry_dummy.snpdat", sep="/")
+#' handle <- io.snp_phased_ancestry(filename)
+#' calldata <- matrix(
+#'     as.integer(sample.int(
+#'         2, n * s * 2,
+#'         replace=TRUE,
+#'         prob=c(0.7, 0.3)
+#'     ) - 1),
+#'     n, s * 2
+#' )
+#' ancestries <- matrix(
+#'     as.integer(sample.int(
+#'         A, n * s * 2,
+#'         replace=TRUE,
+#'         prob=rep_len(1/A, A)
+#'     ) - 1),
+#'     n, s * 2
+#' )
+#' handle$write(calldata, ancestries, A, 1)
+#' out <- matrix.snp_phased_ancestry(handle)
+#' file.remove(filename)
 #' @export
 matrix.snp_phased_ancestry <- function(
     io,
@@ -265,6 +354,24 @@ matrix.snp_phased_ancestry <- function(
 #' 
 #' @param   io      IO handler.
 #' @param   n_threads   Number of threads.
+#' @returns SNP unphased matrix.
+#' @examples
+#' n <- 123
+#' s <- 423
+#' filename <- paste(tempdir(), "snp_unphased_dummy.snpdat", sep="/")
+#' handle <- io.snp_unphased(filename)
+#' mat <- matrix(
+#'     as.integer(sample.int(
+#'         3, n * s, 
+#'         replace=TRUE, 
+#'         prob=c(0.7, 0.2, 0.1)
+#'     ) - 1),
+#'     n, s
+#' )
+#' impute <- double(s)
+#' handle$write(mat, "mean", impute, 1)
+#' out <- matrix.snp_unphased(handle)
+#' file.remove(filename)
 #' @export
 matrix.snp_unphased <- function(
     io,
@@ -286,6 +393,16 @@ matrix.snp_unphased <- function(
 #' @param   mat     The sparse matrix to view.
 #' @param   method  Method type.
 #' @param   n_threads   Number of threads.
+#' @returns Sparse matrix.
+#' @examples
+#' n <- 100
+#' p <- 20
+#' X_dense <- matrix(rnorm(n * p), n, p)
+#' X_sp <- as(X_dense, "dgCMatrix")
+#' out <- matrix.sparse(X_sp, method="naive")
+#' A_dense <- t(X_dense) %*% X_dense
+#' A_sp <- as(A_dense, "dgCMatrix")
+#' out <- matrix.sparse(A_sp, method="cov")
 #' @export
 matrix.sparse <- function(
     mat,
@@ -319,6 +436,12 @@ matrix.sparse <- function(
 #' @param   scales     The scale values.
 #' @param   ddof        Degrees of freedom.
 #' @param   n_threads   Number of threads.
+#' @returns Standardized matrix.
+#' @examples
+#' n <- 100
+#' p <- 20
+#' X <- matrix(rnorm(n * p), n, p)
+#' out <- matrix.standardize(matrix.dense(X))
 #' @export
 matrix.standardize <- function(
     mat,
@@ -370,6 +493,14 @@ matrix.standardize <- function(
 #' @param   indices     Array of indices to subset the matrix.
 #' @param   axis        The axis along which to subset.
 #' @param   n_threads   Number of threads.
+#' @returns Subset of the matrix along an axis.
+#' @examples
+#' n <- 100
+#' p <- 20
+#' X <- matrix.dense(matrix(rnorm(n * p), n, p))
+#' indices <- c(1, 3, 10)
+#' out <- matrix.subset(X, indices, axis=0)
+#' out <- matrix.subset(X, indices, axis=1)
 #' @export
 matrix.subset <- function(
     mat,

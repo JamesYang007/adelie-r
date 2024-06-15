@@ -11,6 +11,35 @@ matrix.snp_phased_ancestry(io, n_threads = 1)
 
 \item{n_threads}{Number of threads.}
 }
+\value{
+SNP phased, ancestry matrix.
+}
 \description{
 Creates a SNP phased, ancestry matrix.
+}
+\examples{
+n <- 123
+s <- 423
+A <- 8
+filename <- paste(tempdir(), "snp_phased_ancestry_dummy.snpdat", sep="/")
+handle <- io.snp_phased_ancestry(filename)
+calldata <- matrix(
+    as.integer(sample.int(
+        2, n * s * 2,
+        replace=TRUE,
+        prob=c(0.7, 0.3)
+    ) - 1),
+    n, s * 2
+)
+ancestries <- matrix(
+    as.integer(sample.int(
+        A, n * s * 2,
+        replace=TRUE,
+        prob=rep_len(1/A, A)
+    ) - 1),
+    n, s * 2
+)
+handle$write(calldata, ancestries, A, 1)
+out <- matrix.snp_phased_ancestry(handle)
+file.remove(filename)
 }

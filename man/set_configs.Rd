@@ -11,6 +11,13 @@ set_configs(name, value = NULL)
 
 \item{value}{Value to assign to the configuration variable.}
 }
+\value{
+Assigned value.
+}
 \description{
 Set configuration settings.
+}
+\examples{
+set_configs("hessian_min", 1e-6)
+set_configs("hessian_min")
 }
