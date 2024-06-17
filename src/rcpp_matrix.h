@@ -234,7 +234,24 @@ class RMatrixCovBase64: public pimpl<matrix_cov_base_64_t>
 {
     using base_t = pimpl<matrix_cov_base_64_t>;
 public:
+    using value_t = double;
+    using index_t = int;
+    using vec_value_t = ad::util::colvec_type<value_t>;
+    using vec_index_t = ad::util::colvec_type<index_t>;
+
     using base_t::base_t;
+
+    int cols() const { return ptr->cols(); }
+
+    vec_value_t mul(
+        const Eigen::Map<vec_index_t>& indices,
+        const Eigen::Map<vec_value_t>& values
+    ) 
+    {
+        vec_value_t out(cols());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(mul, indices, values, out); }();
+        return out;
+    }
 };
 
 class RMatrixNaiveBase64: public pimpl<matrix_naive_base_64_t>

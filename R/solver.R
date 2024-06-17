@@ -6,10 +6,10 @@ solve_ <- function(
     # mapping of each state type to the corresponding solver
     f_dict <- list(
         # cov methods
-        #core.state.StateGaussianPinCov64: core.solver.solve_gaussian_pin_cov_64,
-        #core.state.StateGaussianCov64: core.solver.solve_gaussian_cov_64,
+        #"Rcpp_RStateGaussianPinCov64"=r_solve_gaussian_pin_cov_64,
+        "Rcpp_RStateGaussianCov64"=r_solve_gaussian_cov_64,
         # naive methods
-        #core.state.StateGaussianPinNaive64: core.solver.solve_gaussian_pin_naive_64,
+        #"Rcpp_RStateGaussianPinNaive64"=r_solve_gaussian_pin_naive_64,
         "Rcpp_RStateGaussianNaive64"=r_solve_gaussian_naive_64,
         "Rcpp_RStateMultiGaussianNaive64"=r_solve_multigaussian_naive_64,
         "Rcpp_RStateGlmNaive64"=r_solve_glm_naive_64,
@@ -55,6 +55,187 @@ solve_ <- function(
     attr(state, "total_time") <- out[["total_time"]]
 
     state
+}
+
+#' Solves group elastic net via covariance method.
+#' 
+#' @param   A   Positive semi-definite matrix.
+#' @param   v   Linear term.
+#' @param   constraints     Constraints.
+#' @param   groups  Groups.
+#' @param   alpha   Elastic net parameter.
+#' @param   penalty Penalty factor.
+#' @param   lmda_path   The regularization path.
+#' @param   max_iters   Maximum number of coordinate descents.
+#' @param   tol     Coordinate descent convergence tolerance.
+#' @param   rdev_tol    Relative percent deviance explained tolerance.
+#' @param   newton_tol  Convergence tolerance for the BCD update.
+#' @param   newton_max_iters    Maximum number of iterations for the BCD update.
+#' @param   n_threads   Number of threads.
+#' @param   early_exit  \code{TRUE} if the function should early exit.
+#' @param   screen_rule Screen rule.
+#' @param   min_ratio   Ratio between largest and smallest regularization.
+#' @param   lmda_path_size Number of regularizations.
+#' @param   max_screen_size Maximum number of screen groups.
+#' @param   max_active_size Maximum number of active groups.
+#' @param   pivot_subset_ratio  Subset ratio of pivot rule.
+#' @param   pivot_subset_min    Minimum subset of pivot rule.
+#' @param   pivot_slack_ratio   Slack ratio of pivot rule.
+#' @param   check_state     Check state.
+#' @param   progress_bar    Progress bar.
+#' @param   warm_start      Warm start.
+#' @returns State of the solver.
+#' 
+#' @examples
+#' set.seed(0)
+#' n <- 100
+#' p <- 200
+#' X <- matrix(rnorm(n * p), n, p)
+#' y <- X[,1] * rnorm(1) + rnorm(n)
+#' A <- t(X) %*% X / n
+#' v <- t(X) %*% y / n
+#' state <- gaussian_cov(A, v)
+#' 
+#' @export
+gaussian_cov <- function(
+    A,
+    v,
+    constraints = NULL,
+    groups = NULL,
+    alpha = 1,
+    penalty = NULL,
+    lmda_path = NULL,
+    max_iters = as.integer(1e5),
+    tol = 1e-7,
+    rdev_tol=1e-3,
+    newton_tol = 1e-12,
+    newton_max_iters = 1000,
+    n_threads = 1,
+    early_exit = TRUE,
+    screen_rule = "pivot",
+    min_ratio = 1e-2,
+    lmda_path_size = 100,
+    max_screen_size = NULL,
+    max_active_size = NULL,
+    pivot_subset_ratio = 0.1,
+    pivot_subset_min = 1,
+    pivot_slack_ratio = 1.25,
+    check_state = FALSE,
+    progress_bar = TRUE,
+    warm_start = NULL
+)
+{
+    if (is.matrix(A) || is.array(A) || is.data.frame(A)) {
+        A <- matrix.dense(A, method="cov", n_threads=n_threads)
+    }
+
+    p <- A$cols
+
+    if (!is.null(lmda_path)) {
+        lmda_path <- sort(lmda_path, decreasing=TRUE)
+    } 
+
+    if (is.null(groups)) {
+        groups <- as.integer(0:(p-1))
+    } else {
+        groups <- as.integer(groups)
+    }
+    group_sizes <- c(groups, p)
+    group_sizes <- group_sizes[2:length(group_sizes)] - group_sizes[1:(length(group_sizes)-1)]
+    group_sizes <- as.integer(group_sizes)
+    G <- length(groups)
+
+    if (is.null(penalty)) {
+        penalty <- sqrt(group_sizes)
+    } else {
+        penalty <- as.double(penalty)
+    }
+
+    if (is.null(warm_start)) {
+        lmda <- Inf
+        lmda_max <- NULL
+        screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
+        screen_beta <- double(sum(group_sizes[screen_set + 1]))
+        screen_is_active <- as.integer(rep_len(1, length(screen_set)))
+        screen_dual_size <- 0
+        if (!is.null(constraints)) {
+            screen_dual_size <- as.integer(sum(
+                sapply(screen_set, function(k) {
+                    ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
+                })
+            ))
+        }
+        screen_dual <- double(screen_dual_size)
+        active_set_size <- length(screen_set)
+        active_set <- integer(G)
+        if (active_set_size > 0) {
+            active_set[1:active_set_size] <- 0:(active_set_size-1)
+        }
+        rsq <- 0
+
+        subset <- c()
+        for (ss in screen_set) {
+            subset <- c(subset, groups[ss+1]:(groups[ss+1]+group_sizes[ss+1]-1))
+        }
+        subset <- as.integer(subset)
+        order <- order(subset)
+        indices <- as.integer(subset[order])
+        values <- as.double(screen_beta[order])
+
+        grad <- v - A$mul(indices, values)
+    } else {
+        lmda <- as.double(warm_start$lmda)
+        lmda_max <- as.double(warm_start$lmda_max)
+        screen_set <- as.integer(warm_start$screen_set)
+        screen_beta <- as.double(warm_start$screen_beta)
+        screen_is_active <- as.integer(warm_start$screen_is_active)
+        screen_dual <- as.double(warm_start$screen_dual)
+        active_set_size <- as.integer(warm_start$active_set_size)
+        active_set <- as.integer(warm_start$active_set)
+        rsq <- as.double(warm_start$rsq)
+        grad <- as.double(warm_start$grad)
+    }
+
+    state <- state.gaussian_cov(
+        A=A,
+        v=v,
+        constraints=constraints,
+        groups=groups,
+        group_sizes=group_sizes,
+        alpha=alpha,
+        penalty=penalty,
+        screen_set=screen_set,
+        screen_beta=screen_beta,
+        screen_is_active=screen_is_active,
+        screen_dual=screen_dual,
+        active_set_size=active_set_size,
+        active_set=active_set,
+        rsq=rsq,
+        lmda=lmda,
+        grad=grad,
+        lmda_path=lmda_path,
+        lmda_max=lmda_max,
+        max_iters=max_iters,
+        tol=tol,
+        rdev_tol=rdev_tol,
+        newton_tol=newton_tol,
+        newton_max_iters=newton_max_iters,
+        n_threads=n_threads,
+        early_exit=early_exit,
+        screen_rule=screen_rule,
+        min_ratio=min_ratio,
+        lmda_path_size=lmda_path_size,
+        max_screen_size=max_screen_size,
+        max_active_size=max_active_size,
+        pivot_subset_ratio=pivot_subset_ratio,
+        pivot_subset_min=pivot_subset_min,
+        pivot_slack_ratio=pivot_slack_ratio
+    )
+
+    solve_(
+        state=state,
+        progress_bar=progress_bar
+    )
 }
 
 #' Solves group elastic net via naive method.

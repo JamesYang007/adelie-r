@@ -2,6 +2,17 @@
 # TEST solver
 # ==================================================================
 
+test_that("solver.gaussian_cov", {
+    set.seed(0)
+    n <- 100
+    p <- 200
+    X <- matrix(rnorm(n * p), n, p)
+    y <- X[,1] * rnorm(1) + rnorm(n)
+    A <- t(X) %*% X / n
+    v <- t(X) %*% y / n
+    state <- gaussian_cov(A, v)
+})
+
 test_that("solver.gaussian_naive", {
     set.seed(0)
     n <- 100

@@ -46,6 +46,11 @@ render_gaussian_inputs_ <- function(
     )
 }
 
+render_gaussian_cov_inputs_ <- function(A, ...)
+{
+    render_gaussian_inputs_(...)
+}
+
 render_gaussian_naive_inputs_ <- function(
     X, ...
 )
@@ -105,6 +110,110 @@ state.create_from_core <- function(
     }
 
     core_state
+}
+
+state.gaussian_cov <- function(
+    A,
+    v, 
+    constraints,
+    groups,
+    group_sizes,
+    alpha,
+    penalty,
+    screen_set,
+    screen_beta,
+    screen_is_active,
+    screen_dual,
+    active_set_size,
+    active_set,
+    rsq,
+    lmda,
+    grad,
+    lmda_path=NULL,
+    lmda_max=NULL,
+    max_iters=as.integer(1e5),
+    tol=1e-7,
+    rdev_tol=1e-4,
+    newton_tol=1e-12,
+    newton_max_iters=1000,
+    n_threads=1,
+    early_exit=TRUE,
+    screen_rule="pivot",
+    min_ratio=1e-2,
+    lmda_path_size=100,
+    max_screen_size=NULL,
+    max_active_size=NULL,
+    pivot_subset_ratio=0.1,
+    pivot_subset_min=1,
+    pivot_slack_ratio=1.25
+)
+{
+    inputs <- render_gaussian_cov_inputs_(
+        A=A,
+        groups=groups,
+        lmda_max=lmda_max,
+        lmda_path=lmda_path,
+        lmda_path_size=lmda_path_size,
+        max_screen_size=max_screen_size,
+        max_active_size=max_active_size
+    )
+    max_screen_size <- inputs[["max_screen_size"]]
+    max_active_size <- inputs[["max_active_size"]]
+    lmda_path_size <- inputs[["lmda_path_size"]]
+    setup_lmda_max <- inputs[["setup_lmda_max"]]
+    setup_lmda_path <- inputs[["setup_lmda_path"]]
+    lmda_max <- inputs[["lmda_max"]]
+    lmda_path <- inputs[["lmda_path"]]
+
+    if (is.matrix(A) || is.array(A) || is.data.frame(A)) {
+        A <- matrix.dense(A, method="cov", n_threads=n_threads)
+    }
+
+    constraints <- render_constraints_(length(groups), constraints)
+    input <- list(
+        "A"=A,
+        "v"=v,
+        "constraints"=constraints,
+        "groups"=groups,
+        "group_sizes"=group_sizes,
+        "alpha"=alpha,
+        "penalty"=penalty,
+        "lmda_path"=lmda_path,
+        "lmda_max"=lmda_max,
+        "min_ratio"=min_ratio,
+        "lmda_path_size"=lmda_path_size,
+        "max_screen_size"=max_screen_size,
+        "max_active_size"=max_active_size,
+        "pivot_subset_ratio"=pivot_subset_ratio,
+        "pivot_subset_min"=pivot_subset_min,
+        "pivot_slack_ratio"=pivot_slack_ratio,
+        "screen_rule"=screen_rule,
+        "max_iters"=max_iters,
+        "tol"=tol,
+        "rdev_tol"=rdev_tol,
+        "newton_tol"=newton_tol,
+        "newton_max_iters"=newton_max_iters,
+        "early_exit"=early_exit,
+        "setup_lmda_max"=setup_lmda_max,
+        "setup_lmda_path"=setup_lmda_path,
+        "n_threads"=n_threads,
+        "screen_set"=screen_set,
+        "screen_beta"=screen_beta,
+        "screen_is_active"=screen_is_active,
+        "screen_dual"=screen_dual,
+        "active_set_size"=active_set_size,
+        "active_set"=active_set,
+        "rsq"=rsq,
+        "lmda"=lmda,
+        "grad"=grad
+    )
+    out <- new(RStateGaussianCov64, input)
+    attr(out, "_A") <- A
+    attr(out, "_v") <- v
+    attr(out, "_groups") <- groups
+    attr(out, "_group_sizes") <- group_sizes
+    attr(out, "_penalty") <- penalty
+    out
 }
 
 state.gaussian_naive <- function(

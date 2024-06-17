@@ -175,6 +175,8 @@ RCPP_MODULE(adelie_core_matrix)
 {
     /* base matrices */
     Rcpp::class_<r_matrix_cov_base_64_t>("RMatrixCovBase64")
+        .property("cols", &r_matrix_cov_base_64_t::cols)
+        .method("mul", &r_matrix_cov_base_64_t::mul)
         ;
     Rcpp::class_<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
         .property("rows", &r_matrix_naive_base_64_t::rows)

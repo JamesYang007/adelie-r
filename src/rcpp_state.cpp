@@ -66,6 +66,61 @@ using vec_index_t = ad::util::colvec_type<index_t>;
 using vec_bool_t = ad::util::colvec_type<bool_t>;
 using dyn_vec_constraint_t = std::vector<constraint_base_64_t*>;
 
+auto make_r_state_gaussian_cov_64(Rcpp::List args)
+{
+    r_matrix_cov_base_64_t* A = args["A"];
+    const Eigen::Map<vec_value_t> v = args["v"];
+    const Rcpp::List constraints_r = args["constraints"];
+    dyn_vec_constraint_t constraints;
+    constraints.reserve(constraints_r.size());
+    for (auto c : constraints_r) {
+        if (c == R_NilValue) {
+            constraints.push_back(nullptr);
+        } else {
+            constraints.push_back(Rcpp::as<r_constraint_base_64_t*>(c)->ptr.get());
+        }
+    }
+    const Eigen::Map<vec_index_t> groups = args["groups"];
+    const Eigen::Map<vec_index_t> group_sizes = args["group_sizes"];
+    value_t alpha = args["alpha"];
+    const Eigen::Map<vec_value_t> penalty = args["penalty"];
+    const Eigen::Map<vec_value_t> lmda_path = args["lmda_path"];
+    value_t lmda_max = args["lmda_max"];
+    value_t min_ratio = args["min_ratio"];
+    size_t lmda_path_size = args["lmda_path_size"];
+    size_t max_screen_size = args["max_screen_size"];
+    size_t max_active_size = args["max_active_size"];
+    value_t pivot_subset_ratio = args["pivot_subset_ratio"];
+    size_t pivot_subset_min = args["pivot_subset_min"];
+    value_t pivot_slack_ratio = args["pivot_slack_ratio"];
+    const std::string screen_rule = args["screen_rule"];
+    size_t max_iters = args["max_iters"];
+    value_t tol = args["tol"];
+    value_t rdev_tol = args["rdev_tol"];
+    value_t newton_tol = args["newton_tol"];
+    size_t newton_max_iters = args["newton_max_iters"];
+    bool early_exit = args["early_exit"];
+    bool setup_lmda_max = args["setup_lmda_max"];
+    bool setup_lmda_path = args["setup_lmda_path"];
+    size_t n_threads = args["n_threads"];
+    const Eigen::Map<vec_index_t> screen_set = args["screen_set"];
+    const Eigen::Map<vec_value_t> screen_beta = args["screen_beta"]; 
+    const Eigen::Map<vec_bool_t> screen_is_active = args["screen_is_active"];
+    const Eigen::Map<vec_value_t> screen_dual = args["screen_dual"];
+    size_t active_set_size = args["active_set_size"];
+    const Eigen::Map<vec_index_t> active_set = args["active_set"];
+    value_t rsq = args["rsq"];
+    value_t lmda = args["lmda"];
+    const Eigen::Map<vec_value_t> grad = args["grad"];
+    return new r_state_gaussian_cov_64_t(
+        *A->ptr, v, constraints, groups, group_sizes, alpha, penalty, lmda_path,
+        lmda_max, min_ratio, lmda_path_size, max_screen_size, max_active_size,
+        pivot_subset_ratio, pivot_subset_min, pivot_slack_ratio, screen_rule, max_iters, tol, rdev_tol,
+        newton_tol, newton_max_iters, early_exit, setup_lmda_max, setup_lmda_path, n_threads,
+        screen_set, screen_beta, screen_is_active, screen_dual, active_set_size, active_set, rsq, lmda, grad
+    );
+}
+
 auto make_r_state_gaussian_naive_64(Rcpp::List args)
 {
     r_matrix_naive_base_64_t* X = args["X"];
@@ -338,6 +393,10 @@ auto betas(StateType* state)
     ) {
         return convert_betas(state->X->cols(), state->betas);
     } else if constexpr (
+        std::is_same_v<state_t, r_state_gaussian_cov_64_t>
+    ) {
+        return convert_betas(state->A->cols(), state->betas);
+    } else if constexpr (
         std::is_same_v<state_t, r_state_multigaussian_naive_64_t> ||
         std::is_same_v<state_t, r_state_multiglm_naive_64_t>
     ) {
@@ -355,6 +414,7 @@ RCPP_MODULE(adelie_core_state)
         .field_readonly("screen_set", &state_base_64_t::screen_set)
         .field_readonly("screen_beta", &state_base_64_t::screen_beta)
         .field_readonly("screen_is_active", &state_base_64_t::screen_is_active)
+        .field_readonly("screen_dual", &state_base_64_t::screen_dual)
         .field_readonly("active_set_size", &state_base_64_t::active_set_size)
         .field_readonly("active_set", &state_base_64_t::active_set)
         .field_readonly("intercepts", &state_base_64_t::intercepts)
@@ -365,6 +425,16 @@ RCPP_MODULE(adelie_core_state)
         ;
     Rcpp::class_<r_state_base_64_t>("RStateBase64")
         .derives<state_base_64_t>("StateBase64")
+        ;
+
+    Rcpp::class_<state_gaussian_cov_64_t>("StateGaussianCov64")
+        .derives<state_base_64_t>("StateBase64")
+        .field_readonly("rsq", &state_gaussian_cov_64_t::rsq)
+        ;
+    Rcpp::class_<r_state_gaussian_cov_64_t>("RStateGaussianCov64")
+        .derives<state_gaussian_cov_64_t>("StateGaussianCov64")
+        .factory<Rcpp::List>(make_r_state_gaussian_cov_64)
+        .property("betas", &betas<r_state_gaussian_cov_64_t>, "")
         ;
 
     Rcpp::class_<state_gaussian_naive_64_t>("StateGaussianNaive64")
