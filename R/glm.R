@@ -14,7 +14,6 @@ render_inputs_ <- function(y, weights)
     } else {
         weights_sum <- sum(weights)
         if (abs(weights_sum - 1) > 1e-14) {
-            warning("Normalizing weights to sum to 1.")
             weights <- as.double(weights / weights_sum)
         }
     }

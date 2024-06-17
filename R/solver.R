@@ -295,7 +295,7 @@ grpnet <- function(
     max_iters = as.integer(1e5),
     tol = 1e-7,
     adev_tol = 0.9,
-    ddev_tol = 1e-4,
+    ddev_tol = 0,
     newton_tol = 1e-12,
     newton_max_iters = 1000,
     n_threads = 1,
