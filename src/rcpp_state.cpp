@@ -482,7 +482,7 @@ RCPP_MODULE(adelie_core_state)
         ;
 
     Rcpp::class_<state_multiglm_naive_64_t>("StateMultiGlmNaive64")
-        .derives<state_glm_naive_64_t>("RStateGlmNaive64")
+        .derives<state_glm_naive_64_t>("StateGlmNaive64")
         .field_readonly("intercepts_multi", &state_multiglm_naive_64_t::intercepts)
         ;
     Rcpp::class_<r_state_multiglm_naive_64_t>("RStateMultiGlmNaive64")
