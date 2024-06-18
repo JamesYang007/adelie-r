@@ -18,7 +18,6 @@ RoxygenNote: 7.3.1
 LinkingTo: 
     Rcpp,
     RcppEigen
-NeedsCompilation: yes
 SystemRequirements: C++17
 Imports: 
     Matrix,
