@@ -1,6 +1,6 @@
 Package: adelie
 Title: A Fast and Flexible Group Elastic Net Solver
-Version: 1.0.0.9000
+Version: 1.0.0
 Authors@R: c(
     person("James", "Yang", , "jamesyang916@gmail.com", role = c("aut", "cre", "cph")),
     person("Trevor", "Hastie", , "hastie@stanford.edu", role = c("aut", "cph", "fnd")),
