@@ -17,6 +17,7 @@ RcppExport SEXP _rcpp_module_boot_adelie_core_constraint();
 RcppExport SEXP _rcpp_module_boot_adelie_core_glm();
 RcppExport SEXP _rcpp_module_boot_adelie_core_io();
 RcppExport SEXP _rcpp_module_boot_adelie_core_matrix();
+RcppExport SEXP _rcpp_module_boot_adelie_core_matrix_utils_blas();
 RcppExport SEXP _rcpp_module_boot_adelie_core_solver();
 RcppExport SEXP _rcpp_module_boot_adelie_core_state();
 
@@ -26,6 +27,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_adelie_core_glm", (DL_FUNC) &_rcpp_module_boot_adelie_core_glm, 0},
     {"_rcpp_module_boot_adelie_core_io", (DL_FUNC) &_rcpp_module_boot_adelie_core_io, 0},
     {"_rcpp_module_boot_adelie_core_matrix", (DL_FUNC) &_rcpp_module_boot_adelie_core_matrix, 0},
+    {"_rcpp_module_boot_adelie_core_matrix_utils_blas", (DL_FUNC) &_rcpp_module_boot_adelie_core_matrix_utils_blas, 0},
     {"_rcpp_module_boot_adelie_core_solver", (DL_FUNC) &_rcpp_module_boot_adelie_core_solver, 0},
     {"_rcpp_module_boot_adelie_core_state", (DL_FUNC) &_rcpp_module_boot_adelie_core_state, 0},
     {NULL, NULL, 0}

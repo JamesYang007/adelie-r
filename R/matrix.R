@@ -117,6 +117,25 @@ matrix.dense <- function(
     out
 }
 
+#' Creates an eager covariance matrix.
+#' 
+#' @param   mat     The dense matrix.
+#' @param   n_threads   Number of threads.
+#' @returns The dense covariance matrix.
+#' @examples 
+#' n <- 100
+#' p <- 20
+#' mat <- matrix(rnorm(n * p), n, p)
+#' out <- matrix.eager_cov(mat)
+#' @export
+matrix.eager_cov <- function(
+    mat,
+    n_threads =1
+)
+{
+    dgemtm(mat, n_threads)
+}
+
 #' Creates a matrix with pairwise interactions.
 #' 
 #' @param   mat     The dense matrix.
