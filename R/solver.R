@@ -302,7 +302,7 @@ gaussian_cov <- function(
 #' @param pivot_subset_min Minimum subset of pivot rule.
 #' @param pivot_slack_ratio Slack ratio of pivot rule.
 #' @param check_state Check state.
-#' @param progress_bar Progress bar.
+#' @param progress_bar Progress bar. Default is \code{TRUE}.
 #' @param warm_start Warm start.
 #' @return State of the solver. Among the components the following might be useful.
 #'
@@ -367,6 +367,8 @@ grpnet <- function(
     warm_start = NULL
 )
 {
+    thiscall <- match.call()
+    familyname <- glm$name
     X_raw <- X
 
     if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
@@ -738,8 +740,11 @@ grpnet <- function(
         }
     }
 
-    solve_(
+    state <- solve_(
         state=state,
         progress_bar=progress_bar
     )
+    out <- list(call=thiscall, family = familyname, state = state)
+    class(out) <- "grpnet"
+    out
 }
