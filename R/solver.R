@@ -370,7 +370,10 @@ grpnet <- function(
     thiscall <- match.call()
     familyname <- glm$name
     X_raw <- X
-
+    if(inherits(X,"sparseMatrix")){
+        X <- as(X,"CsparseMatrix")
+        X <- matrix.sparse(X, method="naive", n_threads=n_threads)
+    }
     if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
