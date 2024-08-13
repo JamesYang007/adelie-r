@@ -450,20 +450,16 @@ grpnet <- function(
         solver_args[["weights"]] <- weights
     }
 
+    if (is.null(groups)) {
+        groups <- 0:(p-1)
+    }
+
     # multi-response GLMs
     if (glm$is_multi) {
         K <- ncol(y)
 
-        if (is.null(groups)) {
-            groups <- "grouped"
-        }
-        if (groups == "grouped") {
-            groups <- as.integer(K * ((1:p) - 1))
-        } else if (groups == "ungrouped") {
-            groups <- as.integer((1:(K*p)) - 1)
-        } else {
-            stop("groups must be one of \"grouped\" or \"ungrouped\" for multi-response.")
-        }
+        # flatten the grouping index across the classes
+        groups <- K * groups
 
         if (intercept) {
             groups <- as.integer(c((1:K)-1, K + groups))
@@ -618,11 +614,6 @@ grpnet <- function(
 
     # single-response GLMs
     } else {
-        if (is.null(groups)) {
-            groups <- as.integer(0:(p-1))
-        } else {
-            groups <- as.integer(groups)
-        }
         group_sizes <- c(groups, p)
         group_sizes <- group_sizes[2:length(group_sizes)] - group_sizes[1:(length(group_sizes)-1)]
         group_sizes <- as.integer(group_sizes)
