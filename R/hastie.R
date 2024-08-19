@@ -45,10 +45,10 @@ if(length(weights)!=n)stop("replacement weight vector has to have same length as
 print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 {
     cat("\nCall: ", deparse(x$call), "\n\n")
-    state = x$state
-    Df = rowSums(state$betas!=0)
-    dev.ratio = state$devs
-    lambdas=state$lmdas
+    coefstuff <- coef(x)
+    Df = coefstuff$df
+    dev.ratio = x$state$devs
+    lambdas=coefstuff$lambda
     out = data.frame(Df, `%Dev` = round(dev.ratio *
         100, 2), Lambda = signif(lambdas, digits), check.names = FALSE,
         row.names = seq(along = Df))
@@ -57,132 +57,122 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 }
 
 
-#' make predictions from a "glmnet" object.
+#' make predictions from a "grpnet" object.
 #'
-#' Similar to other predict methods, this functions predicts fitted values,
-#' logits, coefficients and more from a fitted \code{"glmnet"} object.
+#' Similar to other predict methods, this functions predicts linear predictors,
+#' coefficients and more from a fitted \code{"grpnet"} object.
 #'
-#' The shape of the objects returned are different for \code{"multinomial"}
-#' objects. This function actually calls \code{NextMethod()}, and the
-#' appropriate predict method is invoked for each of the three model types.
+#' The shape of the objects returned are different for \code{"multinomial"} and \code{"multigaussian"}
+#' objects
 #' \code{coef(...)} is equivalent to \code{predict(type="coefficients",...)}
 #'
-#' @aliases coef.glmnet coef.relaxed predict.glmnet predict.relaxed
-#' predict.elnet predict.lognet predict.multnet predict.mrelnet predict.fishnet
-#' predict.coxnet
-#' @param object Fitted \code{"glmnet"} model object or a \code{"relaxed"}
-#' model (which inherits from class "glmnet").
+#' @aliases coef.grpnet predict.grpnet
+#' @param object Fitted \code{"grpnet"} model object or a \code{"relaxed"}
+#' model (which inherits from class "grpnet").
 #' @param newx Matrix of new values for \code{x} at which predictions are to be
-#' made. Must be a matrix; can be sparse as in \code{Matrix} package. This
-#' argument is not used for \code{type=c("coefficients","nonzero")}
-#' @param s Value(s) of the penalty parameter \code{lambda} at which
+#' made. Can be a matrix, a sparse matrix as in \code{Matrix} package, or else any of the matrix forms allowable in the \code{adelie} package. This
+#' argument is not used for \code{type="coefficients"}
+#' @param lambda Value(s) of the penalty parameter \code{lambda} at which
 #' predictions are required. Default is the entire sequence used to create the
-#' model.
-#' @param type Type of prediction required. Type \code{"link"} gives the linear
-#' predictors for \code{"binomial"}, \code{"multinomial"}, \code{"poisson"} or
-#' \code{"cox"} models; for \code{"gaussian"} models it gives the fitted
-#' values. Type \code{"response"} gives the fitted probabilities for
-#' \code{"binomial"} or \code{"multinomial"}, fitted mean for \code{"poisson"}
-#' and the fitted relative-risk for \code{"cox"}; for \code{"gaussian"} type
-#' \code{"response"} is equivalent to type \code{"link"}. Type
-#' \code{"coefficients"} computes the coefficients at the requested values for
-#' \code{s}.  Note that for \code{"binomial"} models, results are returned only
-#' for the class corresponding to the second level of the factor response.
-#' Type \code{"class"} applies only to \code{"binomial"} or
-#' \code{"multinomial"} models, and produces the class label corresponding to
-#' the maximum probability. Type \code{"nonzero"} returns a list of the indices
-#' of the nonzero coefficients for each value of \code{s}.
-#' @param exact This argument is relevant only when predictions are made at
-#' values of \code{s} (lambda) \emph{different} from those used in the fitting
-#' of the original model. Not available for \code{"relaxed"} objects. If
-#' \code{exact=FALSE} (default), then the predict function uses linear
-#' interpolation to make predictions for values of \code{s} (lambda) that do
-#' not coincide with those used in the fitting algorithm. While this is often a
-#' good approximation, it can sometimes be a bit coarse.  With
-#' \code{exact=TRUE}, these different values of \code{s} are merged (and
-#' sorted) with \code{object$lambda}, and the model is refit before predictions
-#' are made. In this case, it is required to supply the original data \code{x=}
-#' and \code{y=} as additional named arguments to \code{predict()} or
-#' \code{coef()}.  The workhorse \code{predict.glmnet()} needs to \code{update}
-#' the model, and so needs the data used to create it. The same is true of
-#' \code{weights}, \code{offset}, \code{penalty.factor}, \code{lower.limits},
-#' \code{upper.limits} if these were used in the original call. Failure to do
-#' so will result in an error.
+#' model. If values of \code{lambda} are supplied, the function uses linear
+#' interpolation to make predictions for values of \code{lambda} that do
+#' not coincide with those used in the fitting algorithm.
+#' @param type Type of prediction required. Type \code{"link"} is  the default, and gives the linear
+#' predictors. Type \code{"response"} applies the inverse link to these predictions.
+#' Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.
 #' @param newoffset If an offset is used in the fit, then one must be supplied
 #' for making predictions (except for \code{type="coefficients"} or
 #' \code{type="nonzero"})
-#' @param \dots This is the mechanism for passing arguments like \code{x=} when
-#' \code{exact=TRUE}; see\code{exact} argument.
+#' @param \dots Currently ignored.
 #' @return The object returned depends on type.
-#' @author Jerome Friedman, Trevor Hastie and Rob Tibshirani\cr Maintainer:
-#' Trevor Hastie <hastie@@stanford.edu>
-#' @seealso \code{glmnet}, and \code{print}, and \code{coef} methods, and
-#' \code{cv.glmnet}.
-#' @references Friedman, J., Hastie, T. and Tibshirani, R. (2008)
-#' \emph{Regularization Paths for Generalized Linear Models via Coordinate
-#' Descent (2010), Journal of Statistical Software, Vol. 33(1), 1-22},
-#' \doi{10.18637/jss.v033.i01}.\cr
-#' Simon, N., Friedman, J., Hastie, T. and Tibshirani, R. (2011)
-#' \emph{Regularization Paths for Cox's Proportional
-#' Hazards Model via Coordinate Descent, Journal of Statistical Software, Vol.
-#' 39(5), 1-13},
-#' \doi{10.18637/jss.v039.i05}.\cr
-#' Glmnet webpage with four vignettes, \url{https://glmnet.stanford.edu}.
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
+#' \email{hastie@stanford.edu}
+#' @seealso \code{grpnet}, and \code{print}, and \code{coef} methods, and
+#' \code{cv.grpnet}.
+#' @references Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
+#' and Elastic Net Penalized Regression via Block-Coordinate Descent. arXiv \doi{10.48550/arXiv.2405.08631}.\cr
+#' Adelie Python user guide  \url{https://jamesyang007.github.io/adelie/}
 #' @keywords models regression
 #'
 #' @examples
-#' x=matrix(rnorm(100*20),100,20)
-#' y=rnorm(100)
-#' g2=sample(1:2,100,replace=TRUE)
-#' g4=sample(1:4,100,replace=TRUE)
-#' fit1=glmnet(x,y)
-#' predict(fit1,newx=x[1:5,],s=c(0.01,0.005))
-#' predict(fit1,type="coef")
-#' fit2=glmnet(x,g2,family="binomial")
-#' predict(fit2,type="response",newx=x[2:5,])
-#' predict(fit2,type="nonzero")
-#' fit3=glmnet(x,g4,family="multinomial")
-#' predict(fit3,newx=x[1:3,],type="response",s=0.01)
-#' @method predict glmnet
+#' set.seed(0)
+#' n <- 100
+#' p <- 200
+#' X <- matrix(rnorm(n * p), n, p)
+#' y <- X[,1] * rnorm(1) + rnorm(n)
+#' fit <- grpnet(X, glm.gaussian(y))
+#' coef(fit)
+#' predict(fit,newx = X[1:5])
+#' @method predict grpnet
 #' @export
-#' @export predict.glmnet
-predict.grpnet=function(object,newx,s=NULL,type=c("link","response","coefficients"),newoffset,...){
+#' @export predict.grpnet
+predict.grpnet=function(object,newx,lambda=NULL,type=c("link","response","coefficients"),newoffset,...){
  type=match.arg(type)
   if(missing(newx)){
     if(!match(type,c("coefficients"),FALSE))stop("You need to supply a value for 'newx'")
   }
  if(type=="response")stop("type response not yet implemented")
- state = object$state
- a0=t(as.matrix(state$intercepts))
- rownames(a0)="(Intercept)"
- betas = as(t(state$betas),"CsparseMatrix")
- np = dim(betas);nlam=np[2];p=np[1]
- dimnames(betas)=list(paste0("V",seq(p)),paste0("s",seq(nlam)))
-  nbeta=methods::rbind2(a0,betas)
-  if(!is.null(s)){
-    vnames=dimnames(nbeta)[[1]]
-    dimnames(nbeta)=list(NULL,NULL)
-    lambda=state$lmdas
-    lamlist=lambda.interp(lambda,s)
-    nbeta=nbeta[,lamlist$left,drop=FALSE]%*%Diagonal(x=lamlist$frac) +nbeta[,lamlist$right,drop=FALSE]%*%Diagonal(x=1-lamlist$frac)
-    namess=names(s)
-    if(is.null(namess))namess=paste0("s",seq(0,length=length(s)))
-    dimnames(nbeta)=list(vnames,namess)
-  }
-  if(type=="coefficients")return(nbeta)
-   ###Check on newx
- if(inherits(newx, "sparseMatrix"))newx=as(newx,"dMatrix")
- dx=dim(newx)
- if(is.null(dx))newx=matrix(newx,1,byrow=TRUE)
- if(ncol(newx) != p)stop(paste0("The number of variables in newx must be ",p))
-  nfit=as.matrix(cbind2(1,newx)%*%nbeta)
-  ##  if(object$offset){
-  ##   if(missing(newoffset))stop("No newoffset provided for prediction, yet offset used in fit of glmnet",call.=FALSE)
-  ##   if(is.matrix(newoffset)&&inherits(object,"lognet")&&dim(newoffset)[[2]]==2)newoffset=newoffset[,2]
-  ##   nfit=nfit+array(newoffset,dim=dim(nfit))
-  ## }
-nfit
-  }
+
+state <- object$state
+
+ ## Check for multi fit
+ is.multi <- FALSE
+ if(!is.null(intercepts <-  state[["intercepts_multi"]])){
+     ## it is a list
+     K <- length(intercepts[[1]])
+     intercepts <- unlist(intercepts)
+     if(K>1){
+         intercepts=matrix(unlist(intercepts),byrow=TRUE,ncol=K)
+         is.multi <- TRUE
+     }
+ } else intercepts <- as.matrix(state$intercepts)
+ betas = if(is.multi)state$betas_multi else state$betas
+ if(!is.null(lambda)){
+     lambda.orig=state$lmdas
+     lamlist=lambda.interp(lambda.orig,lambda)
+     betas = Diagonal(x=lamlist$frac)%*%betas[lamlist$left,,drop=FALSE] + Diagonal(x=1-lamlist$frac)%*%betas[lamlist$right,,drop=FALSE]
+     intercepts = diag(x=lamlist$frac)%*%intercepts[lamlist$left,,drop=FALSE] + diag(x=1-lamlist$frac)%*%intercepts[lamlist$right,,drop=FALSE]
+     if(!inherits(betas,"dgRMatrix"))betas = as(betas,"RsparseMatrix")
+ } else lambda = state$lmdas
+ dof <- diff(betas@p)
+ if(is.multi)dof=dof/K
+ nlams = nrow(intercepts)
+ if(type=="coefficients") return(list(intercepts=intercepts,betas=betas,df=dof,lambda=lambda))
+
+ ## Convert newx to an adelie matrix
+ if(inherits(newx,"sparseMatrix")){
+     newx <- as(newx,"CsparseMatrix")
+     newx <- matrix.sparse(newx, method="naive", n_threads=n_threads)
+ }
+ if (is.matrix(newx) || is.array(newx) || is.data.frame(newx)) {
+     newx <- matrix.dense(newx, method="naive")
+ }
+ n <- newx$rows
+
+### Now we produce either a prediction matrix (single response), or a prediction array (multi response)
+ if(!is.multi){# single target
+     preds = newx$sp_btmul(betas)+outer(rep(1,n),drop(intercepts))
+     if(!missing(newoffset)){
+         if(length(newoffset)!=n)stop("Newoffset should have same number of elements as rows of newx")
+         preds=preds+matrix(newoffset,n,nlams)
+         }
+ }
+ else{# multi targets
+     newx = matrix.kronecker_eye(newx,K=K)
+     preds = newx$sp_btmul(betas)
+     nlams = ncol(preds)
+     intercepts = matrix(intercepts,nlams,n*K)# recycles
+     preds=preds+t(intercepts)
+     if(!missing(newoffset)){
+         if(!is.matrix(newoffset)||!all.equal(dim(newoffset),c(n,K)))
+             stop("Newoffset should be an N x K matrix where K is the number of responses")
+         preds=preds+matrix(t(newoffset),n*K,nlams)
+     }
+     preds = array(preds,c(K,n,nlams))
+     preds = aperm(preds,c(2,1,3))
+ }
+ return(preds)
+}
 
 
 lambda.interp=function(lambda,s){
@@ -218,12 +208,12 @@ lambda.interp=function(lambda,s){
 list(left=left,right=right,frac=sfrac)
 }
 
-#' Extract coefficients from a glmnet object
+#' Extract coefficients from a grpnet object
 #'
-#' @method coef glmnet
-#' @rdname predict.glmnet
+#' @method coef grpnet
+#' @rdname predict.grpnet
 #' @export
-#' @export coef.glmnet
+#' @export coef.grpnet
 coef.grpnet=function(object,s=NULL,...)
   predict(object,s=s,type="coefficients",...)
 

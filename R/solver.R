@@ -256,20 +256,32 @@ gaussian_cov <- function(
 #'     represents the family, the reponse and other arguments such as
 #'     weights, if present. The choices are \code{glm.gaussian()},
 #'     \code{glm.binomial()}, \code{glm.poisson()},
-#'     \code{glm.multinomial()}, \code{glm.cox()}, \code{flm.multinomial()},
+#'     \code{glm.multinomial()}, \code{glm.cox()}, \code{glm.multinomial()},
 #'     and \code{glm.multigaussian()}. This is a required argument, and
 #'     there is no default. In the simple example below, we use \code{glm.gaussian(y)}.
-#' @param constraints Constraints on the parameters.
-#' @param groups Groups.
-#' @param alpha Elastic net parameter.
-#' @param penalty Penalty factor.
+#' @param constraints Constraints on the parameters. Currently these are ignored.
+#' @param groups This is an ordered vector of integers that represents the groupings,
+#' with each entry indicating where a group begins. The entries refer to column numbers
+#' in the feature matrix.
+#'        If there are \code{p} features, the default is \code{1:p} (no groups).
+#' (Note that in the output of \code{grpnet} this vector might be shifted to start from 0,
+#' since internally \code{adelie} uses zero-based indexing.)
+#' @param alpha The elasticnet mixing parameter, with \eqn{0\le\alpha\le 1}.
+#' The penalty is defined as
+#' \deqn{(1-\alpha)/2\sum_j||\beta_j||_2^2+\alpha\sum_j||\beta_j||_2,} where thte sum is over groups.
+#' \code{alpha=1} is pure group
+#' lasso penalty, and \code{alpha=0} the pure ridge penalty.
+#' @param penalty Separate penalty factors can be applied to each group of coefficients.
+#' This is a number that multiplies \code{lambda} to allow
+#' differential shrinkage for groups. Can be 0 for some groups, which implies no
+#' shrinkage, and that group is always included in the model.
+#' Default is square-root of group sizes for each group.
 #' @param offsets Offsets, default is \code{NULL}. If present, this is
-#'     a fixed vector or matrix corresponding to the natural
-#'     parameter, and is included as is in the fit.
-#' @param lmda_path The regularization path, default is
-#'     \code{NULL}. Users can provide their own sequence of values for
-#'     \code{lmda_path}, otherwise the code produces a sequence
-#'     automatically.
+#'     a fixed vector or matrix corresponding to the shape of the natural
+#'     parameter, and is added to the fit.
+#' @param lambda A user supplied \code{lambda} sequence. Typical usage is to
+#' have the program compute its own \code{lambda} sequence based on
+#' \code{lmda_path_size} and \code{min_ratio}.
 #' @param irls_max_iters Maximum number of IRLS iterations, default is
 #'     \code{1e4}.
 #' @param irls_tol IRLS convergence tolerance, default is \code{1e-7}.
@@ -293,9 +305,10 @@ gaussian_cov <- function(
 #'     early.
 #' @param intercept Default \code{TRUE} to include an unpenalized
 #'     intercept.
-#' @param screen_rule Screen rule.
-#' @param min_ratio Ratio between largest and smallest regularization.
-#' @param lmda_path_size Number of regularizations.
+#' @param screen_rule Screen rule, with default \code{"pivot"}
+#' (an empirical improvement over \code{"strong"}, the other option.)
+#' @param min_ratio Ratio between smallest and largest value of lambda.
+#' @param lmda_path_size Number of values for \code{lambda}, if generated automatically.
 #' @param max_screen_size Maximum number of screen groups.
 #' @param max_active_size Maximum number of active groups.
 #' @param pivot_subset_ratio Subset ratio of pivot rule.
@@ -304,10 +317,10 @@ gaussian_cov <- function(
 #' @param check_state Check state.
 #' @param progress_bar Progress bar. Default is \code{TRUE}.
 #' @param warm_start Warm start.
-#' @return State of the solver. Among the components the following might be useful.
+#' @return A list of class \code{"grpnet"}, with the main component being \code{state}, the  state of the solver. Users typically use methods like \code{predict()}, \code{print()} etc to examine the object.
 #'
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
-#' \email{hastie@@stanford.edu}
+#' \email{hastie@stanford.edu}
 #'
 #' @references Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
 #' and Elastic Net Penalized Regression via Block-Coordinate Descent. arXiv \doi{10.48550/arXiv.2405.08631}.\cr
@@ -331,7 +344,8 @@ gaussian_cov <- function(
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
 #' y <- X[,1] * rnorm(1) + rnorm(n)
-#' state <- grpnet(X, glm.gaussian(y))
+#' fit <- grpnet(X, glm.gaussian(y))
+#' print(fit)
 #'
 #' @export
 grpnet <- function(
@@ -342,7 +356,7 @@ grpnet <- function(
     alpha = 1,
     penalty = NULL,
     offsets = NULL,
-    lmda_path = NULL,
+    lambda = NULL,
     irls_max_iters = as.integer(1e4),
     irls_tol = 1e-7,
     max_iters = as.integer(1e5),
@@ -354,7 +368,7 @@ grpnet <- function(
     n_threads = 1,
     early_exit = TRUE,
     intercept = TRUE,
-    screen_rule = "pivot",
+    screen_rule = c("pivot","strong"),
     min_ratio = 1e-2,
     lmda_path_size = 100,
     max_screen_size = NULL,
@@ -405,10 +419,10 @@ grpnet <- function(
         }
     }
 
-    if (!is.null(lmda_path)) {
-        lmda_path <- sort(lmda_path, decreasing=TRUE)
+    if (!is.null(lambda)) {
+        lmda_path <- sort(lambda, decreasing=TRUE)
     }
-
+    screen_rule=match.args(screen_rule)
     solver_args <- list(
         X=X_raw,
         constraints=constraints,
@@ -453,6 +467,7 @@ grpnet <- function(
     if (is.null(groups)) {
         groups <- 0:(p-1)
     }
+    else(groups = as.integer(groups-1))# In R we do not do 0 indexing
 
     # multi-response GLMs
     if (glm$is_multi) {
