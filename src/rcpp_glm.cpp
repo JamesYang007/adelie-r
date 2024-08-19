@@ -88,6 +88,7 @@ RCPP_MODULE(adelie_core_glm)
         .property("y", &r_glm_base_64_t::y, "")
         .property("weights", &r_glm_base_64_t::weights, "")
         .method("gradient", &r_glm_base_64_t::gradient)
+        .method("loss", &r_glm_base_64_t::loss)
         .method("loss_full", &r_glm_base_64_t::loss_full)
         ;
 
@@ -98,6 +99,7 @@ RCPP_MODULE(adelie_core_glm)
         .property("y", &r_glm_multibase_64_t::y, "")
         .property("weights", &r_glm_multibase_64_t::weights, "")
         .method("gradient", &r_glm_multibase_64_t::gradient)
+        .method("loss", &r_glm_multibase_64_t::loss)
         .method("loss_full", &r_glm_multibase_64_t::loss_full)
         ;
 
