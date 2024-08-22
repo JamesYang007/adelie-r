@@ -23,7 +23,9 @@ Imports:
     Matrix,
     r2r,
     Rcpp,
-    methods
+    methods,
+    stringr,
+    glmnet
 Suggests:
     ggplot2,
     reshape2,

@@ -59,29 +59,29 @@ gaussian_cov(
 
 \item{n_threads}{Number of threads.}
 
-\item{early_exit}{\code{TRUE} if the function should early exit.}
+\item{early_exit}{\code{TRUE} if the function should exit early.}
 
-\item{screen_rule}{Screen rule.}
+\item{screen_rule}{Screen rule (currently the only value is the default \code{"pivot"}.}
 
-\item{min_ratio}{Ratio between largest and smallest regularization.}
+\item{min_ratio}{Ratio between largest and smallest regularization parameter, default is \code{0.01}.}
 
-\item{lmda_path_size}{Number of regularizations.}
+\item{lmda_path_size}{Number of regularization steps in the path, default is \code{100}.}
 
-\item{max_screen_size}{Maximum number of screen groups.}
+\item{max_screen_size}{Maximum number of screen groups, default is \code{NULL} for no maximum.}
 
-\item{max_active_size}{Maximum number of active groups.}
+\item{max_active_size}{Maximum number of active groups, default is \code{NULL} for no maximum.}
 
-\item{pivot_subset_ratio}{Subset ratio of pivot rule.}
+\item{pivot_subset_ratio}{Subset ratio of pivot rule, default is \code{0.1}.}
 
-\item{pivot_subset_min}{Minimum subset of pivot rule.}
+\item{pivot_subset_min}{Minimum subset of pivot rule, default is \code{1}.}
 
-\item{pivot_slack_ratio}{Slack ratio of pivot rule.}
+\item{pivot_slack_ratio}{Slack ratio of pivot rule, default is \code{1.25}.}
 
-\item{check_state}{Check state.}
+\item{check_state}{Check state, default is \code{FALSE}.}
 
-\item{progress_bar}{Progress bar.}
+\item{progress_bar}{Progress bar, default is \code{TRUE}.}
 
-\item{warm_start}{Warm start.}
+\item{warm_start}{Warm start, default is \code{NULL} (no warm start).}
 }
 \value{
 State of the solver.

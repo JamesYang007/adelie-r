@@ -83,8 +83,8 @@ solve_ <- function(
 #' @param   pivot_slack_ratio   Slack ratio of pivot rule, default is \code{1.25}.
 #' @param   check_state     Check state, default is \code{FALSE}.
 #' @param   progress_bar    Progress bar, default is \code{TRUE}.
-#' @param   warm_start      Warm start, default is \code{NULL} (no warm start}.
-#' @returns State of the solver.
+#' @param   warm_start      Warm start, default is \code{NULL} (no warm start).
+#' @return  State of the solver.
 #'
 #' @examples
 #' set.seed(0)
@@ -245,10 +245,7 @@ gaussian_cov <- function(
 #' extends the abilities of the \code{glmnet} package to allow for
 #' grouped regularization. The code is very efficient (core routines
 #' are written in C++), and allows for specialized matrix
-#' classes. Initially the documentation will be somewhat sparse - we
-#' refer the users to the arXiv article below. With time we will fill
-#' out this package with helper functions and more detailed
-#' documentation.
+#' classes.
 #'
 #' @param X Feature matrix. Either a regualr R matrix, or else an
 #'     \code{adelie} custom matrix class, or a concatination of such.
@@ -307,20 +304,24 @@ gaussian_cov <- function(
 #'     intercept.
 #' @param screen_rule Screen rule, with default \code{"pivot"}
 #' (an empirical improvement over \code{"strong"}, the other option.)
-#' @param min_ratio Ratio between smallest and largest value of lambda.
+#' @param min_ratio Ratio between smallest and largest value of lambda. Default is 1e-2.
 #' @param lmda_path_size Number of values for \code{lambda}, if generated automatically.
+#' Default is 100.
 #' @param max_screen_size Maximum number of screen groups.
 #' @param max_active_size Maximum number of active groups.
 #' @param pivot_subset_ratio Subset ratio of pivot rule.
 #' @param pivot_subset_min Minimum subset of pivot rule.
 #' @param pivot_slack_ratio Slack ratio of pivot rule.
 #' @param check_state Check state.
-#' @param progress_bar Progress bar. Default is \code{TRUE}.
+#' @param progress_bar Progress bar. Default is \code{FALSE}.
 #' @param warm_start Warm start.
-#' @return A list of class \code{"grpnet"}, with the main component being \code{state}, the  state of the solver. Users typically use methods like \code{predict()}, \code{print()} etc to examine the object.
 #'
+#' @return A list of class \code{"grpnet"}. This has a main component called \code{state} which
+#' represents the fitted path, and a few extra
+#' useful components such as the \code{call}, the \code{family} name, and \code{group_sizes}.
+#' Users typically use methods like \code{predict()}, \code{print()}, \code{plot()} etc to examine the object.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
-#' \email{hastie@stanford.edu}
+#' \email{hastie@@stanford.edu}
 #'
 #' @references Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
 #' and Elastic Net Penalized Regression via Block-Coordinate Descent. arXiv \doi{10.48550/arXiv.2405.08631}.\cr
@@ -377,7 +378,7 @@ grpnet <- function(
     pivot_subset_min = 1,
     pivot_slack_ratio = 1.25,
     check_state = FALSE,
-    progress_bar = TRUE,
+    progress_bar = FALSE,
     warm_start = NULL
 )
 {
@@ -418,11 +419,11 @@ grpnet <- function(
             offsets <- matrix(0.0, nrow(y), ncol(y))
         }
     }
-
-    if (!is.null(lambda)) {
-        lmda_path <- sort(lambda, decreasing=TRUE)
+    lmda_path = lambda
+    if (!is.null(lmda_path)) {
+        lmda_path <- sort(lmda_path, decreasing=TRUE)
     }
-    screen_rule=match.args(screen_rule)
+    screen_rule=match.arg(screen_rule)
     solver_args <- list(
         X=X_raw,
         constraints=constraints,
@@ -468,7 +469,7 @@ grpnet <- function(
         groups <- 0:(p-1)
     }
     else(groups = as.integer(groups-1))# In R we do not do 0 indexing
-
+    savegrpsize = diff(c(groups,p))
     # multi-response GLMs
     if (glm$is_multi) {
         K <- ncol(y)
@@ -753,7 +754,7 @@ grpnet <- function(
         state=state,
         progress_bar=progress_bar
     )
-    out <- list(call=thiscall, family = familyname, state = state)
+    out <- list(call=thiscall, family = familyname, group_sizes=savegrpsize,state = state)
     class(out) <- "grpnet"
     out
 }

@@ -2,6 +2,7 @@
 #' @import Matrix
 #' @import r2r
 #' @importFrom methods as new
+#' @importFrom stats predict coef
 #' @useDynLib adelie, .registration = TRUE
 NULL
 Rcpp::loadModule("adelie_core_configs", TRUE)
