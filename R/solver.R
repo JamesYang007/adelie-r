@@ -298,23 +298,24 @@ gaussian_cov <- function(
 #' @param newton_max_iters Maximum number of iterations for the BCD
 #'     update, default \code{1000}.
 #' @param n_threads Number of threads, default \code{1}.
-#' @param early_exit \code{TRUE} if the function should wish to exit
+#' @param early_exit \code{TRUE} if the function should be allowed to exit
 #'     early.
 #' @param intercept Default \code{TRUE} to include an unpenalized
 #'     intercept.
-#' @param screen_rule Screen rule, with default \code{"pivot"}
+#' @param screen_rule Screen rule, with default \code{"pivot"}. Other option is \code{"strong"}.
 #' (an empirical improvement over \code{"strong"}, the other option.)
 #' @param min_ratio Ratio between smallest and largest value of lambda. Default is 1e-2.
 #' @param lmda_path_size Number of values for \code{lambda}, if generated automatically.
 #' Default is 100.
-#' @param max_screen_size Maximum number of screen groups.
-#' @param max_active_size Maximum number of active groups.
-#' @param pivot_subset_ratio Subset ratio of pivot rule.
-#' @param pivot_subset_min Minimum subset of pivot rule.
-#' @param pivot_slack_ratio Slack ratio of pivot rule.
-#' @param check_state Check state.
+#' @param max_screen_size Maximum number of screen groups. Default is \code{NULL}.
+#' @param max_active_size Maximum number of active groups. Default is \code{NULL}.
+#' @param pivot_subset_ratio Subset ratio of pivot rule. Default is \code{0.1}. Users not expected to fiddle with this.
+#' @param pivot_subset_min Minimum subset of pivot rule. Defaults is \code{1}. Users not expected to fiddle with this.
+#' @param pivot_slack_ratio Slack ratio of pivot rule, default is \code{1.25}. Users not expected to fiddle with this.
+#' See reference for details.
+#' @param check_state Check state. Internal parameter, with default \code{FALSE}.
 #' @param progress_bar Progress bar. Default is \code{FALSE}.
-#' @param warm_start Warm start.
+#' @param warm_start Warm start (default is \code{NULL}). Internal parameter.
 #'
 #' @return A list of class \code{"grpnet"}. This has a main component called \code{state} which
 #' represents the fitted path, and a few extra
@@ -384,7 +385,6 @@ grpnet <- function(
 {
     thiscall <- match.call()
     familyname <- glm$name
-    X_raw <- X
     if(inherits(X,"sparseMatrix")){
         X <- as(X,"CsparseMatrix")
         X <- matrix.sparse(X, method="naive", n_threads=n_threads)
@@ -392,6 +392,7 @@ grpnet <- function(
     if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
+    X_raw <- X
 
     n <- X$rows
     p <- X$cols

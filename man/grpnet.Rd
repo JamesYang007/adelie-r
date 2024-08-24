@@ -106,13 +106,13 @@ update, default \code{1000}.}
 
 \item{n_threads}{Number of threads, default \code{1}.}
 
-\item{early_exit}{\code{TRUE} if the function should wish to exit
+\item{early_exit}{\code{TRUE} if the function should be allowed to exit
 early.}
 
 \item{intercept}{Default \code{TRUE} to include an unpenalized
 intercept.}
 
-\item{screen_rule}{Screen rule, with default \code{"pivot"}
+\item{screen_rule}{Screen rule, with default \code{"pivot"}. Other option is \code{"strong"}.
 (an empirical improvement over \code{"strong"}, the other option.)}
 
 \item{min_ratio}{Ratio between smallest and largest value of lambda. Default is 1e-2.}
@@ -120,21 +120,22 @@ intercept.}
 \item{lmda_path_size}{Number of values for \code{lambda}, if generated automatically.
 Default is 100.}
 
-\item{max_screen_size}{Maximum number of screen groups.}
+\item{max_screen_size}{Maximum number of screen groups. Default is \code{NULL}.}
 
-\item{max_active_size}{Maximum number of active groups.}
+\item{max_active_size}{Maximum number of active groups. Default is \code{NULL}.}
 
-\item{pivot_subset_ratio}{Subset ratio of pivot rule.}
+\item{pivot_subset_ratio}{Subset ratio of pivot rule. Default is \code{0.1}. Users not expected to fiddle with this.}
 
-\item{pivot_subset_min}{Minimum subset of pivot rule.}
+\item{pivot_subset_min}{Minimum subset of pivot rule. Defaults is \code{1}. Users not expected to fiddle with this.}
 
-\item{pivot_slack_ratio}{Slack ratio of pivot rule.}
+\item{pivot_slack_ratio}{Slack ratio of pivot rule, default is \code{1.25}. Users not expected to fiddle with this.
+See reference for details.}
 
-\item{check_state}{Check state.}
+\item{check_state}{Check state. Internal parameter, with default \code{FALSE}.}
 
 \item{progress_bar}{Progress bar. Default is \code{FALSE}.}
 
-\item{warm_start}{Warm start.}
+\item{warm_start}{Warm start (default is \code{NULL}). Internal parameter.}
 }
 \value{
 A list of class \code{"grpnet"}. This has a main component called \code{state} which

@@ -7,11 +7,11 @@
 glm.binomial(y, weights = NULL, link = "logit")
 }
 \arguments{
-\item{y}{Response vector.}
+\item{y}{Binary response vector, with values 0 or 1, or a logical vector.}
 
-\item{weights}{Observation weights.}
+\item{weights}{Observation weight vector, with default \code{NULL}.}
 
-\item{link}{The link function type.}
+\item{link}{The link function type, with choice \code{"logit"} (default) or \code{"probit"}).}
 }
 \value{
 Binomial GLM object.

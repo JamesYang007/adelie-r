@@ -4,18 +4,24 @@
 \alias{glm.cox}
 \title{Creates a Cox GLM family object.}
 \usage{
-glm.cox(start, stop, status, weights = NULL, tie_method = "efron")
+glm.cox(
+  start = -Inf,
+  stop,
+  status,
+  weights = NULL,
+  tie_method = c("efron", "breslow")
+)
 }
 \arguments{
-\item{start}{Start time vector.}
+\item{start}{Start time vector. Default is a vector of \code{-Inf} of same length as \code{stop}.}
 
 \item{stop}{Stop time vector.}
 
-\item{status}{Status vector.}
+\item{status}{Binary status vector of same length ast \code{stop}, with 1 a "death", and 0 censored.}
 
-\item{weights}{Observation weights.}
+\item{weights}{Observation weights, with default \code{NULL}.}
 
-\item{tie_method}{The tie-breaking method.}
+\item{tie_method}{The tie-breaking method - one of  \code{"efron"} (default) or \code{"breslow"}.}
 }
 \value{
 Cox GLM object.

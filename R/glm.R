@@ -19,16 +19,16 @@ render_inputs_ <- function(y, weights)
     }
 
     list(
-        y=y, 
+        y=y,
         weights=weights
     )
 }
 
 #' Creates a Binomial GLM family object.
-#' 
-#' @param   y     Response vector.
-#' @param   weights Observation weights. 
-#' @param   link    The link function type.
+#'
+#' @param   y     Binary response vector, with values 0 or 1, or a logical vector.
+#' @param   weights Observation weight vector, with default \code{NULL}.
+#' @param   link    The link function type, with choice \code{"logit"} (default) or \code{"probit"}).
 #' @returns Binomial GLM object.
 #' @examples
 #' n <- 100
@@ -52,12 +52,12 @@ glm.binomial <- function(y, weights=NULL, link="logit")
 }
 
 #' Creates a Cox GLM family object.
-#' 
-#' @param   start     Start time vector.
+#'
+#' @param   start     Start time vector. Default is a vector of \code{-Inf} of same length as \code{stop}.
 #' @param   stop     Stop time vector.
-#' @param   status     Status vector.
-#' @param   weights Observation weights. 
-#' @param tie_method    The tie-breaking method.
+#' @param   status     Binary status vector of same length ast \code{stop}, with 1 a "death", and 0 censored.
+#' @param   weights Observation weights, with default \code{NULL}.
+#' @param tie_method    The tie-breaking method - one of  \code{"efron"} (default) or \code{"breslow"}.
 #' @returns Cox GLM object.
 #' @examples
 #' n <- 100
@@ -66,10 +66,12 @@ glm.binomial <- function(y, weights=NULL, link="logit")
 #' status <- rbinom(n, 1, 0.5)
 #' obj <- glm.cox(start, stop, status)
 #' @export
-glm.cox <- function(start, stop, status, weights=NULL, tie_method="efron")
+glm.cox <- function(start = -Inf, stop, status, weights=NULL, tie_method=c("efron","breslow"))
 {
+    tie_method=match.arg(tie_method)
     input <- render_inputs_(status, weights)
-    start <- as.double(start)
+    n <- length(stop)
+    start <- rep(as.double(start), length = n)
     stop <- as.double(stop)
     status <- input[["y"]]
     weights <- input[["weights"]]
@@ -90,9 +92,9 @@ glm.cox <- function(start, stop, status, weights=NULL, tie_method="efron")
 }
 
 #' Creates a Gaussian GLM family object.
-#' 
+#'
 #' @param   y     Response vector.
-#' @param   weights Observation weights. 
+#' @param   weights Observation weight vector, with default \code{NULL}.
 #' @param   opt     If \code{TRUE}, an optimized routine is run.
 #' @returns Gaussian GLM
 #' @examples
@@ -113,9 +115,9 @@ glm.gaussian <- function(y, weights=NULL, opt=TRUE)
 }
 
 #' Creates a MultiGaussian GLM family object.
-#' 
-#' @param   y     Response vector.
-#' @param   weights Observation weights. 
+#'
+#' @param   y     Response matrix, with two or more columns.
+#' @param   weights Observation weight vector, with default \code{NULL}.
 #' @param   opt     If \code{TRUE}, an optimized routine is run.
 #' @returns MultiGaussian GLM object.
 #' @examples
@@ -139,9 +141,9 @@ glm.multigaussian <- function(y, weights=NULL, opt=TRUE)
 }
 
 #' Creates a Multinomial GLM family object.
-#' 
+#'
 #' @param   y     Response vector.
-#' @param   weights Observation weights. 
+#' @param   weights Observation weights.
 #' @returns Multinomial GLM object.
 #' @examples
 #' n <- 100
@@ -163,9 +165,9 @@ glm.multinomial <- function(y, weights=NULL)
 }
 
 #' Creates a Poisson GLM family object.
-#' 
+#'
 #' @param   y     Response vector.
-#' @param   weights Observation weights. 
+#' @param   weights Observation weights.
 #' @returns Poisson GLM object.
 #' @examples
 #' n <- 100

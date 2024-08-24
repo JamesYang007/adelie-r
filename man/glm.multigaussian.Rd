@@ -7,9 +7,9 @@
 glm.multigaussian(y, weights = NULL, opt = TRUE)
 }
 \arguments{
-\item{y}{Response vector.}
+\item{y}{Response matrix, with two or more columns.}
 
-\item{weights}{Observation weights.}
+\item{weights}{Observation weight vector, with default \code{NULL}.}
 
 \item{opt}{If \code{TRUE}, an optimized routine is run.}
 }
