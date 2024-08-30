@@ -100,8 +100,10 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' @aliases coef.grpnet predict.grpnet
 #' @param object Fitted \code{"grpnet"} model.
 #' @param newx Matrix of new values for \code{x} at which predictions are to be
-#' made. Can be a matrix, a sparse matrix as in \code{Matrix} package, or else any of the matrix forms allowable in the \code{adelie} package. This
-#' argument is not used for \code{type="coefficients"}
+#' made. Can be a matrix, a sparse matrix as in \code{Matrix} package, or else any of the matrix forms
+#' allowable in the \code{adelie} package. The number of columns must match that of the input matrix
+#' used in fitting \code{object}. If the model object was fit with \code{standardize=TRUE}, the saved
+#' centers and scaling will be applied to this matrix. This argument is not used for \code{type="coefficients"}
 #' @param lambda Value(s) of the penalty parameter \code{lambda} at which
 #' predictions are required. Default is the entire sequence used to create the
 #' model. If values of \code{lambda} are supplied, the function uses linear
@@ -169,7 +171,8 @@ state <- object$state
  dof <- diff(betas@p)
  if(is.multi)dof=dof/K
  nlams = nrow(intercepts)
- if(type=="coefficients") return(list(intercepts=intercepts,betas=betas,df=dof,lambda=lambda))
+ if(type=="coefficients")
+     return(list(intercepts=intercepts,betas=betas,df=dof,lambda=lambda))
 
  ## Convert newx to an adelie matrix
  if(inherits(newx,"sparseMatrix")){
@@ -179,6 +182,10 @@ state <- object$state
  if (is.matrix(newx) || is.array(newx) || is.data.frame(newx)) {
      newx <- matrix.dense(newx, method="naive")
  }
+ stan = object$standardize
+ if(!is.null(stan))
+     newx = matrix.standardize(newx,centers=stan$centers,scales=stan$scales)
+
  n <- newx$rows
 
 ### Now we produce either a prediction matrix (single response), or a prediction array (multi response)
@@ -289,6 +296,7 @@ coef.grpnet=function(object,s=NULL,...)
 #'     a fixed vector or matrix corresponding to the shape of the natural
 #'     parameter, and is added to the fit.
 #' @param progress_bar Progress bar. Default is \code{FALSE}.
+#' @param n_threads Number of threads, default \code{1}.
 #' @return an object of class \code{"cv.grpnet"} is returned, which is a list
 #' with the ingredients of the cross-validation fit.
 #' \item{lambda}{the values of \code{lambda} used in the
@@ -347,6 +355,7 @@ cv.grpnet = function(
                      lmda_path_size = 100,
                      offsets=NULL,
                      progress_bar= FALSE,
+                     n_threads = 1,
                     ...
                     ){
     cv.call = match.call()
@@ -372,6 +381,7 @@ cv.grpnet = function(
                       progress_bar=progress_bar,
                       ...)
     lambda = fit_full$state$lmdas
+    lambda_max = max(lambda)
     weights = glm$weights
 ### Set up deviance matrix
     devmat = matrix(NA,n_folds,length(lambda))
@@ -387,8 +397,8 @@ cv.grpnet = function(
                       offsets=offsets,
                       progress_bar=FALSE,...)
         lam0 = fit0$state$lmdas
-        local_lam = exp(log(lam0)-logstep)
-        local_lam = local_lam[local_lam < lambda]
+        local_lam = exp(log(lam0)+logstep)
+        local_lam = local_lam[local_lam > lambda_max]
         aug_lam = c(local_lam, lambda)
         ## Now compute the fit
         fit_local = grpnet(X,local_glm,

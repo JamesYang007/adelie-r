@@ -73,7 +73,7 @@ render_multi_inputs_ <- function(
         ones_kron <- matrix.kronecker_eye(matrix(rep_len(1.0, n), n, 1), n_classes, n_threads)
         X <- matrix.concatenate(
             list(ones_kron, X),
-            axis=1,
+            axis=2,# Trevor changed the axis in concatenate by adding 1
             n_threads
         )
     }
@@ -103,7 +103,7 @@ state.create_from_core <- function(
 
 state.gaussian_cov <- function(
     A,
-    v, 
+    v,
     constraints,
     groups,
     group_sizes,

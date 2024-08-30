@@ -7,14 +7,15 @@
 matrix.one_hot(mat, levels = NULL, n_threads = 1)
 }
 \arguments{
-\item{mat}{The dense matrix.}
+\item{mat}{A dense matrix, which can include factors with levels coded as non-negative integers.}
 
-\item{levels}{Levels.}
+\item{levels}{Number of levels for each of the columns of \code{mat}, with \code{1} representing a quantitative feature. A factor with \code{K} levels should be represented by the numbers \code{0,1,...,K-1}.}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
-One-hot encoded matrix.
+One-hot encoded matrix. All the factor columns, with levels>1, are replaced by a collection of one-hot encoded versions (dummy matrices). The resulting matrix has \code{sum(levels)} columns.
+The object is an S4 class with methods for efficient computation by adelie. Note that some of the arguments are transformed to C++ base 0 for internal use, and if the object is examined, it will reflect that.
 }
 \description{
 Creates a one-hot encoded matrix.
@@ -24,4 +25,7 @@ n <- 100
 p <- 20
 mat <- matrix(rnorm(n * p), n, p)
 out <- matrix.one_hot(mat)
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

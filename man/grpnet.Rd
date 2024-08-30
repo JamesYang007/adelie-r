@@ -13,6 +13,7 @@ grpnet(
   penalty = NULL,
   offsets = NULL,
   lambda = NULL,
+  standardize = TRUE,
   irls_max_iters = as.integer(10000),
   irls_tol = 1e-07,
   max_iters = as.integer(1e+05),
@@ -77,6 +78,11 @@ parameter, and is added to the fit.}
 \item{lambda}{A user supplied \code{lambda} sequence. Typical usage is to
 have the program compute its own \code{lambda} sequence based on
 \code{lmda_path_size} and \code{min_ratio}.}
+
+\item{standardize}{If \code{TRUE} (the default), the columns of \code{X} are standardized before the
+fit is computed. This is good practice if the features are a mixed bag, because it has an impact on
+the penalty. The regularization path is computed using the standardized features, and the
+standardization information is saved on the object for making future predictions.}
 
 \item{irls_max_iters}{Maximum number of IRLS iterations, default is
 \code{1e4}.}

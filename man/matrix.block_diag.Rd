@@ -26,3 +26,6 @@ mats <- lapply(ps, function(p) {
 })
 out <- matrix.block_diag(mats)
 }
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
+}

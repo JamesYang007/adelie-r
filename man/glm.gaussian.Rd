@@ -11,16 +11,22 @@ glm.gaussian(y, weights = NULL, opt = TRUE)
 
 \item{weights}{Observation weight vector, with default \code{NULL}.}
 
-\item{opt}{If \code{TRUE}, an optimized routine is run.}
+\item{opt}{If \code{TRUE} (default), an optimized routine is run.}
 }
 \value{
 Gaussian GLM
 }
 \description{
-Creates a Gaussian GLM family object.
+A GLM family object specifies the type of model fit, provides the appropriate response object and makes sure it is represented in the right form for the model family, and allows for optional parameters such as a weight vector.
 }
 \examples{
 n <- 100
 y <- rnorm(n)
 obj <- glm.gaussian(y)
+}
+\seealso{
+\code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

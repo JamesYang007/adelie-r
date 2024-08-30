@@ -4,21 +4,28 @@
 \alias{matrix.interaction}
 \title{Creates a matrix with pairwise interactions.}
 \usage{
-matrix.interaction(mat, intr_keys, intr_values, levels = NULL, n_threads = 1)
+matrix.interaction(
+  mat,
+  intr_keys = NULL,
+  intr_values,
+  levels = NULL,
+  n_threads = 1
+)
 }
 \arguments{
-\item{mat}{The dense matrix.}
+\item{mat}{The dense matrix, which can include factors with levels coded as non-negative integers.}
 
-\item{intr_keys}{List of feature indices.}
+\item{intr_keys}{List of feature indices. This is a list of all features with which interactions can be formed. Default is \code{1:p} where \code{p} is the number of columns in \code{mat}.}
 
-\item{intr_values}{List of list of feature indices.}
+\item{intr_values}{List of list of feature indices. For each of the \code{m <= p} indices listed in \code{intr_keys}, there is a list of indices indicating which columns are candidates for interaction with that feature. If a list is \code{list(NULL)}, that means all other features are candidates for interactions.  The default is a list of length \code{m} where each element is \code{list(NULL)}; that is \code{rep(list(NULL), m}.}
 
-\item{levels}{Levels.}
+\item{levels}{Number of levels for each of the columns of \code{mat}, with \code{1} representing a quantitative feature. A factor with \code{K} levels should be represented by the numbers \code{0,1,...,K-1}.}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
-Pairwise interaction matrix.
+Pairwise interaction matrix. Logic is used to avoid repetitions. For each factor variable, the column is one-hot-encoded to form a basis for that feature.
+The object is an S4 class with methods for efficient computation by adelie. Note that some of the arguments are transformed to C++ base 0 for internal use, and if the object is examined, it will reflect that.
 }
 \description{
 Creates a matrix with pairwise interactions.
@@ -28,8 +35,11 @@ n <- 10
 p <- 20
 X_dense <- matrix(rnorm(n * p), n, p)
 X_dense[,1] <- rbinom(n, 4, 0.5)
-intr_keys <- c(0, 1)
-intr_values <- list(NULL, c(0, 2))
-levels <- c(c(5), rep(0, p-1))
+intr_keys <- c(1, 2)
+intr_values <- list(NULL, c(1, 3))
+levels <- c(c(5), rep(1, p-1))
 out <- matrix.interaction(X_dense, intr_keys, intr_values, levels)
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

@@ -7,7 +7,7 @@
 glm.binomial(y, weights = NULL, link = "logit")
 }
 \arguments{
-\item{y}{Binary response vector, with values 0 or 1, or a logical vector.}
+\item{y}{Binary response vector, with values 0 or 1, or a logical vector. Alternatively, if data are represented by a two-column matrix of proportions (with row-sums = 1), then one can provide one of the columns as the response. This is useful for grouped binomial data, where each observation represents the result of \code{m[i]} successes out of \code{n[i]} trials. Then the response is provided as \code{y[i] = m[i]/n[i]} and the corresponding element of the weight vector as \code{w[i]=n[i]}. Alternatively can use \code{glm.multinomial()} instead.}
 
 \item{weights}{Observation weight vector, with default \code{NULL}.}
 
@@ -17,10 +17,16 @@ glm.binomial(y, weights = NULL, link = "logit")
 Binomial GLM object.
 }
 \description{
-Creates a Binomial GLM family object.
+A GLM family object specifies the type of model fit, provides the appropriate response object and makes sure it is represented in the right form for the model family, and allows for optional parameters such as a weight vector.
 }
 \examples{
 n <- 100
 y <- rbinom(n, 1, 0.5)
 obj <- glm.binomial(y)
+}
+\seealso{
+\code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

@@ -279,6 +279,10 @@ gaussian_cov <- function(
 #' @param lambda A user supplied \code{lambda} sequence. Typical usage is to
 #' have the program compute its own \code{lambda} sequence based on
 #' \code{lmda_path_size} and \code{min_ratio}.
+#' @param standardize If \code{TRUE} (the default), the columns of \code{X} are standardized before the
+#' fit is computed. This is good practice if the features are a mixed bag, because it has an impact on
+#' the penalty. The regularization path is computed using the standardized features, and the
+#' standardization information is saved on the object for making future predictions.
 #' @param irls_max_iters Maximum number of IRLS iterations, default is
 #'     \code{1e4}.
 #' @param irls_tol IRLS convergence tolerance, default is \code{1e-7}.
@@ -359,6 +363,7 @@ grpnet <- function(
     penalty = NULL,
     offsets = NULL,
     lambda = NULL,
+    standardize = TRUE,
     irls_max_iters = as.integer(1e4),
     irls_tol = 1e-7,
     max_iters = as.integer(1e5),
@@ -392,13 +397,15 @@ grpnet <- function(
     if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
-    X_raw <- X
-
     n <- X$rows
     p <- X$cols
-
     y <- glm$y
     weights <- as.double(glm$weights)
+    if(standardize){
+        if(intercept)centers=NULL else centers = rep(0.0,p)
+        X = matrix.standardize(X,centers=centers,weights=weights)
+    }
+    X_raw <- X
     if (is.null(dim(y))) {
         y <- as.double(y)
     }
@@ -550,7 +557,7 @@ grpnet <- function(
                     matrix(rep_len(1.0, n), n, 1), K, n_threads=n_threads
                 ),
                 X_aug
-            ), axis=1, n_threads=n_threads)
+            ), axis=2, n_threads=n_threads)# Trevor changed the axis meaning - it was 1
         }
 
         if (is_gaussian_opt) {
@@ -755,7 +762,10 @@ grpnet <- function(
         state=state,
         progress_bar=progress_bar
     )
-    out <- list(call=thiscall, family = familyname, group_sizes=savegrpsize,state = state)
+    stan = if(standardize)
+               list(centers=attr(X,"_centers"),scales = attr(X,"_scales"))
+           else NULL
+    out <- list(call=thiscall, family = familyname, group_sizes=savegrpsize,standardize = stan, state = state)
     class(out) <- "grpnet"
     out
 }

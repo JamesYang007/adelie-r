@@ -7,18 +7,24 @@
 glm.poisson(y, weights = NULL)
 }
 \arguments{
-\item{y}{Response vector.}
+\item{y}{Response vector of non-negative counts.}
 
-\item{weights}{Observation weights.}
+\item{weights}{Observation weight vector, with default \code{NULL}.}
 }
 \value{
 Poisson GLM object.
 }
 \description{
-Creates a Poisson GLM family object.
+A GLM family object specifies the type of model fit, provides the appropriate response object and makes sure it is represented in the right form for the model family, and allows for optional parameters such as a weight vector.
 }
 \examples{
 n <- 100
 y <- rpois(n, 1)
 obj <- glm.poisson(y)
+}
+\seealso{
+\code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

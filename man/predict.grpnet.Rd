@@ -20,8 +20,10 @@
 \item{object}{Fitted \code{"grpnet"} model.}
 
 \item{newx}{Matrix of new values for \code{x} at which predictions are to be
-made. Can be a matrix, a sparse matrix as in \code{Matrix} package, or else any of the matrix forms allowable in the \code{adelie} package. This
-argument is not used for \code{type="coefficients"}}
+made. Can be a matrix, a sparse matrix as in \code{Matrix} package, or else any of the matrix forms
+allowable in the \code{adelie} package. The number of columns must match that of the input matrix
+used in fitting \code{object}. If the model object was fit with \code{standardize=TRUE}, the saved
+centers and scaling will be applied to this matrix. This argument is not used for \code{type="coefficients"}}
 
 \item{lambda}{Value(s) of the penalty parameter \code{lambda} at which
 predictions are required. Default is the entire sequence used to create the

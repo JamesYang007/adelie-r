@@ -4,19 +4,20 @@
 \alias{matrix.subset}
 \title{Creates a subset of the matrix along an axis.}
 \usage{
-matrix.subset(mat, indices, axis = 0, n_threads = 1)
+matrix.subset(mat, indices, axis = 1, n_threads = 1)
 }
 \arguments{
-\item{mat}{The matrix to subset.}
+\item{mat}{The \code{adelie} matrix to subset.}
 
-\item{indices}{Array of indices to subset the matrix.}
+\item{indices}{Vector of indices to subset the matrix.}
 
-\item{axis}{The axis along which to subset.}
+\item{axis}{The axis along which to subset (2 is columns, 1 is rows).}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
-Subset of the matrix along an axis.
+Matrix subsetted along the appropriate axis.
+The object is an S4 class with methods for efficient computation by adelie.
 }
 \description{
 Creates a subset of the matrix along an axis.
@@ -26,6 +27,9 @@ n <- 100
 p <- 20
 X <- matrix.dense(matrix(rnorm(n * p), n, p))
 indices <- c(1, 3, 10)
-out <- matrix.subset(X, indices, axis=0)
 out <- matrix.subset(X, indices, axis=1)
+out <- matrix.subset(X, indices, axis=2)
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

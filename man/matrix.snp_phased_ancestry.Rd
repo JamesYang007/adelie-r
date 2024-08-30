@@ -43,3 +43,6 @@ handle$write(calldata, ancestries, A, 1)
 out <- matrix.snp_phased_ancestry(handle)
 file.remove(filename)
 }
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
+}

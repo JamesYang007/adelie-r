@@ -2,22 +2,23 @@
 % Please edit documentation in R/matrix.R
 \name{matrix.kronecker_eye}
 \alias{matrix.kronecker_eye}
-\title{Creates a Kronecker product with identity matrix.}
+\title{Creates a Kronecker product with an identity matrix.}
 \usage{
-matrix.kronecker_eye(mat, K, n_threads = 1)
+matrix.kronecker_eye(mat, K = 1, n_threads = 1)
 }
 \arguments{
 \item{mat}{The matrix to view as a Kronecker product.}
 
-\item{K}{Dimension of the identity matrix.}
+\item{K}{Dimension of the identity matrix (default is 1, which does essentially nothing).}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
-Kronecker product with identity matrix.
+Kronecker product with identity matrix. If \code{mat} is n x p, the the resulting matrix will be nK x np.
+The object is an S4 class with methods for efficient computation by adelie.
 }
 \description{
-Creates a Kronecker product with identity matrix.
+Creates a Kronecker product with an identity matrix.
 }
 \examples{
 n <- 100
@@ -27,4 +28,7 @@ mat <- matrix(rnorm(n * p), n, p)
 out <- matrix.kronecker_eye(mat, K)
 mat <- matrix.dense(mat)
 out <- matrix.kronecker_eye(mat, K)
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

@@ -13,6 +13,7 @@ cv.grpnet(
   lmda_path_size = 100,
   offsets = NULL,
   progress_bar = FALSE,
+  n_threads = 1,
   ...
 )
 }
@@ -46,6 +47,8 @@ a fixed vector or matrix corresponding to the shape of the natural
 parameter, and is added to the fit.}
 
 \item{progress_bar}{Progress bar. Default is \code{FALSE}.}
+
+\item{n_threads}{Number of threads, default \code{1}.}
 }
 \value{
 an object of class \code{"cv.grpnet"} is returned, which is a list

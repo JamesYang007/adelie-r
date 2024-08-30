@@ -7,12 +7,12 @@
 matrix.eager_cov(mat, n_threads = 1)
 }
 \arguments{
-\item{mat}{The dense matrix.}
+\item{mat}{A dense matrix to be used with the \code{gaussian_cov()} solver.}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
-The dense covariance matrix.
+The dense covariance matrix. This matrix is exactly \code{t(mat)\%*\%mat}, computed with some efficiency.
 }
 \description{
 Creates an eager covariance matrix.

@@ -4,17 +4,18 @@
 \alias{matrix.concatenate}
 \title{Creates a concatenation of the matrices.}
 \usage{
-matrix.concatenate(mats, axis = 0, n_threads = 1)
+matrix.concatenate(mats, axis = 2, n_threads = 1)
 }
 \arguments{
 \item{mats}{List of matrices.}
 
-\item{axis}{The axis along which the matrices will be joined.}
+\item{axis}{The axis along which the matrices will be joined. With axis = 2 (default) this function is equivalent to \code{cbind()} and axis = 1 is equivalent to \code{rbind()}.}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
 Concatenation of matrices.
+The object is an S4 class with methods for efficient computation in C++ by adelie. Note that for the object itself axis is represented with base 0 (so 1 less than the argument here).
 }
 \description{
 Creates a concatenation of the matrices.
@@ -22,14 +23,17 @@ Creates a concatenation of the matrices.
 \examples{
 n <- 100
 ps <- c(10, 20, 30)
-mats <- lapply(ps, function(p) { 
+mats <- lapply(ps, function(p) {
     matrix.dense(matrix(rnorm(n * p), n, p))
 })
 out <- matrix.concatenate(mats, axis=1)
-ns <- c(10, 20, 30)
-p <- 100
-mats <- lapply(ns, function(n) { 
+ps <- c(10, 20, 30)
+n <- 100
+mats <- lapply(ps, function(p) {
     matrix.dense(matrix(rnorm(n * p), n, p))
 })
-out <- matrix.concatenate(mats, axis=0)
+out <- matrix.concatenate(mats, axis=2)
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

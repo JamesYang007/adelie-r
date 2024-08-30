@@ -5,19 +5,19 @@
 \title{Creates a Cox GLM family object.}
 \usage{
 glm.cox(
-  start = -Inf,
   stop,
   status,
+  start = -Inf,
   weights = NULL,
   tie_method = c("efron", "breslow")
 )
 }
 \arguments{
-\item{start}{Start time vector. Default is a vector of \code{-Inf} of same length as \code{stop}.}
-
 \item{stop}{Stop time vector.}
 
-\item{status}{Binary status vector of same length ast \code{stop}, with 1 a "death", and 0 censored.}
+\item{status}{Binary status vector of same length as \code{stop}, with 1 a "death", and 0 censored.}
+
+\item{start}{Start time vector. Default is a vector of \code{-Inf} of same length as \code{stop}.}
 
 \item{weights}{Observation weights, with default \code{NULL}.}
 
@@ -27,7 +27,7 @@ glm.cox(
 Cox GLM object.
 }
 \description{
-Creates a Cox GLM family object.
+A GLM family object specifies the type of model fit, provides the appropriate response object and makes sure it is represented in the right form for the model family, and allows for optional parameters such as a weight vector.
 }
 \examples{
 n <- 100
@@ -35,4 +35,10 @@ start <- sample.int(20, size=n, replace=TRUE)
 stop <- start + 1 + sample.int(5, size=n, replace=TRUE)
 status <- rbinom(n, 1, 0.5)
 obj <- glm.cox(start, stop, status)
+}
+\seealso{
+\code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }
