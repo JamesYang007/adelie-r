@@ -49,6 +49,8 @@ parameter, and is added to the fit.}
 \item{progress_bar}{Progress bar. Default is \code{FALSE}.}
 
 \item{n_threads}{Number of threads, default \code{1}.}
+
+\item{\dots}{Other arguments that can be passed to \code{grpnet}}
 }
 \value{
 an object of class \code{"cv.grpnet"} is returned, which is a list

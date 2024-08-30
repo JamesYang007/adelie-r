@@ -47,11 +47,6 @@ matrix.block_diag <- function(
 #' @examples
 #' n <- 100
 #' ps <- c(10, 20, 30)
-#' mats <- lapply(ps, function(p) {
-#'     matrix.dense(matrix(rnorm(n * p), n, p))
-#' })
-#' out <- matrix.concatenate(mats, axis=1)
-
 #' ps <- c(10, 20, 30)
 #' n <- 100
 #' mats <- lapply(ps, function(p) {

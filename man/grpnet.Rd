@@ -92,7 +92,7 @@ standardization information is saved on the object for making future predictions
 \item{max_iters}{Maximum total number of coordinate descent
 iterations, default is \code{1e5}.}
 
-\item{tol}{Coordinate descent convergence tolerance, default{1e-7}.}
+\item{tol}{Coordinate descent convergence tolerance, default \code{1e-7}.}
 
 \item{adev_tol}{Fraction deviance explained tolerance, default
 \code{0.9}. This can be seen as a limit on overfitting the

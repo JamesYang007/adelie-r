@@ -45,3 +45,4 @@
 ^.*Rprof\.out$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
+^tests/*

@@ -14,7 +14,7 @@
   ...
 )
 
-\method{coef}{grpnet}(object, s = NULL, ...)
+\method{coef}{grpnet}(object, lambda = NULL, ...)
 }
 \arguments{
 \item{object}{Fitted \code{"grpnet"} model.}
@@ -61,7 +61,7 @@ X <- matrix(rnorm(n * p), n, p)
 y <- X[,1] * rnorm(1) + rnorm(n)
 fit <- grpnet(X, glm.gaussian(y))
 coef(fit)
-predict(fit,newx = X[1:5])
+predict(fit,newx = X[1:5,])
 }
 \references{
 Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso

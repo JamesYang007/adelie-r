@@ -288,7 +288,7 @@ gaussian_cov <- function(
 #' @param irls_tol IRLS convergence tolerance, default is \code{1e-7}.
 #' @param max_iters Maximum total number of coordinate descent
 #'     iterations, default is \code{1e5}.
-#' @param tol Coordinate descent convergence tolerance, default{1e-7}.
+#' @param tol Coordinate descent convergence tolerance, default \code{1e-7}.
 #' @param adev_tol Fraction deviance explained tolerance, default
 #'     \code{0.9}. This can be seen as a limit on overfitting the
 #'     training data.

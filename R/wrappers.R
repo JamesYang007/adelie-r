@@ -134,7 +134,7 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' y <- X[,1] * rnorm(1) + rnorm(n)
 #' fit <- grpnet(X, glm.gaussian(y))
 #' coef(fit)
-#' predict(fit,newx = X[1:5])
+#' predict(fit,newx = X[1:5,])
 #' @method predict grpnet
 #' @export
 #' @export predict.grpnet
@@ -177,7 +177,7 @@ state <- object$state
  ## Convert newx to an adelie matrix
  if(inherits(newx,"sparseMatrix")){
      newx <- as(newx,"CsparseMatrix")
-     newx <- matrix.sparse(newx, method="naive", n_threads=n_threads)
+     newx <- matrix.sparse(newx, method="naive")
  }
  if (is.matrix(newx) || is.array(newx) || is.data.frame(newx)) {
      newx <- matrix.dense(newx, method="naive")
@@ -253,8 +253,8 @@ list(left=left,right=right,frac=sfrac)
 #' @rdname predict.grpnet
 #' @export
 #' @export coef.grpnet
-coef.grpnet=function(object,s=NULL,...)
-  predict(object,s=s,type="coefficients",...)
+coef.grpnet=function(object,lambda=NULL,...)
+  predict(object,lambda=lambda,type="coefficients",...)
 
 
 #' Cross-validation for grpnet
@@ -297,6 +297,7 @@ coef.grpnet=function(object,s=NULL,...)
 #'     parameter, and is added to the fit.
 #' @param progress_bar Progress bar. Default is \code{FALSE}.
 #' @param n_threads Number of threads, default \code{1}.
+#' @param \dots Other arguments that can be passed to \code{grpnet}
 #' @return an object of class \code{"cv.grpnet"} is returned, which is a list
 #' with the ingredients of the cross-validation fit.
 #' \item{lambda}{the values of \code{lambda} used in the
