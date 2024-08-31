@@ -1,7 +1,7 @@
 ---
 title: "An Introduction to `adelie`"
 author:
-    - James Yang and Trevor Hastie
+    - James Yang, Trevor Hastie and Balasubramanian Narasimhan
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 bibliography: assets/grpnet_refs.bib
 output: rmarkdown::html_vignette
@@ -19,8 +19,12 @@ knitr::opts_chunk$set(
   fig.height=6
 )
 ```
-# __Introduction to Group Elastic Net__
+# __Introduction to Group Lasso and Elastic Net__
 
+The `adelie` package  provides extremely efficient procedures for
+fitting the entire group lasso and group elastic net regularization
+path for GLMs, multinomial, the Cox model and multi-task Gaussian
+models. `adelie` is similar to the R package `glmnet` in scope of models, and in computational speed.
 The R package `adelie` is built from the same C++ code as used in the
 corresponding [adelie Python package](https://github.com/JamesYang007/adelie).
 

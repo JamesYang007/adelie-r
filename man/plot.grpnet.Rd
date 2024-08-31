@@ -45,7 +45,7 @@ and Elastic Net Penalized Regression via Block-Coordinate Descent. arXiv \doi{10
 \code{cv.grpnet}.
 }
 \author{
-Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }
 \keyword{models}
 \keyword{regression}

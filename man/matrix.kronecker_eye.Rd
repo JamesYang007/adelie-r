@@ -30,5 +30,5 @@ mat <- matrix.dense(mat)
 out <- matrix.kronecker_eye(mat, K)
 }
 \author{
-Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

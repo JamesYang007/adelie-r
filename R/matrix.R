@@ -244,7 +244,7 @@ matrix.interaction <- function(
 #' @param   n_threads   Number of threads.
 #' @return Kronecker product with identity matrix. If \code{mat} is n x p, the the resulting matrix will be nK x np.
 #' The object is an S4 class with methods for efficient computation by adelie.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -286,7 +286,7 @@ matrix.kronecker_eye <- function(
 #' @param   n_threads   Number of threads.
 #' @return Lazy covariance matrix. This is essentially the same matrix, but with a setup to create covariance terms as needed on the fly.
 #' The object is an S4 class with methods for efficient computation by adelie.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -315,7 +315,7 @@ matrix.lazy_cov <- function(
 #' @param   n_threads   Number of threads.
 #' @return One-hot encoded matrix. All the factor columns, with levels>1, are replaced by a collection of one-hot encoded versions (dummy matrices). The resulting matrix has \code{sum(levels)} columns.
 #' The object is an S4 class with methods for efficient computation by adelie. Note that some of the arguments are transformed to C++ base 0 for internal use, and if the object is examined, it will reflect that.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -350,7 +350,7 @@ matrix.one_hot <- function(
 #' @param   io  IO handler.
 #' @param   n_threads   Number of threads.
 #' @return SNP phased, ancestry matrix.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 123
 #' s <- 423
@@ -489,7 +489,7 @@ matrix.sparse <- function(
 #' @param   n_threads   Number of threads.
 #' @return Standardized matrix.
 #' The object is an S4 class with methods for efficient computation by adelie.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -553,7 +553,7 @@ matrix.standardize <- function(
 #' @param   n_threads   Number of threads.
 #' @return Matrix subsetted along the appropriate axis.
 #' The object is an S4 class with methods for efficient computation by adelie.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20

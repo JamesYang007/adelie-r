@@ -44,5 +44,5 @@ out <- matrix.snp_phased_ancestry(handle)
 file.remove(filename)
 }
 \author{
-Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

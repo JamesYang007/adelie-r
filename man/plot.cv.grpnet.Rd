@@ -54,7 +54,7 @@ Adelie Python user guide  \url{https://jamesyang007.github.io/adelie/}
 \code{grpnet} and \code{cv.grpnet}.
 }
 \author{
-Trevor Hastie and James Yang\cr Maintainer:
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer:
 Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }
 \keyword{group}

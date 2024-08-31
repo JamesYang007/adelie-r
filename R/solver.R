@@ -343,7 +343,7 @@ gaussian_cov <- function(
 #' Tibshirani, Ryan. (2012) \emph{Strong Rules for Discarding Predictors in
 #' Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
 #' \url{https://arxiv.org/abs/1011.2234}.\cr
-
+#' @seealso \code{cv.grpnet}, \code{predict.grpnet}, \code{plot.grpnet}, \code{print.grpnet}.
 #' @examples
 #' set.seed(0)
 #' n <- 100

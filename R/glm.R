@@ -65,7 +65,7 @@ glm.binomial <- function(y, weights=NULL, link="logit")
 #' @param   weights Observation weights, with default \code{NULL}.
 #' @param tie_method    The tie-breaking method - one of  \code{"efron"} (default) or \code{"breslow"}.
 #' @return Cox GLM object.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
 #' @examples
 #' n <- 100
@@ -107,7 +107,7 @@ glm.cox <- function(stop, status, start = -Inf, weights=NULL, tie_method=c("efro
 #' @param   weights Observation weight vector, with default \code{NULL}.
 #' @param   opt     If \code{TRUE} (default), an optimized routine is run.
 #' @return Gaussian GLM
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
 #' @examples
 #' n <- 100
@@ -134,7 +134,7 @@ glm.gaussian <- function(y, weights=NULL, opt=TRUE)
 #' @param   weights Observation weight vector, with default \code{NULL}.
 #' @param   opt     If \code{TRUE} (default), an optimized routine is run.
 #' @return MultiGaussian GLM object.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
 #' @examples
 #' n <- 100
@@ -163,7 +163,7 @@ glm.multigaussian <- function(y, weights=NULL, opt=TRUE)
 #' @param   y     Response matrix with \code{K>1} columns, and row sums equal to 1. This can either be a "one-hot" encoded version of a K-category factor variable, or else a matrix of proportions. This is useful for grouped multinomial data, where column \code{y[i, k]} represents the proportion of outcomes in category k in \code{n[i]} trials. Then the corresponding element of the weight vector is \code{w[i]=n[i]}.
 #' @param   weights Observation weights.
 #' @return Multinomial GLM object.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
 #' @examples
 #' n <- 100
@@ -191,7 +191,7 @@ glm.multinomial <- function(y, weights=NULL)
 #' @param   y     Response vector of non-negative counts.
 #' @param   weights Observation weight vector, with default \code{NULL}.
 #' @return Poisson GLM object.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
 #' @examples
 #' n <- 100

@@ -31,7 +31,7 @@ and Elastic Net Penalized Regression via Block-Coordinate Descent. arXiv \doi{10
 \code{grpnet}, \code{predict} and \code{coef} methods.
 }
 \author{
-Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }
 \keyword{group}
 \keyword{lasso}

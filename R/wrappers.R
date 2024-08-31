@@ -476,7 +476,7 @@ cv.grpnet = function(
 #' @param sign.lambda Either plot against \code{log(lambda)} or its
 #' negative (default) if \code{sign.lambda=-1}
 #' @param \dots Other graphical parameters
-#' @author Trevor Hastie and James Yang\cr Maintainer:
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer:
 #' Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{grpnet} and \code{cv.grpnet}.
 #' @references Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
@@ -550,7 +550,7 @@ abline(v=sign.lambda*log(cvobj$lambda.1se),lty=3)
 #' @param glm.name This is a logical (default \code{TRUE}), and causes the glm name of the model
 #' to be included in the plot.
 #' @param \dots Other graphical parameters to plot
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{grpnet}, and \code{print}, and \code{coef} methods, and
 #' \code{cv.grpnet}.
 #' @references Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
@@ -652,7 +652,7 @@ plot.grpnet=function(x, sign.lambda=-1,glm.name=TRUE,...){
 #' used.
 #' @param \dots Not used. Other arguments to predict.
 #' @return The object returned depends on the arguments.
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{grpnet}, and \code{print}, and \code{coef} methods, and
 #' \code{cv.grpnet}.
 #' @references Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
@@ -687,7 +687,7 @@ predict.cv.grpnet=function(object,newx,lambda=c("lambda.1se","lambda.min"),...){
 #' @param x fitted 'cv.grpnet' object
 #' @param digits significant digits in printout
 #' @param \dots additional print arguments
-#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{grpnet}, \code{predict} and \code{coef} methods.
 #' @references Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
 #' and Elastic Net Penalized Regression via Block-Coordinate Descent. arXiv \doi{10.48550/arXiv.2405.08631}.
