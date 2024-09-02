@@ -79,7 +79,7 @@ glm.cox <- function(stop, status, start = -Inf, weights=NULL, tie_method=c("efro
     tie_method=match.arg(tie_method)
     input <- render_inputs_(status, weights)
     n <- length(stop)
-    start <- rep(as.double(start), length = n)
+    start <- rep(as.double(start), length.out = n)
     stop <- as.double(stop)
     status <- input[["y"]]
     weights <- input[["weights"]]
