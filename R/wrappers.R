@@ -82,7 +82,7 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
     lambdas=coefstuff$lambda
     out = data.frame(Df, `%Dev` = round(dev.ratio *
         100, 2), Lambda = signif(lambdas, digits), check.names = FALSE,
-        row.names = seq(along = Df))
+        row.names = seq(along.with = Df))
     class(out) = c("anova", class(out))
     print(out)
 }
@@ -370,7 +370,7 @@ cv.grpnet = function(
 
     N <- X$rows
     if (is.null(foldid))
-        foldid = sample(rep(seq(n_folds), length = N))
+        foldid = sample(rep(seq(n_folds), length.out = N))
   else n_folds = max(foldid)
   if (n_folds < 3)
     stop("n_folds must be bigger than 3; n_folds=10 recommended")
@@ -529,7 +529,7 @@ do.call("plot",plot.args)
                col="darkgrey")
     points(sign.lambda*log(cvobj$lambda),cvobj$cvm,pch=20,
           col="red")
-axis(side=3,at=sign.lambda*log(cvobj$lambda),labels=paste(cvobj$nz),tick=FALSE,line=0)
+axis(side=3,at=sign.lambda*log(cvobj$lambda),labels=paste(cvobj$nzero),tick=FALSE,line=0)
 abline(v=sign.lambda*log(cvobj$lambda.min),lty=3)
 abline(v=sign.lambda*log(cvobj$lambda.1se),lty=3)
   invisible()
