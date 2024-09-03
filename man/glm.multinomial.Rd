@@ -7,7 +7,7 @@
 glm.multinomial(y, weights = NULL)
 }
 \arguments{
-\item{y}{Response vector.}
+\item{y}{Response matrix with \code{K>1} columns, and row sums equal to 1. This can either be a "one-hot" encoded version of a K-category factor variable, or else a matrix of proportions. This is useful for grouped multinomial data, where column \code{y[i, k]} represents the proportion of outcomes in category k in \code{n[i]} trials. Then the corresponding element of the weight vector is \code{w[i]=n[i]}.}
 
 \item{weights}{Observation weights.}
 }
@@ -15,11 +15,17 @@ glm.multinomial(y, weights = NULL)
 Multinomial GLM object.
 }
 \description{
-Creates a Multinomial GLM family object.
+A GLM family object specifies the type of model fit, provides the appropriate response object and makes sure it is represented in the right form for the model family, and allows for optional parameters such as a weight vector.
 }
 \examples{
 n <- 100
 K <- 5
 y <- t(rmultinom(n, 1, rep(1/K, K)))
 obj <- glm.multinomial(y)
+}
+\seealso{
+\code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
+}
+\author{
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

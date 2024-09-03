@@ -2,6 +2,8 @@
 #' @import Matrix
 #' @import r2r
 #' @importFrom methods as new
+#' @importFrom stats predict coef approx weighted.mean
+#' @importFrom graphics abline axis legend matplot points segments
 #' @useDynLib adelie, .registration = TRUE
 NULL
 Rcpp::loadModule("adelie_core_configs", TRUE)

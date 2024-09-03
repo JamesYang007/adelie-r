@@ -24,8 +24,8 @@ filename <- paste(tempdir(), "snp_unphased_dummy.snpdat", sep="/")
 handle <- io.snp_unphased(filename)
 mat <- matrix(
     as.integer(sample.int(
-        3, n * s, 
-        replace=TRUE, 
+        3, n * s,
+        replace=TRUE,
         prob=c(0.7, 0.2, 0.1)
     ) - 1),
     n, s

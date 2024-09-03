@@ -7,12 +7,13 @@
 matrix.lazy_cov(mat, n_threads = 1)
 }
 \arguments{
-\item{mat}{The data matrix.}
+\item{mat}{A dense  data matrix to be used with the \code{gaussian_cov()} solver.}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
-Lazy covariance matrix.
+Lazy covariance matrix. This is essentially the same matrix, but with a setup to create covariance terms as needed on the fly.
+The object is an S4 class with methods for efficient computation by adelie.
 }
 \description{
 Creates a lazy covariance matrix.
@@ -22,4 +23,7 @@ n <- 100
 p <- 20
 mat <- matrix(rnorm(n * p), n, p)
 out <- matrix.lazy_cov(mat)
+}
+\author{
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

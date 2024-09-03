@@ -4,21 +4,31 @@
 \alias{matrix.standardize}
 \title{Creates a standardized matrix.}
 \usage{
-matrix.standardize(mat, centers = NULL, scales = NULL, ddof = 0, n_threads = 1)
+matrix.standardize(
+  mat,
+  centers = NULL,
+  scales = NULL,
+  weights = NULL,
+  ddof = 0,
+  n_threads = 1
+)
 }
 \arguments{
-\item{mat}{The underlying matrix.}
+\item{mat}{An \code{adelie} matrix.}
 
-\item{centers}{The center values.}
+\item{centers}{The center values. Default is to use the column means.}
 
-\item{scales}{The scale values.}
+\item{scales}{The scale values. Default is to use the sample standard deviations.}
 
-\item{ddof}{Degrees of freedom.}
+\item{weights}{Observation weight vector, which defaults to 1/n per observation.}
+
+\item{ddof}{Degrees of freedom for standard deviations, with default 0 (1/n). The alternative is 1 leading to 1/(n-1).}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
 Standardized matrix.
+The object is an S4 class with methods for efficient computation by adelie.
 }
 \description{
 Creates a standardized matrix.
@@ -28,4 +38,7 @@ n <- 100
 p <- 20
 X <- matrix(rnorm(n * p), n, p)
 out <- matrix.standardize(matrix.dense(X))
+}
+\author{
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

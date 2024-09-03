@@ -7,21 +7,27 @@
 glm.multigaussian(y, weights = NULL, opt = TRUE)
 }
 \arguments{
-\item{y}{Response vector.}
+\item{y}{Response matrix, with two or more columns.}
 
-\item{weights}{Observation weights.}
+\item{weights}{Observation weight vector, with default \code{NULL}.}
 
-\item{opt}{If \code{TRUE}, an optimized routine is run.}
+\item{opt}{If \code{TRUE} (default), an optimized routine is run.}
 }
 \value{
 MultiGaussian GLM object.
 }
 \description{
-Creates a MultiGaussian GLM family object.
+A GLM family object specifies the type of model fit, provides the appropriate response object and makes sure it is represented in the right form for the model family, and allows for optional parameters such as a weight vector.
 }
 \examples{
 n <- 100
 K <- 5
 y <- matrix(rnorm(n*K), n, K)
 obj <- glm.multigaussian(y)
+}
+\seealso{
+\code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
+}
+\author{
+James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }

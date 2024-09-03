@@ -60,7 +60,6 @@ render_gaussian_naive_inputs_ <- function(
 
 render_multi_inputs_ <- function(
     X,
-    groups,
     offsets,
     intercept,
     n_threads
@@ -74,24 +73,14 @@ render_multi_inputs_ <- function(
         ones_kron <- matrix.kronecker_eye(matrix(rep_len(1.0, n), n, 1), n_classes, n_threads)
         X <- matrix.concatenate(
             list(ones_kron, X),
-            axis=1,
+            axis=2,# Trevor changed the axis in concatenate by adding 1
             n_threads
         )
     }
 
-    if (length(groups) == X$cols) {
-        group_type <- "ungrouped"
-    } else {
-        if (length(groups) != X$cols / n_classes + (n_classes-1) * intercept) {
-            stop("groups must be of the \"grouped\" or \"ungrouped\" type.")
-        }
-        group_type <- "grouped"
-    }
-
     list(
         X=X,
-        offsets=offsets,
-        group_type=group_type
+        offsets=offsets
     )
 }
 
@@ -114,7 +103,7 @@ state.create_from_core <- function(
 
 state.gaussian_cov <- function(
     A,
-    v, 
+    v,
     constraints,
     groups,
     group_sizes,
@@ -404,14 +393,12 @@ state.multigaussian_naive <- function(
     n_classes <- ncol(y)
     inputs <- render_multi_inputs_(
         X=X,
-        groups=groups,
         offsets=offsets,
         intercept=intercept,
         n_threads=n_threads
     )
     X <- inputs[["X"]]
     offsets <- inputs[["offsets"]]
-    group_type <- inputs[["group_type"]]
 
     glm <- glm.multigaussian(y=y, weights=weights)
     X_expanded <- X
@@ -419,7 +406,7 @@ state.multigaussian_naive <- function(
     constraints <- render_constraints_(length(groups), constraints)
 
     input <- list(
-        "group_type"=group_type,
+        "group_type"="grouped", # TODO: remove with 1.1.47
         "n_classes"=n_classes,
         "multi_intercept"=intercept,
         "X"=X,
@@ -690,19 +677,17 @@ state.multiglm_naive <- function(
     n_classes <- ncol(glm$y)
     inputs <- render_multi_inputs_(
         X=X,
-        groups=groups,
         offsets=offsets,
         intercept=intercept,
         n_threads=n_threads
     )
     X <- inputs[["X"]]
     offsets <- inputs[["offsets"]]
-    group_type <- inputs[["group_type"]]
     constraints <- render_constraints_(length(groups), constraints)
 
     X_expanded <- X
     input <- list(
-        "group_type"=group_type,
+        "group_type"="grouped", # TODO: remove with 1.1.47
         "n_classes"=n_classes,
         "multi_intercept"=intercept,
         "X"=X_expanded,

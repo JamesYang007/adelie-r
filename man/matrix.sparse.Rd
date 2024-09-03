@@ -2,22 +2,25 @@
 % Please edit documentation in R/matrix.R
 \name{matrix.sparse}
 \alias{matrix.sparse}
-\title{Creates a viewer of a sparse matrix.}
+\title{Creates a sparse matrix object.}
 \usage{
-matrix.sparse(mat, method = "naive", n_threads = 1)
+matrix.sparse(mat, method = c("naive", "cov"), n_threads = 1)
 }
 \arguments{
-\item{mat}{The sparse matrix to view.}
+\item{mat}{A sparse matrix.}
 
-\item{method}{Method type.}
+\item{method}{Method type, with  default \code{method="naive"}.
+If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
+Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
-Sparse matrix.
+Sparse matrix object.
+The object is an S4 class with methods for efficient computation by adelie.
 }
 \description{
-Creates a viewer of a sparse matrix.
+Creates a sparse matrix object.
 }
 \examples{
 n <- 100

@@ -1,8 +1,9 @@
 #' Creates a block-diagonal matrix.
-#' 
+#'
 #' @param   mats    List of matrices.
 #' @param   n_threads   Number of threads.
-#' @returns Block-diagonal matrix.
+#' @return Block-diagonal matrix.
+#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' ps <- c(10, 20, 30)
@@ -27,7 +28,7 @@ matrix.block_diag <- function(
     }
     mats <- mats_wrap
     input <- list(
-        "mats"=mats, 
+        "mats"=mats,
         "n_threads"=n_threads
     )
     out <- new(RMatrixCovBlockDiag64, input)
@@ -36,32 +37,31 @@ matrix.block_diag <- function(
 }
 
 #' Creates a concatenation of the matrices.
-#' 
+#'
 #' @param   mats    List of matrices.
-#' @param   axis    The axis along which the matrices will be joined.
+#' @param   axis    The axis along which the matrices will be joined. With axis = 2 (default) this function is equivalent to \code{cbind()} and axis = 1 is equivalent to \code{rbind()}.
 #' @param   n_threads   Number of threads.
-#' @returns Concatenation of matrices.
+#' @return Concatenation of matrices.
+#' The object is an S4 class with methods for efficient computation in C++ by adelie. Note that for the object itself axis is represented with base 0 (so 1 less than the argument here).
+#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' ps <- c(10, 20, 30)
-#' mats <- lapply(ps, function(p) { 
+#' ps <- c(10, 20, 30)
+#' n <- 100
+#' mats <- lapply(ps, function(p) {
 #'     matrix.dense(matrix(rnorm(n * p), n, p))
 #' })
-#' out <- matrix.concatenate(mats, axis=1)
-
-#' ns <- c(10, 20, 30)
-#' p <- 100
-#' mats <- lapply(ns, function(n) { 
-#'     matrix.dense(matrix(rnorm(n * p), n, p))
-#' })
-#' out <- matrix.concatenate(mats, axis=0)
+#' out <- matrix.concatenate(mats, axis=2)
 #' @export
 matrix.concatenate <- function(
-    mats, 
-    axis =0,
+    mats,
+    axis = 2,
     n_threads =1
 )
 {
+    if(axis %in% c(1,2))axis = axis -1 # C++ base 0
+    else stop("axis can take values 1 (row-bind) or 2 (column bind)  only")
     mats_wrap <- list()
     for (i in 1:length(mats)) {
         mat <- mats[[i]]
@@ -83,12 +83,16 @@ matrix.concatenate <- function(
     out
 }
 
-#' Creates a viewer of a dense matrix.
-#' 
+#' Creates a dense matrix object.
+#'
 #' @param   mat     The dense matrix.
-#' @param   method  Method type.
+#' @param   method  Method type, with  default \code{method="naive"}.
+#' If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
+#' Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.
 #' @param   n_threads   Number of threads.
-#' @returns Dense matrix.
+#' @return Dense matrix.
+#' The object is an S4 class with methods for efficient computation by adelie.
+#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -99,17 +103,18 @@ matrix.concatenate <- function(
 #' @export
 matrix.dense <- function(
     mat,
-    method ="naive",
+    method = c("naive","cov"),
     n_threads =1
 )
 {
+    method=match.arg(method)
     mat <- as.matrix(mat)
     dispatcher <- c(
         "naive" = RMatrixNaiveDense64F,
         "cov" = RMatrixCovDense64F
     )
     input <- list(
-        "mat"=mat, 
+        "mat"=mat,
         "n_threads"=n_threads
     )
     out <- new(dispatcher[[method]], input)
@@ -118,11 +123,11 @@ matrix.dense <- function(
 }
 
 #' Creates an eager covariance matrix.
-#' 
-#' @param   mat     The dense matrix.
+#'
+#' @param   mat     A dense matrix to be used with the \code{gaussian_cov()} solver.
 #' @param   n_threads   Number of threads.
-#' @returns The dense covariance matrix.
-#' @examples 
+#' @return The dense covariance matrix. This matrix is exactly \code{t(mat)%*%mat}, computed with some efficiency.
+#' @examples
 #' n <- 100
 #' p <- 20
 #' mat <- matrix(rnorm(n * p), n, p)
@@ -137,41 +142,51 @@ matrix.eager_cov <- function(
 }
 
 #' Creates a matrix with pairwise interactions.
-#' 
-#' @param   mat     The dense matrix.
-#' @param   intr_keys   List of feature indices.
-#' @param   intr_values List of list of feature indices.
-#' @param   levels      Levels.
+#'
+#' @param   mat     The dense matrix, which can include factors with levels coded as non-negative integers.
+#' @param   intr_keys   List of feature indices. This is a list of all features with which interactions can be formed. Default is \code{1:p} where \code{p} is the number of columns in \code{mat}.
+#' @param   intr_values List of list of feature indices. For each of the \code{m <= p} indices listed in \code{intr_keys}, there is a list of indices indicating which columns are candidates for interaction with that feature. If a list is \code{list(NULL)}, that means all other features are candidates for interactions.  The default is a list of length \code{m} where each element is \code{list(NULL)}; that is \code{rep(list(NULL), m}.
+#' @param   levels Number of levels for each of the columns of \code{mat}, with \code{1} representing a quantitative feature. A factor with \code{K} levels should be represented by the numbers \code{0,1,...,K-1}.
 #' @param   n_threads   Number of threads.
-#' @returns Pairwise interaction matrix.
+#' @return Pairwise interaction matrix. Logic is used to avoid repetitions. For each factor variable, the column is one-hot-encoded to form a basis for that feature.
+#' The object is an S4 class with methods for efficient computation by adelie. Note that some of the arguments are transformed to C++ base 0 for internal use, and if the object is examined, it will reflect that.
+#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 10
 #' p <- 20
 #' X_dense <- matrix(rnorm(n * p), n, p)
 #' X_dense[,1] <- rbinom(n, 4, 0.5)
-#' intr_keys <- c(0, 1)
-#' intr_values <- list(NULL, c(0, 2))
-#' levels <- c(c(5), rep(0, p-1))
+#' intr_keys <- c(1, 2)
+#' intr_values <- list(NULL, c(1, 3))
+#' levels <- c(c(5), rep(1, p-1))
 #' out <- matrix.interaction(X_dense, intr_keys, intr_values, levels)
 #' @export
 matrix.interaction <- function(
     mat,
-    intr_keys,
+    intr_keys = NULL,
     intr_values,
     levels =NULL,
     n_threads =1
 )
-{   
+{
     mat <- as.matrix(mat)
     d <- ncol(mat)
 
-    if (is.null(levels)) {
+    if (is.null(levels)) {# levels of 1 are translated to 0
         levels <- integer(d)
     }
-
-    stopifnot(length(intr_keys) == length(intr_values))
-    stopifnot(length(intr_keys) > 0)
-
+    else levels[levels==1] <- 0
+    levels=as.integer(levels)
+    if(is.null(intr_keys))intr_keys = 1:d
+    intr_keys = intr_keys-1 # base 0 for C++
+    if(missing(intr_values))
+        intr_values = rep(list(NULL),length(intr_keys))
+    else{
+        if(length(intr_values) != length(intr_keys))
+            stop("the length of intr_values should be the same as length of intr_keys")
+        intr_values = lapply(intr_values,# base 0 for C++
+                             function(x)if(!is.null(x))x-1 else x)
+        }
     arange_d <- as.integer((1:d) - 1)
     keys <- sort(unique(as.integer(intr_keys)))
     pairs_seen <- hashset()
@@ -210,9 +225,9 @@ matrix.interaction <- function(
     levels <- as.integer(levels)
 
     input <- list(
-        "mat"=mat, 
-        "pairsT"=pairsT, 
-        "levels"=levels, 
+        "mat"=mat,
+        "pairsT"=pairsT,
+        "levels"=levels,
         "n_threads"=n_threads
     )
     out <- new(RMatrixNaiveInteractionDense64F, input)
@@ -222,12 +237,14 @@ matrix.interaction <- function(
     out
 }
 
-#' Creates a Kronecker product with identity matrix.
+#' Creates a Kronecker product with an identity matrix.
 #'
 #' @param   mat     The matrix to view as a Kronecker product.
-#' @param   K       Dimension of the identity matrix.
+#' @param   K       Dimension of the identity matrix (default is 1, which does essentially nothing).
 #' @param   n_threads   Number of threads.
-#' @returns Kronecker product with identity matrix.
+#' @return Kronecker product with identity matrix. If \code{mat} is n x p, the the resulting matrix will be nK x np.
+#' The object is an S4 class with methods for efficient computation by adelie.
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -239,7 +256,7 @@ matrix.interaction <- function(
 #' @export
 matrix.kronecker_eye <- function(
     mat,
-    K,
+    K=1,
     n_threads =1
 )
 {
@@ -264,10 +281,12 @@ matrix.kronecker_eye <- function(
 }
 
 #' Creates a lazy covariance matrix.
-#' 
-#' @param   mat     The data matrix.
+#'
+#' @param   mat     A dense  data matrix to be used with the \code{gaussian_cov()} solver.
 #' @param   n_threads   Number of threads.
-#' @returns Lazy covariance matrix.
+#' @return Lazy covariance matrix. This is essentially the same matrix, but with a setup to create covariance terms as needed on the fly.
+#' The object is an S4 class with methods for efficient computation by adelie.
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -281,7 +300,7 @@ matrix.lazy_cov <- function(
 {
     mat <- as.matrix(mat)
     input <- list(
-        "mat"=mat, 
+        "mat"=mat,
         "n_threads"=n_threads
     )
     out <- new(RMatrixCovLazyCov64F, input)
@@ -290,11 +309,13 @@ matrix.lazy_cov <- function(
 }
 
 #' Creates a one-hot encoded matrix.
-#' 
-#' @param   mat     The dense matrix.
-#' @param   levels      Levels.
+#'
+#' @param   mat     A dense matrix, which can include factors with levels coded as non-negative integers.
+#' @param   levels      Number of levels for each of the columns of \code{mat}, with \code{1} representing a quantitative feature. A factor with \code{K} levels should be represented by the numbers \code{0,1,...,K-1}.
 #' @param   n_threads   Number of threads.
-#' @returns One-hot encoded matrix.
+#' @return One-hot encoded matrix. All the factor columns, with levels>1, are replaced by a collection of one-hot encoded versions (dummy matrices). The resulting matrix has \code{sum(levels)} columns.
+#' The object is an S4 class with methods for efficient computation by adelie. Note that some of the arguments are transformed to C++ base 0 for internal use, and if the object is examined, it will reflect that.
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -308,13 +329,14 @@ matrix.one_hot <- function(
 )
 {
     d <- ncol(mat)
-    if (is.null(levels)) {
+    if (is.null(levels)) {# levels of 1 are translated to 0
         levels <- integer(d)
     }
+    else levels[levels==1] <- 0
     levels <- as.integer(levels)
     input <- list(
-        "mat"=mat, 
-        "levels"=levels, 
+        "mat"=mat,
+        "levels"=levels,
         "n_threads"=n_threads
     )
     out <- new(RMatrixNaiveOneHotDense64F, input)
@@ -324,10 +346,11 @@ matrix.one_hot <- function(
 }
 
 #' Creates a SNP phased, ancestry matrix.
-#' 
-#' @param   io      IO handler.
+#'
+#' @param   io  IO handler.
 #' @param   n_threads   Number of threads.
-#' @returns SNP phased, ancestry matrix.
+#' @return SNP phased, ancestry matrix.
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 123
 #' s <- 423
@@ -361,7 +384,7 @@ matrix.snp_phased_ancestry <- function(
 {
     if (!io$is_read) { io$read() }
     input <- list(
-        "io"=io, 
+        "io"=io,
         "n_threads"=n_threads
     )
     out <- new(RMatrixNaiveSNPPhasedAncestry64, input)
@@ -370,10 +393,10 @@ matrix.snp_phased_ancestry <- function(
 }
 
 #' Creates a SNP unphased matrix.
-#' 
+#'
 #' @param   io      IO handler.
 #' @param   n_threads   Number of threads.
-#' @returns SNP unphased matrix.
+#' @return SNP unphased matrix.
 #' @examples
 #' n <- 123
 #' s <- 423
@@ -381,8 +404,8 @@ matrix.snp_phased_ancestry <- function(
 #' handle <- io.snp_unphased(filename)
 #' mat <- matrix(
 #'     as.integer(sample.int(
-#'         3, n * s, 
-#'         replace=TRUE, 
+#'         3, n * s,
+#'         replace=TRUE,
 #'         prob=c(0.7, 0.2, 0.1)
 #'     ) - 1),
 #'     n, s
@@ -399,7 +422,7 @@ matrix.snp_unphased <- function(
 {
     if (!io$is_read) { io$read() }
     input <- list(
-        "io"=io, 
+        "io"=io,
         "n_threads"=n_threads
     )
     out <- new(RMatrixNaiveSNPUnphased64, input)
@@ -407,12 +430,15 @@ matrix.snp_unphased <- function(
     out
 }
 
-#' Creates a viewer of a sparse matrix.
-#' 
-#' @param   mat     The sparse matrix to view.
-#' @param   method  Method type.
+#' Creates a sparse matrix object.
+#'
+#' @param   mat     A sparse matrix.
+#' @param   method  Method type, with  default \code{method="naive"}.
+#' If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
+#' Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.
 #' @param   n_threads   Number of threads.
-#' @returns Sparse matrix.
+#' @return Sparse matrix object.
+#' The object is an S4 class with methods for efficient computation by adelie.
 #' @examples
 #' n <- 100
 #' p <- 20
@@ -425,18 +451,23 @@ matrix.snp_unphased <- function(
 #' @export
 matrix.sparse <- function(
     mat,
-    method ="naive",
+    method = c("naive","cov"),
     n_threads =1
-)
-{  
-    mat <- as(mat, "dgCMatrix")
+    )
+{
+    method = match.arg(method)
+    if(inherits(mat,"sparseMatrix")){
+        if(!inherits(mat,"dgCMatrix"))
+            mat=as(as(as(mat, "generalMatrix"), "CsparseMatrix"), "dMatrix")
+    }
+    else stop("matrix is not a 'sparseMatrix'")
     dispatcher <- c(
         "naive" = RMatrixNaiveSparse64F,
         "cov" = RMatrixCovSparse64F
     )
     input <- list(
         "rows"=nrow(mat),
-        "cols"=ncol(mat), 
+        "cols"=ncol(mat),
         "nnz"=length(mat@i),
         "outer"=mat@p,
         "inner"=mat@i,
@@ -449,30 +480,38 @@ matrix.sparse <- function(
 }
 
 #' Creates a standardized matrix.
-#' 
-#' @param   mat     The underlying matrix.
-#' @param   centers     The center values.
-#' @param   scales     The scale values.
-#' @param   ddof        Degrees of freedom.
+#'
+#' @param   mat     An \code{adelie} matrix.
+#' @param   centers     The center values. Default is to use the column means.
+#' @param   scales     The scale values. Default is to use the sample standard deviations.
+#' @param   weights  Observation weight vector, which defaults to 1/n per observation.
+#' @param   ddof        Degrees of freedom for standard deviations, with default 0 (1/n). The alternative is 1 leading to 1/(n-1).
 #' @param   n_threads   Number of threads.
-#' @returns Standardized matrix.
+#' @return Standardized matrix.
+#' The object is an S4 class with methods for efficient computation by adelie.
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
 #' X <- matrix(rnorm(n * p), n, p)
 #' out <- matrix.standardize(matrix.dense(X))
 #' @export
+
 matrix.standardize <- function(
     mat,
     centers =NULL,
     scales =NULL,
+    weights=NULL,
     ddof =0,
     n_threads =1
 )
 {
     n <- mat$rows
     p <- mat$cols
-    sqrt_weights <- as.double(rep(1 / sqrt(n), n))
+    if(is.null(weights))
+        weights=rep(1/n,n)
+    else weights=weights/sum(weights)
+    sqrt_weights <- sqrt(weights)
     is_centers_none <- is.null(centers)
 
     if (is_centers_none) {
@@ -494,9 +533,9 @@ matrix.standardize <- function(
     centers <- as.numeric(centers)
     scales <- as.numeric(scales)
     input <- list(
-        "mat"=mat, 
-        "centers"=centers, 
-        "scales"=scales, 
+        "mat"=mat,
+        "centers"=centers,
+        "scales"=scales,
         "n_threads"=n_threads
     )
     out <- new(RMatrixNaiveStandardize64, input)
@@ -507,35 +546,40 @@ matrix.standardize <- function(
 }
 
 #' Creates a subset of the matrix along an axis.
-#' 
-#' @param   mat     The matrix to subset.
-#' @param   indices     Array of indices to subset the matrix.
-#' @param   axis        The axis along which to subset.
+#'
+#' @param   mat     The \code{adelie} matrix to subset.
+#' @param   indices     Vector of indices to subset the matrix.
+#' @param   axis        The axis along which to subset (2 is columns, 1 is rows).
 #' @param   n_threads   Number of threads.
-#' @returns Subset of the matrix along an axis.
+#' @return Matrix subsetted along the appropriate axis.
+#' The object is an S4 class with methods for efficient computation by adelie.
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
 #' p <- 20
 #' X <- matrix.dense(matrix(rnorm(n * p), n, p))
 #' indices <- c(1, 3, 10)
-#' out <- matrix.subset(X, indices, axis=0)
 #' out <- matrix.subset(X, indices, axis=1)
+#' out <- matrix.subset(X, indices, axis=2)
 #' @export
 matrix.subset <- function(
     mat,
     indices,
-    axis =0,
+    axis =1,
     n_threads =1
 )
 {
+    if(axis %in% c(1,2))axis = axis -1 # C++ base 0
+    else stop("axis can take values 1 (rows) or 2 (columns)  only")
+
     dispatcher <- c(
         RMatrixNaiveRSubset64,
         RMatrixNaiveCSubset64
     )
     indices <- as.integer(indices)
     input <- list(
-        "mat"=mat, 
-        "subset"=indices, 
+        "mat"=mat,
+        "subset"=indices,
         "n_threads"=n_threads
     )
     out <- new(dispatcher[[axis+1]], input)

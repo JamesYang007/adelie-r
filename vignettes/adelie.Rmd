@@ -1,10 +1,12 @@
 ---
-title: "adelie"
+title: "An Introduction to `adelie`"
 author:
-    - James Yang
+    - James Yang, Trevor Hastie and Balasubramanian Narasimhan
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+bibliography: assets/grpnet_refs.bib
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{adelie}
+  %\VignetteIndexEntry{An Introduction to `adelie`}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,20 +14,448 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "##",
+  fig.width = 7,
+  fig.height=6
 )
 ```
+# __Introduction to Group Lasso and Elastic Net__
 
-## Quickstart
+The `adelie` package  provides extremely efficient procedures for
+fitting the entire group lasso and group elastic net regularization
+path for GLMs, multinomial, the Cox model and multi-task Gaussian
+models. `adelie` is similar to the R package `glmnet` in scope of models, and in computational speed.
+The R package `adelie` is built from the same C++ code as used in the
+corresponding [adelie Python package](https://github.com/JamesYang007/adelie).
+
+In this notebook, we give a brief overview of the group elastic net problem that `adelie` solves.
+
+
+## __Single-Response Group Elastic Net__
+
+
+The single-response group elastic net problem is given by
+$$
+\begin{align*}
+    \mathrm{minimize}_{\beta, \beta_0} \quad&
+    \ell(\eta) + \lambda \sum\limits_{g=1}^G \omega_g \left(
+        \alpha \|\beta_g\|_2 + \frac{1-\alpha}{2} \|\beta_g\|_2^2
+    \right)
+    \\\text{subject to}\quad&
+    \eta = X \beta + \beta_0 \mathbf{1} + \eta^0
+\end{align*}
+$$
+where 
+$\beta_0$ is the intercept,
+$\beta$ is the coefficient vector,
+$X$ is the feature matrix,
+$\eta^0$ is a fixed offset vector,
+$\lambda \geq 0$ is the regularization parameter,
+$G$ is the number of groups,
+$\omega_g \geq 0$ is the penalty factor per group,
+$\alpha \in [0,1]$ is the elastic net parameter,
+and $\beta_g$ are the coefficients for the $g$ th group.
+$\ell(\cdot)$ is the loss function defined by the GLM.
+As an example, the Gaussian GLM 
+(`glm.gaussian()`)
+defines the loss function as
+$$
+\begin{align*}
+    \ell(\eta)
+    &=
+    \sum\limits_{i=1}^n w_i \left(
+        -y_i \eta_i + \frac{\eta_i^2}{2}
+    \right)
+\end{align*}
+$$
+where
+$w \geq 0$ is the observation weight vector,
+$y$ is the response vector,
+and $\eta$ is the linear prediction vector as in the optimization
+problem above. This is equivalent to the weighted sum-of-squared errors
+$$
+\begin{align*}
+    \mbox{RSS}
+    &=
+    \frac12\sum\limits_{i=1}^n w_i \left(
+        y_i -\eta_i \right)^2,
+\end{align*}
+$$
+since the term in $\sum w_iy_i^2$ is a constant for the
+optimization.
+
+Specifically for the Gaussian GLM, we employ a specialized optimizer based on coordinate descent
+to solve the group elastic net problem.
+
+The Gaussian GLM is written in "exponential family" form, with
+$\eta_i$ the natural parameter. Other GLMs such as binomial
+(`glm.binomial()`) and Poisson (`glm.poisson()`) have similar
+expressions for the negative log-likelihood.
+For other general GLMs as well as the Cox model (`glm.cox()`), we use a proximal Newton method, 
+which leads to an Iterative Reweighted Least Squares (IRLS) algorithm,
+That is, we iteratively perform a quadratic approximation to $\ell(\cdot)$, 
+which yields a sequence of Gaussian GLM group elastic net problems
+that we solve using our special solver based on coordinate descent.
+
+
+The Gaussian GLM also admits a different algorithm, which we call the _the covariance method_,
+using summary statistics rather than individual-level data.
+The covariance method solves the following problem:
+$$
+\begin{align*}
+    \mathrm{minimize}_{\beta} \quad&
+    \frac{1}{2} \beta^\top A \beta
+    - v^\top \beta
+    + 
+    \lambda \sum\limits_{g=1}^G \omega_g \left(
+        \alpha \|\beta_g\|_2 + \frac{1-\alpha}{2} \|\beta_g\|_2^2
+    \right)
+\end{align*}
+$$
+This method would be equivalent to the usual single-response Gaussian group elastic net problem
+if $A \equiv X_c^\top W X_c$ and $v \equiv X_c^\top W y_c$
+where $X_c$ is column-centered version of $X$ 
+and $y_c$ is the centered version of $y-\eta^0$
+where the means are computed with weights $W$
+(if intercept is to be fit).
+
+This method only works for the Gaussian case since the proximal Newton method
+changes the weights $W$ at every IRLS iteration,
+so that without access to $X$, it is not possible to compute the new "$A$" and "$v$".
+
+
+## __Multi-Response Group Elastic Net__
+
+
+The multi-response group elastic net problem is given by
+$$
+\begin{align*}
+    \mathrm{minimize}_{B,\; \beta_0} \quad&
+    \ell(\eta) + \lambda \sum\limits_{g=1}^G \omega_g \left(
+        \alpha \|B_g\|_F + \frac{1-\alpha}{2} \|B_g\|_F^2
+    \right)
+    \\\text{subject to}\quad&
+        \eta = X B + \mathbf{1} \beta_0^\top + \eta^0
+\end{align*}
+$$
+The model arises in "multitask" learning --- `glm.multigaussian()` ---
+as
+well as multinomial (multiclass) logistic regression
+--- `glm.multinomial()`. This way, we have possibly different linear
+predictions for each of $K$ responses, and hence 
+$\eta$ is $n\times K$. The coefficient "matrices" for each group $B_g$ are
+penalized using a Frobenius norm. 
+Note that if an intercept is included in the model, an intercept is added for each response.
+
+
+We use an alternative but equivalent representation in the `adelie` software, by
+"flattening" the coefficient matrices. Specifically we solve
+$$
+\begin{align*}
+    \mathrm{minimize}_{\beta,\; \beta_0} \quad&
+    \ell(\eta) + \lambda \sum\limits_{g=1}^G \omega_g \left(
+        \alpha \|\beta_g\|_2 + \frac{1-\alpha}{2} \|\beta_g\|_2^2
+    \right)
+    \\\text{subject to}\quad&
+    \mathrm{vec}(\eta^\top) = (X \otimes I_K) \beta + (\mathbf{1} \otimes I_K) \beta_0 + \mathrm{vec}(\eta^{0\top})
+\end{align*}
+$$
+where $\mathrm{vec}(\cdot)$ is the operator that flattens a column-major matrix into a vector,
+and $A \otimes B$ is the Kronecker product operator. Hence $\beta \equiv \mathrm{vec}(B^\top)$.
+
+As indicated above, the multi-response group elastic net problem is technically of the same form
+as the single-response group elastic net problem.
+In fact, `adelie` reuses the single-response solver for multi-response problems
+by modifying the inputs appropriately 
+(e.g. using `matrix.kronecker_eye()`) to represent $X \otimes I_K$).
+For the MultiGaussian family, we wrap the specialized single-response Gaussian solver
+and otherwise for general multi-response GLMs, we wrap the single-response GLM solver.
+
+
+# __Quickstart__
+
+In this section, we cover the basic usage of `adelie`.
 
 ```{r}
 library(adelie)
-
-set.seed(0)
-n <- 100
-p <- 200
-X <- matrix(rnorm(n * p), n, p)
-y <- X[,1] * rnorm(1) + rnorm(n)
-state <- grpnet(X, glm.gaussian(y))
 ```
 
+## __Gaussian Group Elastic Net__
+
+Before using `adelie`, we assume that the user has a feature matrix `X` and a response vector `y`.
+For simplicity, we assume for now that `X` is a dense matrix,
+although we will later see that `X` can be substituted with a custom matrix as well.
+For demonstration, we will randomly generate our data.
+
+```{r}
+n = 100     # number of observations
+p = 1000    # number of features
+set.seed(5) # seed
+X = matrix(rnorm(n*p),n,p)
+y = X[,1:10]%*%rnorm(10) + rnorm(n)*sqrt(10) # makes SNR = 1
+```
+
+### __Lasso__
+
+
+The most basic call to `grpnet` simply supplies a `X` matrix and a `glm` object.
+For example, `glm.gaussian()` returns a Gaussian `glm` object,
+which corresponds to the usual least squares loss function.
+By default, `grpnet` will fit lasso by setting each feature as its own group.
+`adelie` is written to treat groups of size `1` in a more optimized manner,
+so it is a competitive lasso solver that has computation times similar
+to those of the `glmnet` package.
+Like `glmnet`, `grpnet` will also generate a sequence of 100  regularizations $\lambda$ 
+evenly spaced on the log scale, by default if the user does not provide the path.
+Since `grpnet` is a path-solver, it will warm-start at the next $\lambda$
+using the current solution on the path.
+__For this reason, we recommend users to supply a sufficiently fine grid of__ $\lambda$ __or use the default path!__
+
+```{r}
+fit = grpnet(X=X, glm=glm.gaussian(y=y))
+print(fit)
+```
+
+The `print()` methods gives a nice summary of the fit.
+Note that the solver finished early in this example.
+By default, the solver terminates if the latter reaches $90\%$ as a simple heuristic to avoid overfitting.
+This threshold can be controlled via the argument `adev_tol`.
+
+The output of `grpnet` is a an object of class "grpnet", which
+contains some simple descriptors of the model, as well as a _state_
+object that represents the state of the optimizer.
+For most use-cases, the users do not need to inspect the internals of a state object,
+but rather can extract the useful information via the methods
+`print()`, `plot()`, `predict()` and `coef()`.
+
+```{r}
+plot(fit)
+```
+Here we plot the coefficients profiles as a function of
+$-\log(\lambda)$. By default `grpnet` standardizes the features
+internally, and these coefficients are on the scale of the
+standardized features. One can avoid standardization via `standardize
+= FALSE` in the call to `grpnet()`.
+
+We can make predictions at new values for the features --- here we use
+a subset of the original:
+
+```{r}
+pred = predict(fit, newx = X[1:5,],lambda = c(1.5, 1))
+pred
+```
+Finally, we would like to choose a good value for $\lambda$, and for
+that we use cross-validation. We include a `progress_bar` argument,
+which can be helful for big problems. The `plot` method for a
+`cv.grpnet` object displays the average cross-validated deviance of the model,
+with approximate standard error bars for the average. 
+
+```{r}
+fitcv = cv.grpnet(X,glm.gaussian(y),progress_bar = TRUE)
+plot(fitcv)
+```
+Two vertical
+dashed lines are included: one at the value of $\lambda$ corresponding
+to the minimum value, and another at a larger (more conservative)
+value of $\lambda$, such that the mean error is within one standard
+error of the minimum.
+
+One can print the fitted `cv.glmnet` object:
+```{r}
+fitcv
+```
+One can also predict directly from it:
+```{r}
+pred = predict(fitcv, newx = X)
+pred = predict(fitcv, newx = X, lambda = "lambda.min")
+```
+In the first case the prediction is at the default value of $\lambda$,
+which is `lambda = "lambda.1se"`. Alternatively, any numeric values of
+$\lambda$ can be supplied.
+
+### __Group Lasso__
+
+
+To fit group lasso, the user simply needs to supply a `groups` argument that
+defines the starting column index of $X$ for each group.
+For example, if there are `4` features with two (contiguous) groups of sizes `3` and `1`, respectively,
+then `groups = c(1, 4)`.
+For demonstration, we take the same data as before and group every `10` features.
+We then fit group lasso using the same function.
+
+```{r}
+fitg = grpnet(
+    X=X,
+    glm=glm.gaussian(y=y),
+    groups=seq(from = 1, to = p, by=10),
+    )
+print(fitg)
+plot(fitg)
+```
+Notice in the printout the active set (df) increases in steps of 10,
+as expected. Also the coefficient plot colors all coefficients for a
+group with the sample color.
+
+
+As before, we can use cross-validation to select the tuning parameter.
+```{r}
+fitgcv = cv.grpnet(
+    X,
+    glm.gaussian(y),
+    groups=seq(from = 1, to = p, by=10),
+    progress_bar = TRUE)
+plot(fitgcv)
+```
+
+
+## __GLM Group Elastic Net__
+
+In the previous section, we covered how to solve penalized least squares regression.
+Nearly all of the content remains the same for fitting penalized GLM regression.
+The only difference is in the choice of the `glm` object.
+For brevity, we only discuss logistic regression as our non-trivial GLM example,
+however the following discussion applies for any GLM.
+
+Let's modify our example and generate a binomial response.
+
+```{r}
+eta = X[,1:5]%*%rnorm(5)/sqrt(5)
+mu = 1 / (1 + exp(-eta))
+y = rbinom(n, size = 1, prob = mu)
+```
+
+To solve the group elastic net problem using the logistic loss,
+we simply provide the binomial GLM object.
+For simplicity, we fit the lasso problem below.
+
+```{r}
+fitb = grpnet(X, glm.binomial(y))
+plot(fitb)
+```
+
+Cross-validation works as before:
+```{r}
+fitbcv = cv.grpnet(X,glm.binomial(y),progress_bar = TRUE)
+plot(fitbcv)
+```
+We can make predictions from the fitted objects as before. For GLMs,
+the predictions are for the link ($\eta$).
+
+We can specify coefficient groups just as before.
+
+## __Multi-Response GLM Elastic Net__
+
+`grpnet` is also able to fit multi-response GLM elastic nets.
+Currently, we only support MultiGaussian (least squares) and Multinomial GLMs.
+ 
+The following code shows an example of fitting a multinomial
+regression problem. We will use the `glm.multinomial()` family, which
+expects a matrix response $Y$ with $K$ columns (the number of
+classes). Each row of $Y$ is a proportion vector which sums to 1.
+In the example below, $Y$ is an indicator matrix, with a single 1 in
+each row, the rest being zeros.
+
+```{r}
+n = 300     # number of observations
+p = 100    # number of features
+K = 4       # number of classes
+set.seed(7)
+X = matrix(rnorm(n*p),n,p)
+eta = X[, 1:5] %*% matrix(rnorm(K*5),5,K)/sqrt(5)
+probs = exp(eta)
+probs = probs/rowSums(probs)
+Y = t(apply(probs,1,function(prob)rmultinom(1, 1, prob)))
+Y[1:5,]
+```
+
+The fitting proceeds as before. We will directly fit a group lasso,
+with groups of 5 chosen similarly to before.
+
+```{r fitm}
+grps = seq(from=1, to=p, by = 5)
+fitm = grpnet(X, glm.multinomial(Y), groups=grps)
+```
+
+```{r  out.lines = 10}
+print(fitm)
+```
+
+```{r plotfitm}
+plot(fitm)
+```
+The coefficient for each feature is a vector(one per class), so rather
+than show multiple coefficients, the plot shows the progress of the
+2norm as a function of $\lambda$. Once again, because of the grouping
+(into groups of 5 here), the groups are colored the same. In this
+case, the first group has all the action, so appears much earlier than
+the rest.
+
+```{r}
+fitmcv = cv.grpnet(X,glm.multinomial(Y),groups=grps)
+plot(fitmcv)
+```
+
+Another important difference from the single-response case is that 
+the user must be aware of the shape of the returned coefficients, as
+returned by `coef(fitm)` or `coef(fitmcv)`. 
+```{r}
+names(coef(fitm))
+```
+We see that `coef()` returns a list.
+For multi-response GLMs, the `intercepts` component is
+included by default for each response,
+and hence is a $L \times K$ matrix, where $L$ is the number of
+$\lambda$s in the path. The `betas` component will be a $L \times pK)$
+sparse matrix where every successive $K$ columns correspond to the
+coefficients associated with a feature and across all responses.
+
+Fortunately the `predict()` method understands this structure, and
+behaves as intended.
+
+```{r}
+predict(fitmcv,newx = X[1:3,])
+```
+Here by default the prediction is made at `lambda = "lambda.1se"`.
+
+## __Cox Models__
+
+Our final example will be for censored survival data, and we will fit
+Cox proportional hazards model.
+
+We create an example with a $500 \times 100$ _sparse_ $X$ matrix.
+In this example we have right censoring. So the "subject" exits at
+times in `y`, and the binary `status` is 1 of the exit is a "death",
+else 0 if censored.
+
+```{r}
+set.seed(9)
+n <- 500
+p <- 100
+X  <- matrix(rnorm(n*p), n, p)
+X[sample.int(n * p, size = 0.5 * n * p)] <- 0
+X_sparse <- Matrix::Matrix(X, sparse = TRUE)
+
+nzc <- p / 4
+beta <- rnorm(nzc)
+fx <- X[, seq(nzc)] %*% beta / 3
+hx <- exp(fx)
+y <- rexp(n,hx)
+status <- rbinom(n = n, prob = 0.3, size = 1)
+```
+
+We now fit an elastic-net model using the `glm.cox()` family,
+with every set of 5 coefficients in a group.
+
+```{r}
+groups = seq(from = 1, to = p, by = 5)
+fitcv <- cv.grpnet(X_sparse,
+                   glm.cox(stop = y, status = status),
+                   alpha = 0.5,
+                   groups = groups)
+par(mfrow = c(1,2))
+plot(fitcv)
+plot(fitcv$grpnet.fit)
+```
+
+
+## References

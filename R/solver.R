@@ -1,5 +1,5 @@
 solve_ <- function(
-    state, 
+    state,
     progress_bar=FALSE
 )
 {
@@ -58,7 +58,7 @@ solve_ <- function(
 }
 
 #' Solves group elastic net via covariance method.
-#' 
+#'
 #' @param   A   Positive semi-definite matrix.
 #' @param   v   Linear term.
 #' @param   constraints     Constraints.
@@ -72,20 +72,20 @@ solve_ <- function(
 #' @param   newton_tol  Convergence tolerance for the BCD update.
 #' @param   newton_max_iters    Maximum number of iterations for the BCD update.
 #' @param   n_threads   Number of threads.
-#' @param   early_exit  \code{TRUE} if the function should early exit.
-#' @param   screen_rule Screen rule.
-#' @param   min_ratio   Ratio between largest and smallest regularization.
-#' @param   lmda_path_size Number of regularizations.
-#' @param   max_screen_size Maximum number of screen groups.
-#' @param   max_active_size Maximum number of active groups.
-#' @param   pivot_subset_ratio  Subset ratio of pivot rule.
-#' @param   pivot_subset_min    Minimum subset of pivot rule.
-#' @param   pivot_slack_ratio   Slack ratio of pivot rule.
-#' @param   check_state     Check state.
-#' @param   progress_bar    Progress bar.
-#' @param   warm_start      Warm start.
-#' @returns State of the solver.
-#' 
+#' @param   early_exit  \code{TRUE} if the function should exit early.
+#' @param   screen_rule Screen rule (currently the only value is the default \code{"pivot"}.
+#' @param   min_ratio   Ratio between largest and smallest regularization parameter, default is \code{0.01}.
+#' @param   lmda_path_size Number of regularization steps in the path, default is \code{100}.
+#' @param   max_screen_size Maximum number of screen groups, default is \code{NULL} for no maximum.
+#' @param   max_active_size Maximum number of active groups, default is \code{NULL} for no maximum.
+#' @param   pivot_subset_ratio  Subset ratio of pivot rule, default is \code{0.1}.
+#' @param   pivot_subset_min    Minimum subset of pivot rule, default is \code{1}.
+#' @param   pivot_slack_ratio   Slack ratio of pivot rule, default is \code{1.25}.
+#' @param   check_state     Check state, default is \code{FALSE}.
+#' @param   progress_bar    Progress bar, default is \code{TRUE}.
+#' @param   warm_start      Warm start, default is \code{NULL} (no warm start).
+#' @return  State of the solver.
+#'
 #' @examples
 #' set.seed(0)
 #' n <- 100
@@ -95,7 +95,7 @@ solve_ <- function(
 #' A <- t(X) %*% X / n
 #' v <- t(X) %*% y / n
 #' state <- gaussian_cov(A, v)
-#' 
+#'
 #' @export
 gaussian_cov <- function(
     A,
@@ -133,7 +133,7 @@ gaussian_cov <- function(
 
     if (!is.null(lmda_path)) {
         lmda_path <- sort(lmda_path, decreasing=TRUE)
-    } 
+    }
 
     if (is.null(groups)) {
         groups <- as.integer(0:(p-1))
@@ -238,47 +238,120 @@ gaussian_cov <- function(
     )
 }
 
-#' Solves group elastic net via naive method.
-#' 
-#' @param   X   Feature matrix.
-#' @param   glm     GLM object.
-#' @param   constraints Constraints.
-#' @param   groups  Groups.
-#' @param   alpha   Elastic net parameter.
-#' @param   penalty Penalty factor.
-#' @param   offsets Offsets.
-#' @param   lmda_path   The regularization path.
-#' @param   irls_max_iters  Maximum number of IRLS iterations.
-#' @param   irls_tol  IRLS convergence tolerance.
-#' @param   max_iters   Maximum number of coordinate descents.
-#' @param   tol     Coordinate descent convergence tolerance.
-#' @param   adev_tol    Percent deviance explained tolerance.
-#' @param   ddev_tol    Difference in percent deviance explained tolerance.
-#' @param   newton_tol  Convergence tolerance for the BCD update.
-#' @param   newton_max_iters    Maximum number of iterations for the BCD update.
-#' @param   n_threads   Number of threads.
-#' @param   early_exit  \code{TRUE} if the function should early exit.
-#' @param   intercept   \code{TRUE} to fit with intercept.
-#' @param   screen_rule Screen rule.
-#' @param   min_ratio   Ratio between largest and smallest regularization.
-#' @param   lmda_path_size Number of regularizations.
-#' @param   max_screen_size Maximum number of screen groups.
-#' @param   max_active_size Maximum number of active groups.
-#' @param   pivot_subset_ratio  Subset ratio of pivot rule.
-#' @param   pivot_subset_min    Minimum subset of pivot rule.
-#' @param   pivot_slack_ratio   Slack ratio of pivot rule.
-#' @param   check_state     Check state.
-#' @param   progress_bar    Progress bar.
-#' @param   warm_start      Warm start.
-#' @returns State of the solver.
+#' fit a GLM with group lasso or group elastic-net regularization
 #'
+#' Computes a group elastic-net regularization path for a variety of
+#' GLM and other families, including the Cox model. This function
+#' extends the abilities of the \code{glmnet} package to allow for
+#' grouped regularization. The code is very efficient (core routines
+#' are written in C++), and allows for specialized matrix
+#' classes.
+#'
+#' @param X Feature matrix. Either a regualr R matrix, or else an
+#'     \code{adelie} custom matrix class, or a concatination of such.
+#' @param glm GLM family/response object. This is an expression that
+#'     represents the family, the reponse and other arguments such as
+#'     weights, if present. The choices are \code{glm.gaussian()},
+#'     \code{glm.binomial()}, \code{glm.poisson()},
+#'     \code{glm.multinomial()}, \code{glm.cox()}, \code{glm.multinomial()},
+#'     and \code{glm.multigaussian()}. This is a required argument, and
+#'     there is no default. In the simple example below, we use \code{glm.gaussian(y)}.
+#' @param constraints Constraints on the parameters. Currently these are ignored.
+#' @param groups This is an ordered vector of integers that represents the groupings,
+#' with each entry indicating where a group begins. The entries refer to column numbers
+#' in the feature matrix.
+#'        If there are \code{p} features, the default is \code{1:p} (no groups).
+#' (Note that in the output of \code{grpnet} this vector might be shifted to start from 0,
+#' since internally \code{adelie} uses zero-based indexing.)
+#' @param alpha The elasticnet mixing parameter, with \eqn{0\le\alpha\le 1}.
+#' The penalty is defined as
+#' \deqn{(1-\alpha)/2\sum_j||\beta_j||_2^2+\alpha\sum_j||\beta_j||_2,} where thte sum is over groups.
+#' \code{alpha=1} is pure group
+#' lasso penalty, and \code{alpha=0} the pure ridge penalty.
+#' @param penalty Separate penalty factors can be applied to each group of coefficients.
+#' This is a number that multiplies \code{lambda} to allow
+#' differential shrinkage for groups. Can be 0 for some groups, which implies no
+#' shrinkage, and that group is always included in the model.
+#' Default is square-root of group sizes for each group.
+#' @param offsets Offsets, default is \code{NULL}. If present, this is
+#'     a fixed vector or matrix corresponding to the shape of the natural
+#'     parameter, and is added to the fit.
+#' @param lambda A user supplied \code{lambda} sequence. Typical usage is to
+#' have the program compute its own \code{lambda} sequence based on
+#' \code{lmda_path_size} and \code{min_ratio}.
+#' @param standardize If \code{TRUE} (the default), the columns of \code{X} are standardized before the
+#' fit is computed. This is good practice if the features are a mixed bag, because it has an impact on
+#' the penalty. The regularization path is computed using the standardized features, and the
+#' standardization information is saved on the object for making future predictions.
+#' @param irls_max_iters Maximum number of IRLS iterations, default is
+#'     \code{1e4}.
+#' @param irls_tol IRLS convergence tolerance, default is \code{1e-7}.
+#' @param max_iters Maximum total number of coordinate descent
+#'     iterations, default is \code{1e5}.
+#' @param tol Coordinate descent convergence tolerance, default \code{1e-7}.
+#' @param adev_tol Fraction deviance explained tolerance, default
+#'     \code{0.9}. This can be seen as a limit on overfitting the
+#'     training data.
+#' @param ddev_tol Difference in fraction deviance explained
+#'     tolerance, default \code{0}. If a step in the path changes the
+#'     deviance by this amount or less, the algorithm truncates the
+#'     path.
+#' @param newton_tol Convergence tolerance for the BCD update, default
+#'     \code{1e-12}. This parameter controls the iterations in each
+#'     block-coordinate step to establish the block solution.
+#' @param newton_max_iters Maximum number of iterations for the BCD
+#'     update, default \code{1000}.
+#' @param n_threads Number of threads, default \code{1}.
+#' @param early_exit \code{TRUE} if the function should be allowed to exit
+#'     early.
+#' @param intercept Default \code{TRUE} to include an unpenalized
+#'     intercept.
+#' @param screen_rule Screen rule, with default \code{"pivot"}. Other option is \code{"strong"}.
+#' (an empirical improvement over \code{"strong"}, the other option.)
+#' @param min_ratio Ratio between smallest and largest value of lambda. Default is 1e-2.
+#' @param lmda_path_size Number of values for \code{lambda}, if generated automatically.
+#' Default is 100.
+#' @param max_screen_size Maximum number of screen groups. Default is \code{NULL}.
+#' @param max_active_size Maximum number of active groups. Default is \code{NULL}.
+#' @param pivot_subset_ratio Subset ratio of pivot rule. Default is \code{0.1}. Users not expected to fiddle with this.
+#' @param pivot_subset_min Minimum subset of pivot rule. Defaults is \code{1}. Users not expected to fiddle with this.
+#' @param pivot_slack_ratio Slack ratio of pivot rule, default is \code{1.25}. Users not expected to fiddle with this.
+#' See reference for details.
+#' @param check_state Check state. Internal parameter, with default \code{FALSE}.
+#' @param progress_bar Progress bar. Default is \code{FALSE}.
+#' @param warm_start Warm start (default is \code{NULL}). Internal parameter.
+#'
+#' @return A list of class \code{"grpnet"}. This has a main component called \code{state} which
+#' represents the fitted path, and a few extra
+#' useful components such as the \code{call}, the \code{family} name, and \code{group_sizes}.
+#' Users typically use methods like \code{predict()}, \code{print()}, \code{plot()} etc to examine the object.
+#' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
+#' \email{hastie@@stanford.edu}
+#'
+#' @references Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
+#' and Elastic Net Penalized Regression via Block-Coordinate Descent. arXiv \doi{10.48550/arXiv.2405.08631}.\cr
+#' Friedman, J., Hastie, T. and Tibshirani, R. (2008)
+#' \emph{Regularization Paths for Generalized Linear Models via Coordinate
+#' Descent (2010), Journal of Statistical Software, Vol. 33(1), 1-22},
+#' \doi{10.18637/jss.v033.i01}.\cr
+#' Simon, N., Friedman, J., Hastie, T. and Tibshirani, R. (2011)
+#' \emph{Regularization Paths for Cox's Proportional
+#' Hazards Model via Coordinate Descent, Journal of Statistical Software, Vol.
+#' 39(5), 1-13},
+#' \doi{10.18637/jss.v039.i05}.\cr
+#' Tibshirani,Robert, Bien, J., Friedman, J., Hastie, T.,Simon, N.,Taylor, J. and
+#' Tibshirani, Ryan. (2012) \emph{Strong Rules for Discarding Predictors in
+#' Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
+#' \url{https://arxiv.org/abs/1011.2234}.\cr
+#' @seealso \code{cv.grpnet}, \code{predict.grpnet}, \code{plot.grpnet}, \code{print.grpnet}.
 #' @examples
 #' set.seed(0)
 #' n <- 100
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
 #' y <- X[,1] * rnorm(1) + rnorm(n)
-#' state <- grpnet(X, glm.gaussian(y))
+#' fit <- grpnet(X, glm.gaussian(y))
+#' print(fit)
 #'
 #' @export
 grpnet <- function(
@@ -289,7 +362,8 @@ grpnet <- function(
     alpha = 1,
     penalty = NULL,
     offsets = NULL,
-    lmda_path = NULL,
+    lambda = NULL,
+    standardize = TRUE,
     irls_max_iters = as.integer(1e4),
     irls_tol = 1e-7,
     max_iters = as.integer(1e5),
@@ -301,7 +375,7 @@ grpnet <- function(
     n_threads = 1,
     early_exit = TRUE,
     intercept = TRUE,
-    screen_rule = "pivot",
+    screen_rule = c("pivot","strong"),
     min_ratio = 1e-2,
     lmda_path_size = 100,
     max_screen_size = NULL,
@@ -310,21 +384,28 @@ grpnet <- function(
     pivot_subset_min = 1,
     pivot_slack_ratio = 1.25,
     check_state = FALSE,
-    progress_bar = TRUE,
+    progress_bar = FALSE,
     warm_start = NULL
 )
 {
-    X_raw <- X
-
+    thiscall <- match.call()
+    familyname <- glm$name
+    if(inherits(X,"sparseMatrix")){
+        X <- as(X,"CsparseMatrix")
+        X <- matrix.sparse(X, method="naive", n_threads=n_threads)
+    }
     if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
-
     n <- X$rows
     p <- X$cols
-
-    y <- glm$y 
+    y <- glm$y
     weights <- as.double(glm$weights)
+    if(standardize){
+        if(intercept)centers=NULL else centers = rep(0.0,p)
+        X = matrix.standardize(X,centers=centers,weights=weights)
+    }
+    X_raw <- X
     if (is.null(dim(y))) {
         y <- as.double(y)
     }
@@ -346,11 +427,11 @@ grpnet <- function(
             offsets <- matrix(0.0, nrow(y), ncol(y))
         }
     }
-
+    lmda_path = lambda
     if (!is.null(lmda_path)) {
         lmda_path <- sort(lmda_path, decreasing=TRUE)
-    } 
-
+    }
+    screen_rule=match.arg(screen_rule)
     solver_args <- list(
         X=X_raw,
         constraints=constraints,
@@ -392,20 +473,17 @@ grpnet <- function(
         solver_args[["weights"]] <- weights
     }
 
+    if (is.null(groups)) {
+        groups <- 0:(p-1)
+    }
+    else(groups = as.integer(groups-1))# In R we do not do 0 indexing
+    savegrpsize = diff(c(groups,p))
     # multi-response GLMs
     if (glm$is_multi) {
         K <- ncol(y)
 
-        if (is.null(groups)) {
-            groups <- "grouped"
-        } 
-        if (groups == "grouped") {
-            groups <- as.integer(K * ((1:p) - 1))
-        } else if (groups == "ungrouped") {
-            groups <- as.integer((1:(K*p)) - 1)
-        } else {
-            stop("groups must be one of \"grouped\" or \"ungrouped\" for multi-response.")
-        }
+        # flatten the grouping index across the classes
+        groups <- K * groups
 
         if (intercept) {
             groups <- as.integer(c((1:K)-1, K + groups))
@@ -479,7 +557,7 @@ grpnet <- function(
                     matrix(rep_len(1.0, n), n, 1), K, n_threads=n_threads
                 ),
                 X_aug
-            ), axis=1, n_threads=n_threads)
+            ), axis=2, n_threads=n_threads)# Trevor changed the axis meaning - it was 1
         }
 
         if (is_gaussian_opt) {
@@ -498,7 +576,7 @@ grpnet <- function(
                 # R^2 can be initialized to MSE under intercept-model minus y_var.
                 # This is a negative quantity in general, but will be corrected to 0
                 # when the model fits the unpenalized (including intercept) term.
-                # Then, supplying y_var as the normalization will result in R^2 
+                # Then, supplying y_var as the normalization will result in R^2
                 # relative to the intercept-model.
                 if (intercept) {
                     y_off_c <- t(t(y_off) - as.double(t(y_off) %*% weights)) # NOT a typo: weights
@@ -529,7 +607,7 @@ grpnet <- function(
             solver_args[["grad"]] <- grad
 
             state <- do.call(state.multigaussian_naive, solver_args)
-        
+
         # GLM case
         } else {
             if (is.null(warm_start)) {
@@ -560,11 +638,6 @@ grpnet <- function(
 
     # single-response GLMs
     } else {
-        if (is.null(groups)) {
-            groups <- as.integer(0:(p-1))
-        } else {
-            groups <- as.integer(groups)
-        }
         group_sizes <- c(groups, p)
         group_sizes <- group_sizes[2:length(group_sizes)] - group_sizes[1:(length(group_sizes)-1)]
         group_sizes <- as.integer(group_sizes)
@@ -685,8 +758,14 @@ grpnet <- function(
         }
     }
 
-    solve_(
+    state <- solve_(
         state=state,
         progress_bar=progress_bar
     )
+    stan = if(standardize)
+               list(centers=attr(X,"_centers"),scales = attr(X,"_scales"))
+           else NULL
+    out <- list(call=thiscall, family = familyname, group_sizes=savegrpsize,standardize = stan, state = state)
+    class(out) <- "grpnet"
+    out
 }

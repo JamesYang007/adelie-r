@@ -2,22 +2,25 @@
 % Please edit documentation in R/matrix.R
 \name{matrix.dense}
 \alias{matrix.dense}
-\title{Creates a viewer of a dense matrix.}
+\title{Creates a dense matrix object.}
 \usage{
-matrix.dense(mat, method = "naive", n_threads = 1)
+matrix.dense(mat, method = c("naive", "cov"), n_threads = 1)
 }
 \arguments{
 \item{mat}{The dense matrix.}
 
-\item{method}{Method type.}
+\item{method}{Method type, with  default \code{method="naive"}.
+If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
+Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.}
 
 \item{n_threads}{Number of threads.}
 }
 \value{
 Dense matrix.
+The object is an S4 class with methods for efficient computation by adelie.
 }
 \description{
-Creates a viewer of a dense matrix.
+Creates a dense matrix object.
 }
 \examples{
 n <- 100
@@ -26,4 +29,7 @@ X_dense <- matrix(rnorm(n * p), n, p)
 out <- matrix.dense(X_dense, method="naive")
 A_dense <- t(X_dense) \%*\% X_dense
 out <- matrix.dense(A_dense, method="cov")
+}
+\author{
+Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}
 }
