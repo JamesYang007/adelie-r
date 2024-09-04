@@ -113,8 +113,8 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' predictors. Type \code{"response"} applies the inverse link to these predictions.
 #' Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.
 #' @param newoffsets If an offset is used in the fit, then one must be supplied
-#' for making predictions (except for \code{type="coefficients"} or
-#' \code{type="nonzero"})
+#' for making predictions (except for \code{type="coefficients"}.
+#' @param n_threads Number of threads, default \code{1}.
 #' @param \dots Currently ignored.
 #' @return The object returned depends on type.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
@@ -138,7 +138,8 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' @method predict grpnet
 #' @export
 #' @export predict.grpnet
-predict.grpnet=function(object,newx,lambda=NULL,type=c("link","response","coefficients"),newoffsets=NULL,...){
+predict.grpnet=function(object,newx,lambda=NULL,type=c("link","response","coefficients"),
+                        newoffsets=NULL,n_threads=1,...){
  type=match.arg(type)
   if(missing(newx)){
     if(!match(type,c("coefficients"),FALSE))stop("You need to supply a value for 'newx'")
@@ -177,14 +178,14 @@ state <- object$state
  ## Convert newx to an adelie matrix
  if(inherits(newx,"sparseMatrix")){
      newx <- as(newx,"CsparseMatrix")
-     newx <- matrix.sparse(newx, method="naive")
+     newx <- matrix.sparse(newx, method="naive", n_threads=n_threads)
  }
  if (is.matrix(newx) || is.array(newx) || is.data.frame(newx)) {
-     newx <- matrix.dense(newx, method="naive")
+     newx <- matrix.dense(newx, method="naive", n_threads=n_threads)
  }
  stan = object$standardize
  if(!is.null(stan))
-     newx = matrix.standardize(newx,centers=stan$centers,scales=stan$scales)
+     newx = matrix.standardize(newx,centers=stan$centers,scales=stan$scales, n_threads=n_threads)
 
  n <- newx$rows
 
@@ -197,7 +198,7 @@ state <- object$state
          }
  }
  else{# multi targets
-     newx = matrix.kronecker_eye(newx,K=K)
+     newx = matrix.kronecker_eye(newx,K=K, n_threads=n_threads)
      preds = newx$sp_btmul(betas)
      nlams = ncol(preds)
      intercepts = matrix(intercepts,nlams,n*K)# recycles
@@ -380,6 +381,7 @@ cv.grpnet = function(
                       lmda_path_size = 100,
                       offsets=offsets,
                       progress_bar=progress_bar,
+                      n_threads=n_threads,
                       ...)
     lambda = fit_full$state$lmdas
     lambda_max = max(lambda)
@@ -396,7 +398,9 @@ cv.grpnet = function(
         fit0 = grpnet(X,local_glm,
                       lmda_path_size=1,
                       offsets=offsets,
-                      progress_bar=FALSE,...)
+                      progress_bar=FALSE,
+                      n_threads=n_threads,
+                      ...)
         lam0 = fit0$state$lmdas
         local_lam = exp(log(lam0)+logstep)
         local_lam = local_lam[local_lam > lambda_max]
@@ -406,8 +410,9 @@ cv.grpnet = function(
                            lambda=aug_lam,
                            offsets=offsets,
                            progress_bar=progress_bar,
+                           n_threads=n_threads,
                            ...)
-        pred_local = predict(fit_local,newx=X, lambda=lambda,newoffsets=offsets)
+        pred_local = predict(fit_local,newx=X, lambda=lambda,newoffsets=offsets,n_threads=n_threads)
         devmat[k,] = getdev(pred_local,foldid==k,glm,local_glm)
     }
     fweights = tapply(weights,foldid,sum)

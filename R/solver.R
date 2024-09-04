@@ -403,7 +403,7 @@ grpnet <- function(
     weights <- as.double(glm$weights)
     if(standardize){
         if(intercept)centers=NULL else centers = rep(0.0,p)
-        X = matrix.standardize(X,centers=centers,weights=weights)
+        X = matrix.standardize(X,centers=centers,weights=weights, n_threads=n_threads)
     }
     X_raw <- X
     if (is.null(dim(y))) {
