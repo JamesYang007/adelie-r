@@ -17,7 +17,7 @@ matrix.interaction(
 
 \item{intr_keys}{List of feature indices. This is a list of all features with which interactions can be formed. Default is \code{1:p} where \code{p} is the number of columns in \code{mat}.}
 
-\item{intr_values}{List of list of feature indices. For each of the \code{m <= p} indices listed in \code{intr_keys}, there is a list of indices indicating which columns are candidates for interaction with that feature. If a list is \code{list(NULL)}, that means all other features are candidates for interactions.  The default is a list of length \code{m} where each element is \code{list(NULL)}; that is \code{rep(list(NULL), m}.}
+\item{intr_values}{List of integer vectors of feature indices. For each of the \code{m <= p} indices listed in \code{intr_keys}, there is a vector of indices indicating which columns are candidates for interaction with that feature. If a list is \code{list(NULL)}, that means all other features are candidates for interactions.  The default is a list of length \code{m} where each element is \code{list(NULL)}; that is \code{rep(list(NULL), m}.}
 
 \item{levels}{Number of levels for each of the columns of \code{mat}, with \code{1} representing a quantitative feature. A factor with \code{K} levels should be represented by the numbers \code{0,1,...,K-1}.}
 

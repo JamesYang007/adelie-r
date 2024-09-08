@@ -11,6 +11,7 @@
   lambda = NULL,
   type = c("link", "response", "coefficients"),
   newoffsets = NULL,
+  n_threads = 1,
   ...
 )
 
@@ -36,8 +37,9 @@ predictors. Type \code{"response"} applies the inverse link to these predictions
 Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.}
 
 \item{newoffsets}{If an offset is used in the fit, then one must be supplied
-for making predictions (except for \code{type="coefficients"} or
-\code{type="nonzero"})}
+for making predictions (except for \code{type="coefficients"}.}
+
+\item{n_threads}{Number of threads, default \code{1}.}
 
 \item{\dots}{Currently ignored.}
 }
