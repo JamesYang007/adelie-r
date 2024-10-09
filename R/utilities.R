@@ -8,3 +8,38 @@ function(x, upper, lower, width = 0.02, ...)
 	segments(x - barw, lower, x + barw, lower, ...)
 	range(upper, lower)
 }
+nonzeroGroup <- function(coefob,group, logical=FALSE){
+    ## computes which groups are active along the path
+    ## groups are numbered seq(along.with=group)
+    K=ncol(coefob$intercepts)
+    ## if K>1 we change the group def
+    group = K*(group-1) +1
+    nzb=coefob$betas
+    nzb=as.matrix(nzb)
+    nzb=nzb!=0
+    ncols=ncol(nzb)
+    nzb = apply(nzb,1,cumsum)#transposes
+    nzb= rbind(rbind(0,nzb)[group,],nzb[ncols,])
+    nzb = apply(nzb,2,diff)
+    nzb = array(nzb > 0,dim(nzb))
+    if(logical)nzb
+    else apply(nzb,2,function(L,groupid)if(any(L))groupid[L]else NULL,groupid=seq(along.with=group))
+    }
+nonzeroTerms <- function(coefob,group, levels, pairs){
+    groups = nonzeroGroup(
+        coefob,
+        group,
+        logical = TRUE
+    )
+    nmain=length(levels)
+    groupid = seq_len(nmain)
+    termf = function(group_act,groupid,pairs){
+        main = group_act[groupid]
+        int = group_act[-groupid]
+         list(
+            main = if(any(main)) groupid[main] else NULL,
+            int = if(any(int))pairs[int,] else NULL
+        )
+}
+    apply(groups,2,termf,groupid=groupid,pairs=pairs)
+}

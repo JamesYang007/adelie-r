@@ -51,7 +51,8 @@ if(length(weights)!=n)stop("replacement weight vector has to have same length as
 #' Print a summary of the grpnet path at each step along the path.
 #' @details
 #' The call that produced the object `x` is printed, followed by a
-#' three-column matrix with columns `Df`, `%Dev` and `Lambda`.
+#' four-column matrix with columns `Groups`, `Df`, `%Dev` and `Lambda`.
+#' The `Groups` column is the number of active groups in the solution.
 #' The `Df` column is the number of nonzero coefficients (Df is a
 #' reasonable name only for lasso fits). `%Dev` is the percent deviance
 #' explained (relative to the null deviance).
@@ -68,7 +69,7 @@ if(length(weights)!=n)stop("replacement weight vector has to have same length as
 #'
 #' x = matrix(rnorm(100 * 20), 100, 20)
 #' y = rnorm(100)
-#' fit1 = grpnet(x, glm.gaussian(y))
+#' fit1 = grpnet(x, glm.gaussian(y), groups = c(1:5,7,9))
 #' print(fit1)
 #' @method print grpnet
 #' @export
@@ -77,14 +78,21 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 {
     cat("\nCall: ", deparse(x$call), "\n\n")
     coefstuff <- coef(x)
+    groups = nonzeroGroup(
+        coefstuff,
+        group = attr(x$state,"_groups")+1,
+        logical = TRUE
+    )
+    Groups = apply(groups,2,sum)
     Df = coefstuff$df
     dev.ratio = x$state$devs
     lambdas=coefstuff$lambda
-    out = data.frame(Df, `%Dev` = round(dev.ratio *
+    out = data.frame(Groups, Df, `%Dev` = round(dev.ratio *
         100, 2), Lambda = signif(lambdas, digits), check.names = FALSE,
         row.names = seq(along.with = Df))
     class(out) = c("anova", class(out))
     print(out)
+    invisible(out)
 }
 
 
@@ -112,6 +120,7 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' @param type Type of prediction required. Type \code{"link"} is  the default, and gives the linear
 #' predictors. Type \code{"response"} applies the inverse link to these predictions.
 #' Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.
+#' Type \code{"nonzero"} returns a list of active groups along the path, indexed from 1 to number of groups.
 #' @param newoffsets If an offset is used in the fit, then one must be supplied
 #' for making predictions (except for \code{type="coefficients"}.
 #' @param n_threads Number of threads, default \code{1}.
@@ -135,14 +144,15 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' fit <- grpnet(X, glm.gaussian(y))
 #' coef(fit)
 #' predict(fit,newx = X[1:5,])
+#' predict(fit, type="nonzero")
 #' @method predict grpnet
 #' @export
 #' @export predict.grpnet
-predict.grpnet=function(object,newx,lambda=NULL,type=c("link","response","coefficients"),
+predict.grpnet=function(object,newx,lambda=NULL,type=c("link","response","coefficients","nonzero"),
                         newoffsets=NULL,n_threads=1,...){
  type=match.arg(type)
   if(missing(newx)){
-    if(!match(type,c("coefficients"),FALSE))stop("You need to supply a value for 'newx'")
+    if(!match(type,c("coefficients","nonzero"),FALSE))stop("You need to supply a value for 'newx'")
   }
  if(type=="response")stop("type response not yet implemented")
 
@@ -174,7 +184,12 @@ state <- object$state
  nlams = nrow(intercepts)
  if(type=="coefficients")
      return(list(intercepts=intercepts,betas=betas,df=dof,lambda=lambda))
-
+ if(type=="nonzero"){
+     groups = attr(object$state, "_groups")+1 # 0 indexing
+     return(nonzeroGroup(
+         list(intercepts=intercepts,betas=betas),
+         groups))
+     }
  ## Convert newx to an adelie matrix
  if(inherits(newx,"sparseMatrix")){
      newx <- as(newx,"CsparseMatrix")
@@ -476,7 +491,7 @@ cv.grpnet = function(
 #'
 #' A plot is produced, and nothing is returned.
 #'
-#' @aliases plot.cv.grpnet
+#' @aliases plot.cv.grpnet cv.glintnet
 #' @param x fitted \code{"cv.grpnet"} object
 #' @param sign.lambda Either plot against \code{log(lambda)} or its
 #' negative (default) if \code{sign.lambda=-1}

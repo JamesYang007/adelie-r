@@ -9,7 +9,7 @@
   object,
   newx,
   lambda = NULL,
-  type = c("link", "response", "coefficients"),
+  type = c("link", "response", "coefficients", "nonzero"),
   newoffsets = NULL,
   n_threads = 1,
   ...
@@ -34,7 +34,8 @@ not coincide with those used in the fitting algorithm.}
 
 \item{type}{Type of prediction required. Type \code{"link"} is  the default, and gives the linear
 predictors. Type \code{"response"} applies the inverse link to these predictions.
-Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.}
+Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.
+Type \code{"nonzero"} returns a list of active groups along the path, indexed from 1 to number of groups.}
 
 \item{newoffsets}{If an offset is used in the fit, then one must be supplied
 for making predictions (except for \code{type="coefficients"}.}
@@ -64,6 +65,7 @@ y <- X[,1] * rnorm(1) + rnorm(n)
 fit <- grpnet(X, glm.gaussian(y))
 coef(fit)
 predict(fit,newx = X[1:5,])
+predict(fit, type="nonzero")
 }
 \references{
 Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
