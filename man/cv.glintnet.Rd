@@ -29,6 +29,10 @@ weights, if present. The choices are \code{glm.gaussian()},
 and \code{glm.multigaussian()}. This is a required argument, and
 there is no default. In the simple example below, we use \code{glm.gaussian(y)}.}
 
+\item{offsets}{Offsets, default is \code{NULL}. If present, this is
+a fixed vector or matrix corresponding to the shape of the natural
+parameter, and is added to the fit.}
+
 \item{intr_keys}{List of feature indices. This is a list of all features with which interactions can be
 formed. Default is \code{1:p} where \code{p} is the number of columns in \code{X}.}
 
@@ -41,7 +45,17 @@ that is \code{rep(list(NULL), m}.}
 \item{levels}{Number of levels for each of the columns of \code{mat}, with \code{1} representing a
 quantitative feature. A factor with \code{K} levels should be represented by the numbers \code{0,1,...,K-1}.}
 
+\item{n_folds}{(default 10). Although \code{n_folds} can be
+as large as the sample size (leave-one-out CV), it is not recommended for
+large datasets. Smallest value allowable is \code{n_folds=3}.}
+
+\item{foldid}{An optional vector of values between 1 and \code{n_folds}
+identifying what fold each observation is in. If supplied, \code{n_folds} can
+be missing.}
+
 \item{n_threads}{Number of threads, default \code{1}.}
+
+\item{...}{Other arguments that can be passed to \code{grpnet}}
 }
 \value{
 A list of class \code{"glintnet"}, which inherits from class \code{"grpnet"}.

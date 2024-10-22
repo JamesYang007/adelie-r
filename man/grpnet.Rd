@@ -146,7 +146,7 @@ See reference for details.}
 \value{
 A list of class \code{"grpnet"}. This has a main component called \code{state} which
 represents the fitted path, and a few extra
-useful components such as the \code{call}, the \code{family} name, and \code{group_sizes}.
+useful components such as the \code{call}, the \code{family} name, \code{groups} and \code{group_sizes}.
 Users typically use methods like \code{predict()}, \code{print()}, \code{plot()} etc to examine the object.
 }
 \description{

@@ -47,9 +47,9 @@ This has a a few additional components such as \code{pairs}, \code{groups} and \
 Users typically use methods like \code{predict()}, \code{print()}, \code{plot()} etc to examine the object.
 }
 \description{
-This function is an implementation of the \code{glinternet} model of Lim and Hastie,
-and uses \code{grpnet} to fit the overlap group lasso path. It hence inherits all the capabilities of
-\code{grpnet}, including all the GLM families.
+This function is an implementation of the \code{glinternet} model of Lim and Hastie, for fitting interactions between pairs of variables in a model. The method creates \emph{interaction matrices} and enforces hierarchy using the \emph{overlap group lasso}. Once the augmented model matrix is set up,
+\code{glintnet} uses \code{grpnet} to fit the overlap group lasso path. It hence inherits all the capabilities of
+\code{grpnet}, and in particular can fit interaction models for  all the GLM families.
 }
 \details{
 The input matrix can be composed of quantitative variables or columns representing factors.
@@ -59,6 +59,7 @@ Each of the factors are converted to "one-hot" matrices, and hence a group of co
 This is done using the matrix utility function \code{matrix.one_hot()}. In addition interaction matrices are created.
 For each pair of variables for which an interaction is considered, a matrix is created consisting of the
 cross-product of each of the constituent matrices, as described in the "glinternet" reference.
+Once this much bigger matrix is established, the model is handed to \code{grpnet} to produce the fit.
 }
 \examples{
 set.seed(0)

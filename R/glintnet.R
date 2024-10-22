@@ -1,8 +1,8 @@
 #' fit a GLM interaction model with group lasso or group elastic-net regularization
 #'
-#' This function is an implementation of the \code{glinternet} model of Lim and Hastie,
-#' and uses \code{grpnet} to fit the overlap group lasso path. It hence inherits all the capabilities of
-#' \code{grpnet}, including all the GLM families.
+#' This function is an implementation of the \code{glinternet} model of Lim and Hastie, for fitting interactions between pairs of variables in a model. The method creates \emph{interaction matrices} and enforces hierarchy using the \emph{overlap group lasso}. Once the augmented model matrix is set up,
+#' \code{glintnet} uses \code{grpnet} to fit the overlap group lasso path. It hence inherits all the capabilities of
+#' \code{grpnet}, and in particular can fit interaction models for  all the GLM families.
 #'
 #' The input matrix can be composed of quantitative variables or columns representing factors.
 #' The argument \code{levels} indicates which are quantitative, and which are factors.
@@ -11,6 +11,7 @@
 #' This is done using the matrix utility function \code{matrix.one_hot()}. In addition interaction matrices are created.
 #' For each pair of variables for which an interaction is considered, a matrix is created consisting of the
 #' cross-product of each of the constituent matrices, as described in the "glinternet" reference.
+#' Once this much bigger matrix is established, the model is handed to \code{grpnet} to produce the fit.
 #'
 #' @param X A dense matrix, which can include factors with levels coded as non-negative integers starting at 0.
 #' @param glm GLM family/response object. This is an expression that
@@ -116,7 +117,7 @@ glintnet <- function(
                  n_threads=n_threads,
                  ...)
     fit$glint_stand = matob$stand
-    fit=c(fit,list(intr_keys=intr_keys,intr_values=intr_values,levels=levels,groups=matob$groups,pairs=matob$pairs+1))
+    fit=c(fit,list(intr_keys=intr_keys,intr_values=intr_values,levels=levels,pairs=matob$pairs+1))
     if(save.X)fit$X = matob$X
     class(fit)=c("glintnet","grpnet")
     fit$call=this.call
@@ -213,7 +214,7 @@ matrix.glintnet <- function(
 #'
 #' Similar to other predict methods, this functions predicts linear predictors,
 #' coefficients and more from a fitted \code{"glintnet"} object.
-#' @inherit predict.grpnet param
+#' @inherit predict.grpnet params
 #' @aliases coef.glintnet coef.grpnet
 #' @param object Fitted \code{"glintnet"} model.
 #' @param newx Matrix of new values for \code{x} at which predictions are to be
@@ -305,7 +306,7 @@ coef.glintnet <- function(object,lambda=NULL,...)predict(object, lambda = lambda
 #' \code{cv.glintnet} many times, and averaging the error curves.
 #'
 #' @inherit glintnet
-#' @inherit cv.grpnet param
+#' @inherit cv.grpnet params
 #' @param X Feature matrix. Either a regualr R matrix, or else an
 #'     \code{adelie} custom matrix class, or a concatination of such.
 #' @examples
@@ -374,7 +375,8 @@ cv.glintnet <- function(
         levels=levels,
         intr_keys=intr_keys,
         intr_values=intr_values,
-        groups=matob$groups
+        groups=matob$groups,
+        pairs=matob$pairs+1
     )
     obj = c(obj, out$grpnet.fit)
     class(obj)=c("glintnet","grpnet")
@@ -393,8 +395,8 @@ cv.glintnet <- function(
 #'
 #' This function makes it easier to use the results of cross-validation to make
 #' a prediction.
-#' @inherit predict.glintnet param
-#' @inherit predict.cv.grpnet param
+#' @inherit predict.glintnet params
+#' @inherit predict.cv.grpnet params
 #' @aliases coef.cv.glintnet predict.cv.glintnet
 #' @param object Fitted \code{"cv.glintnet"}.
 #' @examples
@@ -445,7 +447,7 @@ coef.cv.glintnet <-function (object, lambda = c("lambda.1se", "lambda.min"), ...
 
 
 #'
-#' Print a summary of the grpnet path at each step along the path.
+#' Print a summary of the glintnet path at each step along the path.
 #' @details
 #' The call that produced the object `x` is printed, followed by a
 #' five-column matrix with columns `N_main`,  `N_int`, `Df`, `%Dev` and `Lambda`.
@@ -453,6 +455,7 @@ coef.cv.glintnet <-function (object, lambda = c("lambda.1se", "lambda.min"), ...
 #' The `Df` column is the number of nonzero coefficients (Df is a
 #' reasonable name only for lasso fits). `%Dev` is the percent deviance
 #' explained (relative to the null deviance).
+#' @param x fitted glintnet object
 #' @inherit print.grpnet
 #'
 #' @method print glintnet
@@ -496,6 +499,35 @@ print.glintnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
     invisible(out)
 }
 
+#' plot the cross-validation curve produced by cv.glintnet
+#'
+#' Plots the cross-validation curve, and upper and lower standard deviation
+#' curves, as a function of the \code{lambda} values used.
+#'
+#' A plot is produced, and nothing is returned.
+#'
+#' @aliases plot.cv.grpnet cv.glintnet
+#' @param x fitted \code{"cv.glintnet"} object
+#' @inherit plot.cv.grpnet
+#' @examples
+#' set.seed(0)
+#' n=500
+#' d_cont = 5     # number of continuous features
+#' d_disc = 5     # number of categorical features
+#' Z_cont = matrix(rnorm(n*d_cont), n, d_cont)
+#' levels = sample(2:5,d_disc, replace = TRUE)
+#' Z_disc = matrix(0,n,d_disc)
+#' for(i in seq(d_disc))Z_disc[,i] = sample(0:(levels[i]-1),n,replace=TRUE)
+#' Z = cbind(Z_cont,Z_disc)
+#' levels = c(rep(1,d_cont),levels)
+#'
+#' xmat = model.matrix(~Z_cont[,1]*factor(Z_disc[,2]))
+#' nc=ncol(xmat)
+#' beta = rnorm(nc)
+#' y = xmat%*%beta+rnorm(n)*1.5
+#'
+#' cvfit <- cv.glintnet(Z, glm.gaussian(y), levels=levels, intr_keys = 1)
+#' plot(cvfit)
 #'
 #' @method plot cv.glintnet
 #' @export

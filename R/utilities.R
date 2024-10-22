@@ -18,8 +18,9 @@ nonzeroGroup <- function(coefob,group, logical=FALSE){
     nzb=as.matrix(nzb)
     nzb=nzb!=0
     ncols=ncol(nzb)
-    nzb = apply(nzb,1,cumsum)#transposes
-    nzb= rbind(rbind(0,nzb)[group,],nzb[ncols,])
+    nlams = nrow(nzb)
+    nzb = matrix(apply(nzb,1,cumsum),ncols,nlams)#transposes
+    nzb= rbind(rbind(0,nzb)[group,,drop=FALSE],nzb[ncols,,drop=FALSE])
     nzb = apply(nzb,2,diff)
     nzb = array(nzb > 0,dim(nzb))
     if(logical)nzb

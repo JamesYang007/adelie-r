@@ -9,6 +9,17 @@
 }
 \arguments{
 \item{object}{Fitted \code{"cv.glintnet"}.}
+
+\item{newx}{Matrix of new values for \code{x} at which predictions are to be
+made. This matrix is of the same form as in the call to \code{glintnet}.}
+
+\item{lambda}{Value(s) of the penalty parameter \code{lambda} at which
+predictions are required. Default is the entire sequence used to create the
+model. If values of \code{lambda} are supplied, the function uses linear
+interpolation to make predictions for values of \code{lambda} that do
+not coincide with those used in the fitting algorithm.}
+
+\item{...}{Currently ignored.}
 }
 \description{
 This function makes predictions from a cross-validated \code{glintnet} model, using

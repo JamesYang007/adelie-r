@@ -323,7 +323,7 @@ gaussian_cov <- function(
 #'
 #' @return A list of class \code{"grpnet"}. This has a main component called \code{state} which
 #' represents the fitted path, and a few extra
-#' useful components such as the \code{call}, the \code{family} name, and \code{group_sizes}.
+#' useful components such as the \code{call}, the \code{family} name, \code{groups} and \code{group_sizes}.
 #' Users typically use methods like \code{predict()}, \code{print()}, \code{plot()} etc to examine the object.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
 #' \email{hastie@@stanford.edu}
@@ -350,7 +350,9 @@ gaussian_cov <- function(
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
 #' y <- X[,1] * rnorm(1) + rnorm(n)
-#' fit <- grpnet(X, glm.gaussian(y))
+#' groups <- c(1, sample(2:199, 60, replace = FALSE))
+#' groups <- sort(groups)
+#' fit <- grpnet(X, glm.gaussian(y), groups = groups)
 #' print(fit)
 #'
 #' @export
@@ -473,10 +475,9 @@ grpnet <- function(
         solver_args[["weights"]] <- weights
     }
 
-    if (is.null(groups)) {
-        groups <- 0:(p-1)
-    }
-    else(groups = as.integer(groups-1))# In R we do not do 0 indexing
+    if (is.null(groups)) groups <- 1:p
+    savegrps = groups
+    groups = as.integer(groups-1)# In R we do not do 0 indexing
     savegrpsize = diff(c(groups,p))
     # multi-response GLMs
     if (glm$is_multi) {
@@ -765,7 +766,7 @@ grpnet <- function(
     stan = if(standardize)
                list(centers=attr(X,"_centers"),scales = attr(X,"_scales"))
            else NULL
-    out <- list(call=thiscall, family = familyname, group_sizes=savegrpsize,standardize = stan, state = state)
+    out <- list(call=thiscall, family = familyname, groups = savegrps, group_sizes=savegrpsize,standardize = stan, state = state)
     class(out) <- "grpnet"
     out
 }

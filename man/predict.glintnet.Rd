@@ -21,6 +21,24 @@
 
 \item{newx}{Matrix of new values for \code{x} at which predictions are to be
 made. This matrix is of the same form as in the call to \code{glintnet}.}
+
+\item{lambda}{Value(s) of the penalty parameter \code{lambda} at which
+predictions are required. Default is the entire sequence used to create the
+model. If values of \code{lambda} are supplied, the function uses linear
+interpolation to make predictions for values of \code{lambda} that do
+not coincide with those used in the fitting algorithm.}
+
+\item{type}{Type of prediction required. Type \code{"link"} is  the default, and gives the linear
+predictors. Type \code{"response"} applies the inverse link to these predictions.
+Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.
+Type \code{"nonzero"} returns a list of active groups along the path, indexed from 1 to number of groups.}
+
+\item{newoffsets}{If an offset is used in the fit, then one must be supplied
+for making predictions (except for \code{type="coefficients"}.}
+
+\item{n_threads}{Number of threads, default \code{1}.}
+
+\item{...}{Currently ignored.}
 }
 \value{
 The object returned depends on type.

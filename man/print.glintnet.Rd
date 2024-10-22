@@ -2,12 +2,12 @@
 % Please edit documentation in R/glintnet.R
 \name{print.glintnet}
 \alias{print.glintnet}
-\title{Print a summary of the grpnet path at each step along the path.}
+\title{Print a summary of the glintnet path at each step along the path.}
 \usage{
 \method{print}{glintnet}(x, digits = max(3, getOption("digits") - 3), ...)
 }
 \arguments{
-\item{x}{fitted grpnet object}
+\item{x}{fitted glintnet object}
 
 \item{digits}{significant digits in printout}
 

@@ -80,7 +80,7 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
     coefstuff <- coef(x)
     groups = nonzeroGroup(
         coefstuff,
-        group = attr(x$state,"_groups")+1,
+        group = x$groups,
         logical = TRUE
     )
     Groups = apply(groups,2,sum)
@@ -141,10 +141,12 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
 #' y <- X[,1] * rnorm(1) + rnorm(n)
-#' fit <- grpnet(X, glm.gaussian(y))
+#' groups <- c(1, sample(2:199, 60, replace = FALSE))
+#' groups <- sort(groups)
+#' fit <- grpnet(X, glm.gaussian(y), groups = groups)
 #' coef(fit)
-#' predict(fit,newx = X[1:5,])
-#' predict(fit, type="nonzero")
+#' predict(fit,newx = X[1:5,], lambda = c(0.1, 0.05))
+#' predict(fit, type="nonzero", lambda = c(0.1, 0.05))
 #' @method predict grpnet
 #' @export
 #' @export predict.grpnet
@@ -179,13 +181,15 @@ state <- object$state
          diag(x=1-lamlist$frac,nrow=nlam)%*%intercepts[lamlist$right,,drop=FALSE]
      if(!inherits(betas,"dgRMatrix"))betas = as(betas,"RsparseMatrix")
  } else lambda = state$lmdas
- dof <- diff(betas@p)
+ nzb = as.matrix(betas) != 0
+ dof = apply(nzb, 1, sum)
+# dof <- diff(betas@p)
  if(is.multi)dof=dof/K
  nlams = nrow(intercepts)
  if(type=="coefficients")
      return(list(intercepts=intercepts,betas=betas,df=dof,lambda=lambda))
  if(type=="nonzero"){
-     groups = attr(object$state, "_groups")+1 # 0 indexing
+     groups = object$groups
      return(nonzeroGroup(
          list(intercepts=intercepts,betas=betas),
          groups))
@@ -270,7 +274,7 @@ list(left=left,right=right,frac=sfrac)
 #' @export
 #' @export coef.grpnet
 coef.grpnet=function(object,lambda=NULL,...)
-  predict(object,lambda=lambda,type="coefficients",...)
+  predict(object, lambda = lambda, type = "coefficients",...)
 
 
 #' Cross-validation for grpnet
@@ -282,12 +286,13 @@ coef.grpnet=function(object,lambda=NULL,...)
 #' of the folds omitted. The out-of-fold deviance is accumulated, and the average deviance and
 #' standard deviation over the folds is computed.  Note that \code{cv.grpnet}
 #' does NOT search for values for \code{alpha}. A specific value should be
-#' supplied, else \code{alpha=1} is assumed by default. If users would like to
+#' supplied, else \code{alpha = 1} is assumed by default. If users would like to
 #' cross-validate \code{alpha} as well, they should call \code{cv.grpnet} with
 #' a pre-computed vector \code{foldid}, and then use this same \code{foldid} vector in
 #' separate calls to \code{cv.grpnet} with different values of \code{alpha}.
 #' Note also that the results of \code{cv.grpnet} are random, since the folds
-#' are selected at random. Users can reduce this randomness by running
+#' are selected at random (unless supplied via \code{foldid}).
+#' Users can reduce this randomness by running
 #' \code{cv.grpnet} many times, and averaging the error curves.
 #'
 #' @param X Feature matrix. Either a regualr R matrix, or else an
@@ -357,9 +362,13 @@ coef.grpnet=function(object,lambda=NULL,...)
 #' n <- 100
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
-#' y <- X[,1] * rnorm(1) + rnorm(n)
-#' fit <- grpnet(X, glm.gaussian(y))
-#' print(fit)
+#' y <- X[,1:25] %*% rnorm(25)/4 + rnorm(n)
+#' groups <- c(1, sample(2:199, 60, replace = FALSE))
+#' groups <- sort(groups)
+#' cvfit <- cv.grpnet(X, glm.gaussian(y), groups = groups)
+#' print(cvfit)
+#' plot(cv.fit)
+#' predict(cvfit, type = "nonzero")
 #'
 #' @export cv.grpnet
 
@@ -670,7 +679,7 @@ plot.grpnet=function(x, sign.lambda=-1,glm.name=TRUE,...){
 #' on the CV \code{object}. Alternatively \code{lambda="lambda.min"} can be used. If
 #' \code{lambda} is numeric, it is taken as the value(s) of \code{lambda} to be
 #' used.
-#' @param \dots Not used. Other arguments to predict.
+#' @param \dots Other arguments to code{predict.grpnet}, such at \code{type}.
 #' @return The object returned depends on the arguments.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{grpnet}, and \code{print}, and \code{coef} methods, and

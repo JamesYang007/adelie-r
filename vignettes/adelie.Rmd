@@ -24,9 +24,13 @@ knitr::opts_chunk$set(
 The `adelie` package  provides extremely efficient procedures for
 fitting the entire group lasso and group elastic net regularization
 path for GLMs, multinomial, the Cox model and multi-task Gaussian
-models. `adelie` is similar to the R package `glmnet` in scope of models, and in computational speed.
+models. `adelie` is similar to the R package `glmnet` in scope of
+models, and in computational speed. 
 The R package `adelie` is built from the same C++ code as used in the
-corresponding [adelie Python package](https://github.com/JamesYang007/adelie).
+corresponding [adelie Python
+package](https://github.com/JamesYang007/adelie).
+See @yang2024adelie for details.
+The theory and algorithms in this implementation are inspired by @glmnet, @coxnet, @strongrules and @block.
 
 In this notebook, we give a brief overview of the group elastic net problem that `adelie` solves.
 
