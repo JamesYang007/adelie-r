@@ -4,14 +4,15 @@
 \alias{matrix.dense}
 \title{Creates a dense matrix object.}
 \usage{
-matrix.dense(mat, method = c("naive", "cov"), n_threads = 1)
+matrix.dense(mat, method = c("naive", "cov", "constraint"), n_threads = 1)
 }
 \arguments{
 \item{mat}{The dense matrix.}
 
 \item{method}{Method type, with  default \code{method="naive"}.
 If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
-Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.}
+Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.
+If \code{method="constraint"}, the matrix is used as input to the constraint objects.}
 
 \item{n_threads}{Number of threads.}
 }
@@ -29,6 +30,7 @@ X_dense <- matrix(rnorm(n * p), n, p)
 out <- matrix.dense(X_dense, method="naive")
 A_dense <- t(X_dense) \%*\% X_dense
 out <- matrix.dense(A_dense, method="cov")
+out <- matrix.dense(X_dense, method="constraint")
 }
 \author{
 Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}

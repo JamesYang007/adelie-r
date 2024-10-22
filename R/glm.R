@@ -61,6 +61,7 @@ glm.binomial <- function(y, weights=NULL, link="logit")
 #'
 #' @param   stop     Stop time vector.
 #' @param   status     Binary status vector of same length as \code{stop}, with 1 a "death", and 0 censored.
+#' @param   strata      TODO
 #' @param   start     Start time vector. Default is a vector of \code{-Inf} of same length as \code{stop}.
 #' @param   weights Observation weights, with default \code{NULL}.
 #' @param tie_method    The tie-breaking method - one of  \code{"efron"} (default) or \code{"breslow"}.
@@ -71,22 +72,30 @@ glm.binomial <- function(y, weights=NULL, link="logit")
 #' n <- 100
 #' start <- sample.int(20, size=n, replace=TRUE)
 #' stop <- start + 1 + sample.int(5, size=n, replace=TRUE)
+#' # TODO: add strata?
 #' status <- rbinom(n, 1, 0.5)
 #' obj <- glm.cox(start, stop, status)
 #' @export
-glm.cox <- function(stop, status, start = -Inf, weights=NULL, tie_method=c("efron","breslow"))
+glm.cox <- function(stop, status, start = -Inf, strata=NULL, weights=NULL, tie_method=c("efron","breslow"))
 {
     tie_method=match.arg(tie_method)
     input <- render_inputs_(status, weights)
     n <- length(stop)
     start <- rep(as.double(start), length.out = n)
     stop <- as.double(stop)
+    # C++ is 0-indexed
+    if (is.null(strata)) {
+        strata <- integer(n)
+    } else {
+        strata <- as.integer(strata - 1) 
+    }
     status <- input[["y"]]
     weights <- input[["weights"]]
     input <- list(
         "start"=start,
         "stop"=stop,
         "status"=status,
+        "strata"=strata,
         "weights"=weights,
         "tie_method"=tie_method
     )
@@ -94,6 +103,7 @@ glm.cox <- function(stop, status, start = -Inf, weights=NULL, tie_method=c("efro
     attr(out, "_start") <- start
     attr(out, "_stop") <- stop
     attr(out, "_status") <- status
+    attr(out, "_strata") <- strata
     attr(out, "_weights") <- weights
     attr(out, "_tie_method") <- tie_method
     out

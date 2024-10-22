@@ -1,6 +1,7 @@
 #' @import Rcpp
 #' @import Matrix
 #' @import r2r
+#' @importFrom utils packageDescription
 #' @importFrom methods as new
 #' @importFrom stats predict coef approx weighted.mean
 #' @importFrom graphics abline axis legend matplot points segments

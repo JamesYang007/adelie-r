@@ -25,6 +25,7 @@ Imports:
     Rcpp,
     methods,
     stringr,
+    utils
 Suggests:
     ggplot2,
     gridExtra,
