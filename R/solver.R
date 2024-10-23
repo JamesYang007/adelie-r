@@ -82,7 +82,7 @@ solve_ <- function(
 #' @param   pivot_subset_min    Minimum subset of pivot rule, default is \code{1}.
 #' @param   pivot_slack_ratio   Slack ratio of pivot rule, default is \code{1.25}.
 #' @param   check_state     Check state, default is \code{FALSE}.
-#' @param   progress_bar    Progress bar, default is \code{TRUE}.
+#' @param   progress_bar    Progress bar, default is \code{FALSE}.
 #' @param   warm_start      Warm start, default is \code{NULL} (no warm start).
 #' @return  State of the solver.
 #'
@@ -121,7 +121,7 @@ gaussian_cov <- function(
     pivot_subset_min = 1,
     pivot_slack_ratio = 1.25,
     check_state = FALSE,
-    progress_bar = TRUE,
+    progress_bar = FALSE,
     warm_start = NULL
 )
 {
@@ -157,15 +157,6 @@ gaussian_cov <- function(
         screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
         screen_beta <- double(sum(group_sizes[screen_set + 1]))
         screen_is_active <- as.integer(rep_len(1, length(screen_set)))
-        screen_dual_size <- 0
-        if (!is.null(constraints)) {
-            screen_dual_size <- as.integer(sum(
-                sapply(screen_set, function(k) {
-                    ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
-                })
-            ))
-        }
-        screen_dual <- double(screen_dual_size)
         active_set_size <- length(screen_set)
         active_set <- integer(G)
         if (active_set_size > 0) {
@@ -189,7 +180,6 @@ gaussian_cov <- function(
         screen_set <- as.integer(warm_start$screen_set)
         screen_beta <- as.double(warm_start$screen_beta)
         screen_is_active <- as.integer(warm_start$screen_is_active)
-        screen_dual <- as.double(warm_start$screen_dual)
         active_set_size <- as.integer(warm_start$active_set_size)
         active_set <- as.integer(warm_start$active_set)
         rsq <- as.double(warm_start$rsq)
@@ -207,7 +197,6 @@ gaussian_cov <- function(
         screen_set=screen_set,
         screen_beta=screen_beta,
         screen_is_active=screen_is_active,
-        screen_dual=screen_dual,
         active_set_size=active_set_size,
         active_set=active_set,
         rsq=rsq,
@@ -392,6 +381,7 @@ grpnet <- function(
 {
     thiscall <- match.call()
     familyname <- glm$name
+    X_raw <- X # MUST come before processing X
     if(inherits(X,"sparseMatrix")){
         X <- as(X,"CsparseMatrix")
         X <- matrix.sparse(X, method="naive", n_threads=n_threads)
@@ -407,7 +397,6 @@ grpnet <- function(
         if(intercept)centers=NULL else centers = rep(0.0,p)
         X = matrix.standardize(X,centers=centers,weights=weights, n_threads=n_threads)
     }
-    X_raw <- X
     if (is.null(dim(y))) {
         y <- as.double(y)
     }
@@ -513,15 +502,6 @@ grpnet <- function(
             screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
             screen_beta <- double(sum(group_sizes[screen_set + 1]))
             screen_is_active <- as.integer(rep_len(1, length(screen_set)))
-            screen_dual_size <- 0
-            if (!is.null(constraints)) {
-                screen_dual_size <- as.integer(sum(
-                    sapply(screen_set, function(k) {
-                        ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
-                    })
-                ))
-            }
-            screen_dual <- double(screen_dual_size)
             active_set_size <- length(screen_set)
             active_set <- integer(G)
             if (active_set_size > 0) {
@@ -533,7 +513,6 @@ grpnet <- function(
             screen_set <- as.integer(warm_start$screen_set)
             screen_beta <- as.double(warm_start$screen_beta)
             screen_is_active <- as.integer(warm_start$screen_is_active)
-            screen_dual <- as.double(warm_start$screen_dual)
             active_set_size <- as.integer(warm_start$active_set_size)
             active_set <- as.integer(warm_start$active_set)
         }
@@ -546,7 +525,6 @@ grpnet <- function(
         solver_args[["screen_set"]] <- screen_set
         solver_args[["screen_beta"]] <- screen_beta
         solver_args[["screen_is_active"]] <- screen_is_active
-        solver_args[["screen_dual"]] <- screen_dual
         solver_args[["active_set_size"]] <- active_set_size
         solver_args[["active_set"]] <- active_set
 
@@ -558,7 +536,7 @@ grpnet <- function(
                     matrix(rep_len(1.0, n), n, 1), K, n_threads=n_threads
                 ),
                 X_aug
-            ), axis=2, n_threads=n_threads)# Trevor changed the axis meaning - it was 1
+            ), axis=2, n_threads=n_threads)
         }
 
         if (is_gaussian_opt) {
@@ -657,15 +635,6 @@ grpnet <- function(
             screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
             screen_beta <- double(sum(group_sizes[screen_set + 1]))
             screen_is_active <- as.integer(rep_len(1, length(screen_set)))
-            screen_dual_size <- 0
-            if (!is.null(constraints)) {
-                screen_dual_size <- as.integer(sum(
-                    sapply(screen_set, function(k) {
-                        ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
-                    })
-                ))
-            }
-            screen_dual <- double(screen_dual_size)
             active_set_size <- length(screen_set)
             active_set <- integer(G)
             if (active_set_size > 0) {
@@ -677,7 +646,6 @@ grpnet <- function(
             screen_set <- as.integer(warm_start$screen_set)
             screen_beta <- as.double(warm_start$screen_beta)
             screen_is_active <- as.integer(warm_start$screen_is_active)
-            screen_dual <- as.double(warm_start$screen_dual)
             active_set_size <- as.integer(warm_start$active_set_size)
             active_set <- as.integer(warm_start$active_set)
         }
@@ -690,7 +658,6 @@ grpnet <- function(
         solver_args[["screen_set"]] <- screen_set
         solver_args[["screen_beta"]] <- screen_beta
         solver_args[["screen_is_active"]] <- screen_is_active
-        solver_args[["screen_dual"]] <- screen_dual
         solver_args[["active_set_size"]] <- active_set_size
         solver_args[["active_set"]] <- active_set
 

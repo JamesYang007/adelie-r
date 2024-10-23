@@ -1,14 +1,14 @@
 #pragma once
 #include "decl.h"
 #include "utils.h"
-#include <adelie_core/glm/glm_base.hpp>
-#include <adelie_core/glm/glm_binomial.hpp>
-#include <adelie_core/glm/glm_cox.hpp>
-#include <adelie_core/glm/glm_gaussian.hpp>
-#include <adelie_core/glm/glm_multibase.hpp>
-#include <adelie_core/glm/glm_multigaussian.hpp>
-#include <adelie_core/glm/glm_multinomial.hpp>
-#include <adelie_core/glm/glm_poisson.hpp>
+#include <adelie_core/glm/glm_base.ipp>
+#include <adelie_core/glm/glm_binomial.ipp>
+#include <adelie_core/glm/glm_cox.ipp>
+#include <adelie_core/glm/glm_gaussian.ipp>
+#include <adelie_core/glm/glm_multibase.ipp>
+#include <adelie_core/glm/glm_multigaussian.ipp>
+#include <adelie_core/glm/glm_multinomial.ipp>
+#include <adelie_core/glm/glm_poisson.ipp>
 
 namespace adelie_core {
 namespace glm {
@@ -71,6 +71,17 @@ public:
         Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss_full, _glm,);
         return out_r[0];
     }
+
+    void inv_link(
+        const Eigen::Ref<const vec_value_t>& eta,
+        Eigen::Ref<vec_value_t> out
+    ) override
+    {
+        const Eigen::Map<colvec_value_t> eta_r(const_cast<value_t*>(eta.data()), eta.size());
+        out = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(inv_link, _glm, eta_r)
+        );
+    }
 };
 
 template <class ValueType>
@@ -90,7 +101,7 @@ public:
         const Eigen::Ref<const rowarr_value_t>& y,
         const Eigen::Ref<const vec_value_t>& weights
     ):
-        base_t("multis4", y, weights, false /* TODO: remove */),
+        base_t("multis4", y, weights),
         _glm(glm)
     {}
 
@@ -132,6 +143,17 @@ public:
         Rcpp::NumericVector out_r = ADELIE_CORE_S4_PURE_OVERRIDE(loss_full, _glm,);
         return out_r[0];
     }
+
+    void inv_link(
+        const Eigen::Ref<const rowarr_value_t>& eta,
+        Eigen::Ref<rowarr_value_t> out
+    ) override
+    {
+        const Eigen::Map<colarr_value_t> etaT_r(const_cast<value_t*>(eta.data()), eta.cols(), eta.rows());
+        out = Rcpp::as<Eigen::Map<colarr_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(inv_link, _glm, etaT_r)
+        ).matrix().transpose().array();
+    }
 };
 
 } // namespace glm
@@ -141,7 +163,7 @@ using glm_base_64_t = ad::glm::GlmBase<double>;
 using glm_multibase_64_t = ad::glm::GlmMultiBase<double>;
 using glm_binomial_logit_64_t = ad::glm::GlmBinomialLogit<double>;
 using glm_binomial_probit_64_t = ad::glm::GlmBinomialProbit<double>;
-using glm_cox_64_t = ad::glm::GlmCox<double>;
+using glm_cox_64_t = ad::glm::GlmCox<double, int>;
 using glm_gaussian_64_t = ad::glm::GlmGaussian<double>;
 using glm_poisson_64_t = ad::glm::GlmPoisson<double>;
 using glm_s4_64_t = ad::glm::GlmS4<double>;
@@ -175,6 +197,16 @@ public:
         return grad;
     }
 
+    vec_value_t hessian(
+        const Eigen::Map<vec_value_t>& eta,
+        const Eigen::Map<vec_value_t>& grad
+    ) 
+    {
+        vec_value_t hess(eta.size());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(hessian, eta, grad, hess); }();
+        return hess;
+    }
+
     value_t loss(
         const Eigen::Map<vec_value_t>& eta
     )
@@ -185,6 +217,15 @@ public:
     value_t loss_full()
     {
         ADELIE_CORE_PIMPL_OVERRIDE(loss_full,);
+    }
+
+    vec_value_t inv_link(
+        const Eigen::Map<vec_value_t>& eta
+    )
+    {
+        vec_value_t out(eta.size());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(inv_link, eta, out); }();
+        return out;
     }
 };
 
@@ -216,6 +257,19 @@ public:
         return gradT;
     }
 
+    colarr_value_t hessian(
+        const Eigen::Map<colarr_value_t>& etaT,
+        const Eigen::Map<colarr_value_t>& gradT
+    ) 
+    {
+        colarr_value_t hessT(etaT.rows(), etaT.cols());
+        Eigen::Map<const rowarr_value_t> eta(etaT.data(), etaT.cols(), etaT.rows());
+        Eigen::Map<const rowarr_value_t> grad(gradT.data(), gradT.cols(), gradT.rows());
+        Eigen::Map<rowarr_value_t> hess(hessT.data(), hessT.cols(), hessT.rows());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(hessian, eta, grad, hess); }();
+        return hessT;
+    }
+
     value_t loss(
         const Eigen::Map<colarr_value_t>& etaT
     )
@@ -227,6 +281,17 @@ public:
     value_t loss_full()
     {
         ADELIE_CORE_PIMPL_OVERRIDE(loss_full,);
+    }
+
+    colarr_value_t inv_link(
+        const Eigen::Map<colarr_value_t>& etaT
+    ) 
+    {
+        colarr_value_t outT(etaT.rows(), etaT.cols());
+        Eigen::Map<const rowarr_value_t> eta(etaT.data(), etaT.cols(), etaT.rows());
+        Eigen::Map<rowarr_value_t> out(outT.data(), outT.cols(), outT.rows());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(gradient, eta, out); }();
+        return outT;
     }
 };
 

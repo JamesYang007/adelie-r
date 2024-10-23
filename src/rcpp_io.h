@@ -1,7 +1,8 @@
 #pragma once
 #include "decl.h"
-#include <adelie_core/io/io_snp_unphased.hpp>
-#include <adelie_core/io/io_snp_phased_ancestry.hpp>
+#include <adelie_core/io/io_snp_base.ipp>
+#include <adelie_core/io/io_snp_unphased.ipp>
+#include <adelie_core/io/io_snp_phased_ancestry.ipp>
 
 using io_snp_base_t = ad::io::IOSNPBase<std::shared_ptr<char>>;
 using io_snp_unphased_t = ad::io::IOSNPUnphased<std::shared_ptr<char>>;

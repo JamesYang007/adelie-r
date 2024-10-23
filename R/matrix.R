@@ -61,7 +61,7 @@ matrix.concatenate <- function(
 )
 {
     if(axis %in% c(1,2))axis = axis -1 # C++ base 0
-    else stop("axis can take values 1 (row-bind) or 2 (column bind)  only")
+    else stop("axis can take values 1 (row-bind) or 2 (column-bind) only")
     mats_wrap <- list()
     for (i in 1:length(mats)) {
         mat <- mats[[i]]
@@ -83,12 +83,66 @@ matrix.concatenate <- function(
     out
 }
 
+#' Creates a feature matrix for the convex relu problem.
+#'
+#' @param   mat    Base feature matrix. It is either a dense or sparse matrix.
+#' @param   mask   Boolean mask matrix.
+#' @param   n_threads   Number of threads.
+#' @return Convex relu feature matrix.
+#' The object is an S4 class with methods for efficient computation in C++ by adelie.
+#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @examples
+#' n <- 100
+#' p <- 20
+#' m <- 10
+#' Z_dense <- matrix(rnorm(n * p), n, p)
+#' mask <- matrix(rbinom(n * m, 1, 0.5), n, m)
+#' out <- matrix.convex_relu(Z_dense, mask)
+#' Z_sparse <- as(Z_dense, "dgCMatrix")
+#' out <- matrix.convex_relu(Z_sparse, mask)
+#' @export
+matrix.convex_relu <- function(
+    mat,
+    mask,
+    n_threads =1
+)
+{
+    if(inherits(mat,"sparseMatrix")){
+        if(!inherits(mat,"dgCMatrix"))
+            mat=as(as(as(mat, "generalMatrix"), "CsparseMatrix"), "dMatrix")
+
+        dispatcher <- RMatrixNaiveConvexReluSparse64F
+        input <- list(
+            "rows"=nrow(mat),
+            "cols"=ncol(mat),
+            "nnz"=length(mat@i),
+            "outer"=mat@p,
+            "inner"=mat@i,
+            "value"=mat@x,
+            "mask"=mask,
+            "n_threads"=n_threads
+        )
+    } else {
+        dispatcher <- RMatrixNaiveConvexReluDense64F
+        input <- list(
+            "mat"=mat,
+            "mask"=mask,
+            "n_threads"=n_threads
+        )
+    }
+    out <- new(dispatcher, input)
+    attr(out, "_mats") <- mat
+    attr(out, "_mask") <- mask
+    out
+}
+
 #' Creates a dense matrix object.
 #'
 #' @param   mat     The dense matrix.
 #' @param   method  Method type, with  default \code{method="naive"}.
 #' If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
 #' Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.
+#' If \code{method="constraint"}, the matrix is used as input to the constraint objects.
 #' @param   n_threads   Number of threads.
 #' @return Dense matrix.
 #' The object is an S4 class with methods for efficient computation by adelie.
@@ -100,10 +154,11 @@ matrix.concatenate <- function(
 #' out <- matrix.dense(X_dense, method="naive")
 #' A_dense <- t(X_dense) %*% X_dense
 #' out <- matrix.dense(A_dense, method="cov")
+#' out <- matrix.dense(X_dense, method="constraint")
 #' @export
 matrix.dense <- function(
     mat,
-    method = c("naive","cov"),
+    method = c("naive","cov","constraint"),
     n_threads =1
 )
 {
@@ -111,12 +166,18 @@ matrix.dense <- function(
     mat <- as.matrix(mat)
     dispatcher <- c(
         "naive" = RMatrixNaiveDense64F,
-        "cov" = RMatrixCovDense64F
+        "cov" = RMatrixCovDense64F,
+        "constraint" = RMatrixConstraintDense64F
     )
     input <- list(
-        "mat"=mat,
         "n_threads"=n_threads
     )
+    if (method == "constraint") {
+        mat <- t(mat)
+        input[["matT"]] <- mat
+    } else {
+        input[["mat"]] <- mat
+    }
     out <- new(dispatcher[[method]], input)
     attr(out, "_mat") <- mat
     out
@@ -262,20 +323,16 @@ matrix.kronecker_eye <- function(
 {
     if (is.matrix(mat) || is.array((mat)) || is.data.frame((mat))) {
         mat <- as.matrix(mat)
-        input <- list(
-            "mat"=mat,
-            "K"=K,
-            "n_threads"=n_threads
-        )
-        out <- new(RMatrixNaiveKroneckerEyeDense64F, input)
+        dispatcher <- RMatrixNaiveKroneckerEyeDense64F
     } else {
-        input <- list(
-            "mat"=mat,
-            "K"=K,
-            "n_threads"=n_threads
-        )
-        out <- new(RMatrixNaiveKroneckerEye64, input)
+        dispatcher <- RMatrixNaiveKroneckerEye64
     }
+    input <- list(
+        "mat"=mat,
+        "K"=K,
+        "n_threads"=n_threads
+    )
+    out <- new(dispatcher, input)
     attr(out, "_mat") <- mat
     out
 }
@@ -436,6 +493,7 @@ matrix.snp_unphased <- function(
 #' @param   method  Method type, with  default \code{method="naive"}.
 #' If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
 #' Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.
+#' If \code{method="constraint"}, the matrix is used as input to the constraint objects.
 #' @param   n_threads   Number of threads.
 #' @return Sparse matrix object.
 #' The object is an S4 class with methods for efficient computation by adelie.
@@ -448,10 +506,11 @@ matrix.snp_unphased <- function(
 #' A_dense <- t(X_dense) %*% X_dense
 #' A_sp <- as(A_dense, "dgCMatrix")
 #' out <- matrix.sparse(A_sp, method="cov")
+#' out <- matrix.sparse(X_sp, method="constraint")
 #' @export
 matrix.sparse <- function(
     mat,
-    method = c("naive","cov"),
+    method = c("naive","cov","constraint"),
     n_threads =1
     )
 {
@@ -461,9 +520,13 @@ matrix.sparse <- function(
             mat=as(as(as(mat, "generalMatrix"), "CsparseMatrix"), "dMatrix")
     }
     else stop("matrix is not a 'sparseMatrix'")
+    if (method == "constraint") {
+        mat <- t(mat)
+    }
     dispatcher <- c(
         "naive" = RMatrixNaiveSparse64F,
-        "cov" = RMatrixCovSparse64F
+        "cov" = RMatrixCovSparse64F,
+        "constraint" = RMatrixConstraintSparse64F
     )
     input <- list(
         "rows"=nrow(mat),
@@ -508,16 +571,17 @@ matrix.standardize <- function(
 {
     n <- mat$rows
     p <- mat$cols
-    if(is.null(weights))
-        weights=rep(1/n,n)
-    else weights=weights/sum(weights)
+    if (is.null(weights)) {
+        weights <- rep(1/n, n)
+    } else {
+        weights <- weights / sum(weights)
+    }
     sqrt_weights <- sqrt(weights)
     is_centers_none <- is.null(centers)
 
     if (is_centers_none) {
         centers <- mat$mul(sqrt_weights, sqrt_weights)
     }
-
     if (is.null(scales)) {
         if (is_centers_none) {
             means <- centers
@@ -525,7 +589,7 @@ matrix.standardize <- function(
             means <- mat$mul(sqrt_weights, sqrt_weights)
         }
 
-        vars <- sapply(1:p, function(j) mat$cov(j-1, 1, sqrt_weights))
+        vars <- mat$sq_mul(weights)
         vars <- vars + centers * (centers - 2 * means)
         scales <- sqrt((n / (n - ddof)) * vars)
     }

@@ -210,7 +210,7 @@ state <- object$state
 
 ### Now we produce either a prediction matrix (single response), or a prediction array (multi response)
  if(!is.multi){# single target
-     preds = newx$sp_btmul(betas)+outer(rep(1,n),drop(intercepts))
+     preds = newx$sp_tmul(betas)+outer(rep(1,n),drop(intercepts))
      if(!is.null(newoffsets)){
          if(length(newoffsets)!=n)stop("Argument newoffsets should have same number of elements as rows of newx")
          preds=preds+matrix(newoffsets,n,nlams)
@@ -218,7 +218,7 @@ state <- object$state
  }
  else{# multi targets
      newx = matrix.kronecker_eye(newx,K=K, n_threads=n_threads)
-     preds = newx$sp_btmul(betas)
+     preds = newx$sp_tmul(betas)
      nlams = ncol(preds)
      intercepts = matrix(intercepts,nlams,n*K)# recycles
      preds=preds+t(intercepts)

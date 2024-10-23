@@ -8,6 +8,7 @@ glm.cox(
   stop,
   status,
   start = -Inf,
+  strata = NULL,
   weights = NULL,
   tie_method = c("efron", "breslow")
 )
@@ -18,6 +19,8 @@ glm.cox(
 \item{status}{Binary status vector of same length as \code{stop}, with 1 a "death", and 0 censored.}
 
 \item{start}{Start time vector. Default is a vector of \code{-Inf} of same length as \code{stop}.}
+
+\item{strata}{TODO}
 
 \item{weights}{Observation weights, with default \code{NULL}.}
 
@@ -33,6 +36,7 @@ A GLM family object specifies the type of model fit, provides the appropriate re
 n <- 100
 start <- sample.int(20, size=n, replace=TRUE)
 stop <- start + 1 + sample.int(5, size=n, replace=TRUE)
+# TODO: add strata?
 status <- rbinom(n, 1, 0.5)
 obj <- glm.cox(start, stop, status)
 }

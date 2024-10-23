@@ -28,7 +28,7 @@ gaussian_cov(
   pivot_subset_min = 1,
   pivot_slack_ratio = 1.25,
   check_state = FALSE,
-  progress_bar = TRUE,
+  progress_bar = FALSE,
   warm_start = NULL
 )
 }
@@ -79,7 +79,7 @@ gaussian_cov(
 
 \item{check_state}{Check state, default is \code{FALSE}.}
 
-\item{progress_bar}{Progress bar, default is \code{TRUE}.}
+\item{progress_bar}{Progress bar, default is \code{FALSE}.}
 
 \item{warm_start}{Warm start, default is \code{NULL} (no warm start).}
 }
