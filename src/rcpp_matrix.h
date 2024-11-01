@@ -11,6 +11,7 @@
 #include <adelie_core/matrix/matrix_cov_lazy_cov.ipp>
 #include <adelie_core/matrix/matrix_cov_sparse.ipp>
 #include <adelie_core/matrix/matrix_naive_base.ipp>
+#include <adelie_core/matrix/matrix_naive_block_diag.ipp>
 #include <adelie_core/matrix/matrix_naive_concatenate.ipp>
 #include <adelie_core/matrix/matrix_naive_convex_relu.ipp>
 #include <adelie_core/matrix/matrix_naive_dense.ipp>
@@ -340,6 +341,7 @@ using matrix_cov_sparse_64F_t = ad::matrix::MatrixCovSparse<Eigen::SparseMatrix<
 using matrix_cov_s4_64_t = ad::matrix::MatrixCovS4<double, int>;
 
 using matrix_naive_base_64_t = ad::matrix::MatrixNaiveBase<double, int>;
+using matrix_naive_block_diag_64_t = ad::matrix::MatrixNaiveBlockDiag<double, int>;
 using matrix_naive_cconcatenate_64_t = ad::matrix::MatrixNaiveCConcatenate<double, int>;
 using matrix_naive_rconcatenate_64_t = ad::matrix::MatrixNaiveRConcatenate<double, int>;
 using matrix_naive_convex_relu_dense_64F_t = ad::matrix::MatrixNaiveConvexReluDense<ad::util::colmat_type<double>, ad::util::colmat_type<int>, int>;
@@ -613,6 +615,7 @@ ADELIE_CORE_PIMPL_DERIVED(RMatrixCovLazyCov64F, RMatrixCovBase64, matrix_cov_laz
 ADELIE_CORE_PIMPL_DERIVED(RMatrixCovSparse64F, RMatrixCovBase64, matrix_cov_sparse_64F_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixCovS464, RMatrixCovBase64, matrix_cov_s4_64_t,)
 
+ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveBlockDiag64, RMatrixNaiveBase64, matrix_naive_block_diag_64_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveCConcatenate64, RMatrixNaiveBase64, matrix_naive_cconcatenate_64_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveRConcatenate64, RMatrixNaiveBase64, matrix_naive_rconcatenate_64_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveConvexReluDense64F, RMatrixNaiveBase64, matrix_naive_convex_relu_dense_64F_t,)
@@ -649,6 +652,7 @@ RCPP_EXPOSED_CLASS(RMatrixCovSparse64F)
 RCPP_EXPOSED_CLASS(RMatrixCovS464)
 
 RCPP_EXPOSED_CLASS(RMatrixNaiveBase64)
+RCPP_EXPOSED_CLASS(RMatrixNaiveBlockDiag64)
 RCPP_EXPOSED_CLASS(RMatrixNaiveCConcatenate64)
 RCPP_EXPOSED_CLASS(RMatrixNaiveRConcatenate64)
 RCPP_EXPOSED_CLASS(RMatrixNaiveConvexReluDense64F)
@@ -679,6 +683,7 @@ using r_matrix_cov_sparse_64F_t = RMatrixCovSparse64F;
 using r_matrix_cov_s4_64_t = RMatrixCovS464;
 
 using r_matrix_naive_base_64_t = RMatrixNaiveBase64;
+using r_matrix_naive_block_diag_64_t = RMatrixNaiveBlockDiag64;
 using r_matrix_naive_cconcatenate_64_t = RMatrixNaiveCConcatenate64;
 using r_matrix_naive_rconcatenate_64_t = RMatrixNaiveRConcatenate64;
 using r_matrix_naive_convex_relu_dense_64F_t = RMatrixNaiveConvexReluDense64F;

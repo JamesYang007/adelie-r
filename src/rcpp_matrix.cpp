@@ -85,6 +85,17 @@ auto make_r_matrix_cov_s4_64(Rcpp::List args)
     return new r_matrix_cov_s4_64_t(mat);
 }
 
+auto make_r_matrix_naive_block_diag_64(Rcpp::List args)
+{
+    Rcpp::List mat_list_r = args["mats"];
+    std::vector<matrix_naive_base_64_t*> mat_list;
+    for (auto obj : mat_list_r) {
+        mat_list.push_back(Rcpp::as<r_matrix_naive_base_64_t*>(obj)->ptr.get());
+    }
+    size_t n_threads = args["n_threads"];
+    return new r_matrix_naive_block_diag_64_t(mat_list, n_threads);
+}
+
 auto make_r_matrix_naive_cconcatenate_64(Rcpp::List args)
 {
     Rcpp::List mat_list_r = args["mats"];
@@ -300,6 +311,10 @@ RCPP_MODULE(adelie_core_matrix)
         ;
 
     /* naive matrices */
+    Rcpp::class_<r_matrix_naive_block_diag_64_t>("RMatrixNaiveBlockDiag64")
+        .derives<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
+        .factory<Rcpp::List>(make_r_matrix_naive_block_diag_64)
+        ;
     Rcpp::class_<r_matrix_naive_cconcatenate_64_t>("RMatrixNaiveCConcatenate64")
         .derives<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
         .factory<Rcpp::List>(make_r_matrix_naive_cconcatenate_64)

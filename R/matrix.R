@@ -1,6 +1,7 @@
 #' Creates a block-diagonal matrix.
 #'
 #' @param   mats    List of matrices.
+#' @param   method  Method type, with  default \code{method="naive"}.
 #' @param   n_threads   Number of threads.
 #' @return Block-diagonal matrix.
 #' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
@@ -11,18 +12,25 @@
 #'     X <- matrix(rnorm(n * p), n, p)
 #'     matrix.dense(t(X) %*% X, method="cov")
 #' })
-#' out <- matrix.block_diag(mats)
+#' out <- matrix.block_diag(mats, method="cov")
+#' mats <- lapply(ps, function(p) {
+#'     X <- matrix(rnorm(n * p), n, p)
+#'     matrix.dense(X, method="naive")
+#' })
+#' out <- matrix.block_diag(mats, method="naive")
 #' @export
 matrix.block_diag <- function(
     mats,
+    method =c("naive", "cov"),
     n_threads =1
 )
 {
+    method <- match.arg(method)
     mats_wrap <- list()
     for (i in 1:length(mats)) {
         mat <- mats[[i]]
         if (is.matrix(mat) || is.array((mat)) || is.data.frame((mat))) {
-            mat <- matrix.dense(mat, method="cov", n_threads=n_threads)
+            mat <- matrix.dense(mat, method=method, n_threads=1)
         }
         mats_wrap[[i]] <- mat
     }
@@ -31,7 +39,11 @@ matrix.block_diag <- function(
         "mats"=mats,
         "n_threads"=n_threads
     )
-    out <- new(RMatrixCovBlockDiag64, input)
+    dispatcher <- c(
+        "cov"=RMatrixCovBlockDiag64,
+        "naive"=RMatrixNaiveBlockDiag64
+    )
+    out <- new(dispatcher[[method]], input)
     attr(out, "_mats") <- mats
     out
 }
