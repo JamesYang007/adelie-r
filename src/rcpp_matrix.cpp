@@ -116,6 +116,31 @@ auto make_r_matrix_naive_rconcatenate_64(Rcpp::List args)
     return new r_matrix_naive_rconcatenate_64_t(mat_list);
 }
 
+auto make_r_matrix_naive_convex_gated_relu_dense_64F(Rcpp::List args)
+{
+    const Eigen::Map<dense_64F_t> mat = args["mat"];
+    const Eigen::Map<mat_bool_t> mask = args["mask"];
+    size_t n_threads = args["n_threads"];
+    return new r_matrix_naive_convex_gated_relu_dense_64F_t(
+        mat, mask, n_threads
+    );
+}
+
+auto make_r_matrix_naive_convex_gated_relu_sparse_64F(Rcpp::List args)
+{
+    const size_t rows = args["rows"];
+    const size_t cols = args["cols"];
+    const size_t nnz = args["nnz"];
+    const Eigen::Map<vec_index_t> outer = args["outer"];
+    const Eigen::Map<vec_index_t> inner = args["inner"];
+    const Eigen::Map<vec_value_t> value = args["value"];
+    const Eigen::Map<mat_bool_t> mask = args["mask"];
+    const size_t n_threads = args["n_threads"];
+    return new r_matrix_naive_convex_gated_relu_sparse_64F_t(
+        rows, cols, nnz, outer, inner, value, mask, n_threads
+    );
+}
+
 auto make_r_matrix_naive_convex_relu_dense_64F(Rcpp::List args)
 {
     const Eigen::Map<dense_64F_t> mat = args["mat"];
@@ -270,6 +295,8 @@ RCPP_MODULE(adelie_core_matrix)
         .method("cov", &r_matrix_naive_base_64_t::cov)
         .method("sq_mul", &r_matrix_naive_base_64_t::sq_mul)
         .method("sp_tmul", &r_matrix_naive_base_64_t::sp_tmul)
+        .method("mean", &r_matrix_naive_base_64_t::mean)
+        .method("var", &r_matrix_naive_base_64_t::var)
         .property("rows", &r_matrix_naive_base_64_t::rows)
         .property("cols", &r_matrix_naive_base_64_t::cols)
         ;
@@ -322,6 +349,14 @@ RCPP_MODULE(adelie_core_matrix)
     Rcpp::class_<r_matrix_naive_rconcatenate_64_t>("RMatrixNaiveRConcatenate64")
         .derives<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
         .factory<Rcpp::List>(make_r_matrix_naive_rconcatenate_64)
+        ;
+    Rcpp::class_<r_matrix_naive_convex_gated_relu_dense_64F_t>("RMatrixNaiveConvexGatedReluDense64F")
+        .derives<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
+        .factory<Rcpp::List>(make_r_matrix_naive_convex_gated_relu_dense_64F)
+        ;
+    Rcpp::class_<r_matrix_naive_convex_gated_relu_sparse_64F_t>("RMatrixNaiveConvexGatedReluSparse64F")
+        .derives<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
+        .factory<Rcpp::List>(make_r_matrix_naive_convex_gated_relu_sparse_64F)
         ;
     Rcpp::class_<r_matrix_naive_convex_relu_dense_64F_t>("RMatrixNaiveConvexReluDense64F")
         .derives<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")

@@ -99,6 +99,7 @@ matrix.concatenate <- function(
 #'
 #' @param   mat    Base feature matrix. It is either a dense or sparse matrix.
 #' @param   mask   Boolean mask matrix.
+#' @param   gated  Flag to indicate whether to use the convex gated relu feature matrix.
 #' @param   n_threads   Number of threads.
 #' @return Convex relu feature matrix.
 #' The object is an S4 class with methods for efficient computation in C++ by adelie.
@@ -116,6 +117,7 @@ matrix.concatenate <- function(
 matrix.convex_relu <- function(
     mat,
     mask,
+    gated =FALSE,
     n_threads =1
 )
 {
@@ -123,7 +125,10 @@ matrix.convex_relu <- function(
         if(!inherits(mat,"dgCMatrix"))
             mat=as(as(as(mat, "generalMatrix"), "CsparseMatrix"), "dMatrix")
 
-        dispatcher <- RMatrixNaiveConvexReluSparse64F
+        dispatcher <- c(
+            RMatrixNaiveConvexReluSparse64F,
+            RMatrixNaiveConvexGatedReluSparse64F
+        )[[gated+1]]
         input <- list(
             "rows"=nrow(mat),
             "cols"=ncol(mat),
@@ -135,7 +140,10 @@ matrix.convex_relu <- function(
             "n_threads"=n_threads
         )
     } else {
-        dispatcher <- RMatrixNaiveConvexReluDense64F
+        dispatcher <- c(
+            RMatrixNaiveConvexReluDense64F,
+            RMatrixNaiveConvexGatedReluDense64F
+        )[[gated+1]]
         input <- list(
             "mat"=mat,
             "mask"=mask,
@@ -588,21 +596,13 @@ matrix.standardize <- function(
     } else {
         weights <- weights / sum(weights)
     }
-    sqrt_weights <- sqrt(weights)
     is_centers_none <- is.null(centers)
 
     if (is_centers_none) {
-        centers <- mat$mul(sqrt_weights, sqrt_weights)
+        centers <- mat$mean(weights)
     }
     if (is.null(scales)) {
-        if (is_centers_none) {
-            means <- centers
-        } else {
-            means <- mat$mul(sqrt_weights, sqrt_weights)
-        }
-
-        vars <- mat$sq_mul(weights)
-        vars <- vars + centers * (centers - 2 * means)
+        vars <- mat$var(centers, weights)
         scales <- sqrt((n / (n - ddof)) * vars)
     }
 

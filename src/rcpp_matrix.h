@@ -13,6 +13,7 @@
 #include <adelie_core/matrix/matrix_naive_base.ipp>
 #include <adelie_core/matrix/matrix_naive_block_diag.ipp>
 #include <adelie_core/matrix/matrix_naive_concatenate.ipp>
+#include <adelie_core/matrix/matrix_naive_convex_gated_relu.ipp>
 #include <adelie_core/matrix/matrix_naive_convex_relu.ipp>
 #include <adelie_core/matrix/matrix_naive_dense.ipp>
 #include <adelie_core/matrix/matrix_naive_interaction.ipp>
@@ -323,6 +324,30 @@ public:
             ADELIE_CORE_S4_PURE_OVERRIDE(sp_tmul, _mat, v)
         ).transpose();
     }
+
+    void mean(
+        const Eigen::Ref<const vec_value_t>& weights,
+        Eigen::Ref<vec_value_t> out
+    ) override
+    {
+        const Eigen::Map<colvec_value_t> weights_r(const_cast<value_t*>(weights.data()), weights.size());
+        out = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(mean, _mat, weights_r)
+        );
+    }
+
+    void var(
+        const Eigen::Ref<const vec_value_t>& centers,
+        const Eigen::Ref<const vec_value_t>& weights,
+        Eigen::Ref<vec_value_t> out
+    ) override
+    {
+        const Eigen::Map<colvec_value_t> centers_r(const_cast<value_t*>(centers.data()), centers.size());
+        const Eigen::Map<colvec_value_t> weights_r(const_cast<value_t*>(weights.data()), weights.size());
+        out = Rcpp::as<Eigen::Map<colvec_value_t>>(
+            ADELIE_CORE_S4_PURE_OVERRIDE(var, _mat, centers_r, weights_r)
+        );
+    }
 };
 
 } // namespace matrix
@@ -344,6 +369,8 @@ using matrix_naive_base_64_t = ad::matrix::MatrixNaiveBase<double, int>;
 using matrix_naive_block_diag_64_t = ad::matrix::MatrixNaiveBlockDiag<double, int>;
 using matrix_naive_cconcatenate_64_t = ad::matrix::MatrixNaiveCConcatenate<double, int>;
 using matrix_naive_rconcatenate_64_t = ad::matrix::MatrixNaiveRConcatenate<double, int>;
+using matrix_naive_convex_gated_relu_dense_64F_t = ad::matrix::MatrixNaiveConvexGatedReluDense<ad::util::colmat_type<double>, ad::util::colmat_type<int>, int>;
+using matrix_naive_convex_gated_relu_sparse_64F_t = ad::matrix::MatrixNaiveConvexGatedReluSparse<Eigen::SparseMatrix<double, Eigen::ColMajor, int>, ad::util::colmat_type<int>, int>;
 using matrix_naive_convex_relu_dense_64F_t = ad::matrix::MatrixNaiveConvexReluDense<ad::util::colmat_type<double>, ad::util::colmat_type<int>, int>;
 using matrix_naive_convex_relu_sparse_64F_t = ad::matrix::MatrixNaiveConvexReluSparse<Eigen::SparseMatrix<double, Eigen::ColMajor, int>, ad::util::colmat_type<int>, int>;
 using matrix_naive_dense_64F_t = ad::matrix::MatrixNaiveDense<ad::util::colmat_type<double>, int>;
@@ -603,6 +630,25 @@ public:
         [&]() { ADELIE_CORE_PIMPL_OVERRIDE(sp_tmul, v, out); }();
         return outT;
     }
+
+    vec_value_t mean(
+        const Eigen::Map<vec_value_t>& weights
+    ) 
+    {
+        vec_value_t out(cols());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(mean, weights, out); }();
+        return out;
+    }
+
+    vec_value_t var(
+        const Eigen::Map<vec_value_t>& centers,
+        const Eigen::Map<vec_value_t>& weights
+    ) 
+    {
+        vec_value_t out(cols());
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(var, centers, weights, out); }();
+        return out;
+    }
 };
 
 ADELIE_CORE_PIMPL_DERIVED(RMatrixConstraintDense64F, RMatrixConstraintBase64, matrix_constraint_dense_64F_t,)
@@ -618,6 +664,8 @@ ADELIE_CORE_PIMPL_DERIVED(RMatrixCovS464, RMatrixCovBase64, matrix_cov_s4_64_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveBlockDiag64, RMatrixNaiveBase64, matrix_naive_block_diag_64_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveCConcatenate64, RMatrixNaiveBase64, matrix_naive_cconcatenate_64_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveRConcatenate64, RMatrixNaiveBase64, matrix_naive_rconcatenate_64_t,)
+ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveConvexGatedReluDense64F, RMatrixNaiveBase64, matrix_naive_convex_gated_relu_dense_64F_t,)
+ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveConvexGatedReluSparse64F, RMatrixNaiveBase64, matrix_naive_convex_gated_relu_sparse_64F_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveConvexReluDense64F, RMatrixNaiveBase64, matrix_naive_convex_relu_dense_64F_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveConvexReluSparse64F, RMatrixNaiveBase64, matrix_naive_convex_relu_sparse_64F_t,)
 ADELIE_CORE_PIMPL_DERIVED(RMatrixNaiveDense64F, RMatrixNaiveBase64, matrix_naive_dense_64F_t,)
@@ -655,6 +703,8 @@ RCPP_EXPOSED_CLASS(RMatrixNaiveBase64)
 RCPP_EXPOSED_CLASS(RMatrixNaiveBlockDiag64)
 RCPP_EXPOSED_CLASS(RMatrixNaiveCConcatenate64)
 RCPP_EXPOSED_CLASS(RMatrixNaiveRConcatenate64)
+RCPP_EXPOSED_CLASS(RMatrixNaiveConvexGatedReluDense64F)
+RCPP_EXPOSED_CLASS(RMatrixNaiveConvexGatedReluSparse64F)
 RCPP_EXPOSED_CLASS(RMatrixNaiveConvexReluDense64F)
 RCPP_EXPOSED_CLASS(RMatrixNaiveConvexReluSparse64F)
 RCPP_EXPOSED_CLASS(RMatrixNaiveDense64F)
@@ -686,6 +736,8 @@ using r_matrix_naive_base_64_t = RMatrixNaiveBase64;
 using r_matrix_naive_block_diag_64_t = RMatrixNaiveBlockDiag64;
 using r_matrix_naive_cconcatenate_64_t = RMatrixNaiveCConcatenate64;
 using r_matrix_naive_rconcatenate_64_t = RMatrixNaiveRConcatenate64;
+using r_matrix_naive_convex_gated_relu_dense_64F_t = RMatrixNaiveConvexGatedReluDense64F;
+using r_matrix_naive_convex_gated_relu_sparse_64F_t = RMatrixNaiveConvexGatedReluSparse64F;
 using r_matrix_naive_convex_relu_dense_64F_t = RMatrixNaiveConvexReluDense64F;
 using r_matrix_naive_convex_relu_sparse_64F_t = RMatrixNaiveConvexReluSparse64F;
 using r_matrix_naive_dense_64F_t = RMatrixNaiveDense64F;
