@@ -4,12 +4,14 @@
 \alias{matrix.convex_relu}
 \title{Creates a feature matrix for the convex relu problem.}
 \usage{
-matrix.convex_relu(mat, mask, n_threads = 1)
+matrix.convex_relu(mat, mask, gated = FALSE, n_threads = 1)
 }
 \arguments{
 \item{mat}{Base feature matrix. It is either a dense or sparse matrix.}
 
 \item{mask}{Boolean mask matrix.}
+
+\item{gated}{Flag to indicate whether to use the convex gated relu feature matrix.}
 
 \item{n_threads}{Number of threads.}
 }
