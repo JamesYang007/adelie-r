@@ -62,10 +62,12 @@ n <- 100
 p <- 200
 X <- matrix(rnorm(n * p), n, p)
 y <- X[,1] * rnorm(1) + rnorm(n)
-fit <- grpnet(X, glm.gaussian(y))
+groups <- c(1, sample(2:199, 60, replace = FALSE))
+groups <- sort(groups)
+fit <- grpnet(X, glm.gaussian(y), groups = groups)
 coef(fit)
-predict(fit,newx = X[1:5,])
-predict(fit, type="nonzero")
+predict(fit,newx = X[1:5,], lambda = c(0.1, 0.05))
+predict(fit, type="nonzero", lambda = c(0.1, 0.05))
 }
 \references{
 Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso

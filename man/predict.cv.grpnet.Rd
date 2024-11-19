@@ -21,7 +21,7 @@ on the CV \code{object}. Alternatively \code{lambda="lambda.min"} can be used. I
 \code{lambda} is numeric, it is taken as the value(s) of \code{lambda} to be
 used.}
 
-\item{\dots}{Not used. Other arguments to predict.}
+\item{\dots}{Other arguments to code{predict.grpnet}, such at \code{type}.}
 }
 \value{
 The object returned depends on the arguments.

@@ -1,6 +1,7 @@
 #' Creates a block-diagonal matrix.
 #'
 #' @param   mats    List of matrices.
+#' @param   method  Method type, with  default \code{method="naive"}.
 #' @param   n_threads   Number of threads.
 #' @return Block-diagonal matrix.
 #' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
@@ -11,18 +12,25 @@
 #'     X <- matrix(rnorm(n * p), n, p)
 #'     matrix.dense(t(X) %*% X, method="cov")
 #' })
-#' out <- matrix.block_diag(mats)
+#' out <- matrix.block_diag(mats, method="cov")
+#' mats <- lapply(ps, function(p) {
+#'     X <- matrix(rnorm(n * p), n, p)
+#'     matrix.dense(X, method="naive")
+#' })
+#' out <- matrix.block_diag(mats, method="naive")
 #' @export
 matrix.block_diag <- function(
     mats,
+    method =c("naive", "cov"),
     n_threads =1
 )
 {
+    method <- match.arg(method)
     mats_wrap <- list()
     for (i in 1:length(mats)) {
         mat <- mats[[i]]
         if (is.matrix(mat) || is.array((mat)) || is.data.frame((mat))) {
-            mat <- matrix.dense(mat, method="cov", n_threads=n_threads)
+            mat <- matrix.dense(mat, method=method, n_threads=1)
         }
         mats_wrap[[i]] <- mat
     }
@@ -31,7 +39,11 @@ matrix.block_diag <- function(
         "mats"=mats,
         "n_threads"=n_threads
     )
-    out <- new(RMatrixCovBlockDiag64, input)
+    dispatcher <- c(
+        "cov"=RMatrixCovBlockDiag64,
+        "naive"=RMatrixNaiveBlockDiag64
+    )
+    out <- new(dispatcher[[method]], input)
     attr(out, "_mats") <- mats
     out
 }
@@ -87,6 +99,7 @@ matrix.concatenate <- function(
 #'
 #' @param   mat    Base feature matrix. It is either a dense or sparse matrix.
 #' @param   mask   Boolean mask matrix.
+#' @param   gated  Flag to indicate whether to use the convex gated relu feature matrix.
 #' @param   n_threads   Number of threads.
 #' @return Convex relu feature matrix.
 #' The object is an S4 class with methods for efficient computation in C++ by adelie.
@@ -104,6 +117,7 @@ matrix.concatenate <- function(
 matrix.convex_relu <- function(
     mat,
     mask,
+    gated =FALSE,
     n_threads =1
 )
 {
@@ -111,7 +125,10 @@ matrix.convex_relu <- function(
         if(!inherits(mat,"dgCMatrix"))
             mat=as(as(as(mat, "generalMatrix"), "CsparseMatrix"), "dMatrix")
 
-        dispatcher <- RMatrixNaiveConvexReluSparse64F
+        dispatcher <- c(
+            RMatrixNaiveConvexReluSparse64F,
+            RMatrixNaiveConvexGatedReluSparse64F
+        )[[gated+1]]
         input <- list(
             "rows"=nrow(mat),
             "cols"=ncol(mat),
@@ -123,7 +140,10 @@ matrix.convex_relu <- function(
             "n_threads"=n_threads
         )
     } else {
-        dispatcher <- RMatrixNaiveConvexReluDense64F
+        dispatcher <- c(
+            RMatrixNaiveConvexReluDense64F,
+            RMatrixNaiveConvexGatedReluDense64F
+        )[[gated+1]]
         input <- list(
             "mat"=mat,
             "mask"=mask,
@@ -576,21 +596,13 @@ matrix.standardize <- function(
     } else {
         weights <- weights / sum(weights)
     }
-    sqrt_weights <- sqrt(weights)
     is_centers_none <- is.null(centers)
 
     if (is_centers_none) {
-        centers <- mat$mul(sqrt_weights, sqrt_weights)
+        centers <- mat$mean(weights)
     }
     if (is.null(scales)) {
-        if (is_centers_none) {
-            means <- centers
-        } else {
-            means <- mat$mul(sqrt_weights, sqrt_weights)
-        }
-
-        vars <- mat$sq_mul(weights)
-        vars <- vars + centers * (centers - 2 * means)
+        vars <- mat$var(centers, weights)
         scales <- sqrt((n / (n - ddof)) * vars)
     }
 

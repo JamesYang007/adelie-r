@@ -80,12 +80,13 @@ The function runs \code{grpnet} \code{n_folds}+1 times; the first to get the
 of the folds omitted. The out-of-fold deviance is accumulated, and the average deviance and
 standard deviation over the folds is computed.  Note that \code{cv.grpnet}
 does NOT search for values for \code{alpha}. A specific value should be
-supplied, else \code{alpha=1} is assumed by default. If users would like to
+supplied, else \code{alpha = 1} is assumed by default. If users would like to
 cross-validate \code{alpha} as well, they should call \code{cv.grpnet} with
 a pre-computed vector \code{foldid}, and then use this same \code{foldid} vector in
 separate calls to \code{cv.grpnet} with different values of \code{alpha}.
 Note also that the results of \code{cv.grpnet} are random, since the folds
-are selected at random. Users can reduce this randomness by running
+are selected at random (unless supplied via \code{foldid}).
+Users can reduce this randomness by running
 \code{cv.grpnet} many times, and averaging the error curves.
 }
 \examples{
@@ -93,9 +94,13 @@ set.seed(0)
 n <- 100
 p <- 200
 X <- matrix(rnorm(n * p), n, p)
-y <- X[,1] * rnorm(1) + rnorm(n)
-fit <- grpnet(X, glm.gaussian(y))
-print(fit)
+y <- X[,1:25] \%*\% rnorm(25)/4 + rnorm(n)
+groups <- c(1, sample(2:199, 60, replace = FALSE))
+groups <- sort(groups)
+cvfit <- cv.grpnet(X, glm.gaussian(y), groups = groups)
+print(cvfit)
+plot(cv.fit)
+predict(cvfit, type = "nonzero")
 
 }
 \references{

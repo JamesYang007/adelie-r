@@ -4,10 +4,12 @@
 \alias{matrix.block_diag}
 \title{Creates a block-diagonal matrix.}
 \usage{
-matrix.block_diag(mats, n_threads = 1)
+matrix.block_diag(mats, method = c("naive", "cov"), n_threads = 1)
 }
 \arguments{
 \item{mats}{List of matrices.}
+
+\item{method}{Method type, with  default \code{method="naive"}.}
 
 \item{n_threads}{Number of threads.}
 }
@@ -24,7 +26,12 @@ mats <- lapply(ps, function(p) {
     X <- matrix(rnorm(n * p), n, p)
     matrix.dense(t(X) \%*\% X, method="cov")
 })
-out <- matrix.block_diag(mats)
+out <- matrix.block_diag(mats, method="cov")
+mats <- lapply(ps, function(p) {
+    X <- matrix(rnorm(n * p), n, p)
+    matrix.dense(X, method="naive")
+})
+out <- matrix.block_diag(mats, method="naive")
 }
 \author{
 Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}

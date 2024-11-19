@@ -9,7 +9,11 @@ test_that("matrix.block_diag", {
         X <- matrix(rnorm(n * p), n, p)
         matrix.dense(t(X) %*% X, method="cov")
     })
-    expect_error(matrix.block_diag(mats), NA)
+    expect_error(matrix.block_diag(mats, method="cov"), NA)
+    mats <- lapply(ps, function(p) {
+        matrix(rnorm(n * p), n, p)
+    })
+    expect_error(matrix.block_diag(mats, method="naive"), NA)
 })
 
 test_that("matrix.concatenate", {
