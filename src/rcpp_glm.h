@@ -290,7 +290,7 @@ public:
         colarr_value_t outT(etaT.rows(), etaT.cols());
         Eigen::Map<const rowarr_value_t> eta(etaT.data(), etaT.cols(), etaT.rows());
         Eigen::Map<rowarr_value_t> out(outT.data(), outT.cols(), outT.rows());
-        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(gradient, eta, out); }();
+        [&]() { ADELIE_CORE_PIMPL_OVERRIDE(inv_link, eta, out); }();
         return outT;
     }
 };
