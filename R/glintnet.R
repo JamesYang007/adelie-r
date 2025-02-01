@@ -21,6 +21,9 @@
 #'     \code{glm.multinomial()}, \code{glm.cox()}, \code{glm.multinomial()},
 #'     and \code{glm.multigaussian()}. This is a required argument, and
 #'     there is no default. In the simple example below, we use \code{glm.gaussian(y)}.
+#' @param offsets Offsets, default is \code{NULL}. If present, this is
+#'     a fixed vector or matrix corresponding to the shape of the natural
+#'     parameter, and is added to the fit.
 #' @param   intr_keys   List of feature indices. This is a list of all features with which interactions can be
 #' formed. Default is \code{1:p} where \code{p} is the number of columns in \code{X}.
 #' @param   intr_values List of integer vectors of feature indices. For each of the \code{m <= p} indices
@@ -31,6 +34,8 @@
 #' @param   levels Number of levels for each of the columns of \code{mat}, with \code{1} representing a
 #' quantitative feature. A factor with \code{K} levels should be represented by the numbers \code{0,1,...,K-1}.
 #' @param n_threads Number of threads, default \code{1}.
+#' @param save.X Logical flag, default \code{FALSE}. If \code{TRUE}, the internally constructed X matrix is returned.
+#' @param \dots Additional named arguments to \code{grpnet}.
 #'
 #' @return A list of class \code{"glintnet"}, which inherits from class \code{"grpnet"}.
 #' This has a a few additional components such as \code{pairs}, \code{groups} and \code{levels}.
@@ -79,6 +84,9 @@
 #' print(fit)
 #'
 #' @export
+#' @importFrom stats sd
+
+
 glintnet <- function(
     X,
     glm,
@@ -215,10 +223,11 @@ matrix.glintnet <- function(
 #' Similar to other predict methods, this functions predicts linear predictors,
 #' coefficients and more from a fitted \code{"glintnet"} object.
 #' @inherit predict.grpnet params
-#' @aliases coef.glintnet coef.grpnet
+#' @aliases coef.glintnet
 #' @param object Fitted \code{"glintnet"} model.
 #' @param newx Matrix of new values for \code{x} at which predictions are to be
 #' made. This matrix is of the same form as in the call to \code{glintnet}.
+#' @param \dots Other arguments that can be passed to \code{predict.grpnet}
 #' @return The object returned depends on type.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
 #' \email{hastie@stanford.edu}
@@ -260,7 +269,6 @@ predict.glintnet <- function (object, newx, lambda = NULL, type = c("link", "res
     type = match.arg(type)
     if (!match(type, c("coefficients","nonzero"), FALSE)){
         if (missing(newx)) stop("You need to supply a value for 'newx'")
-    if (type == "response")stop("type response not yet implemented")
         matob = matrix.glintnet(
             newx,
             object$intr_keys,
@@ -307,7 +315,7 @@ coef.glintnet <- function(object,lambda=NULL,...)predict(object, lambda = lambda
 #'
 #' @inherit glintnet
 #' @inherit cv.grpnet params
-#' @param X Feature matrix. Either a regualr R matrix, or else an
+#' @param X Feature matrix. Either a regular R matrix, or else an
 #'     \code{adelie} custom matrix class, or a concatination of such.
 #' @examples
 #' set.seed(0)
@@ -328,7 +336,7 @@ coef.glintnet <- function(object,lambda=NULL,...)predict(object, lambda = lambda
 #'
 #' cvfit <- cv.glintnet(Z, glm.gaussian(y), levels=levels, intr_keys = 1)
 #' plot(cvfit)
-#' predict(cvfit, newx=Z[1:5,]
+#' predict(cvfit, newx=Z[1:5,])
 #'
 
 #' @export cv.glintnet
@@ -418,7 +426,7 @@ cv.glintnet <- function(
 #'
 #' cvfit <- cv.glintnet(Z, glm.gaussian(y), levels=levels, intr_keys = 1)
 #' plot(cvfit)
-#' predict(cvfit, newx=Z[1:5,]
+#' predict(cvfit, newx=Z[1:5,])
 #'
 #' @method predict cv.glintnet
 #' @export
@@ -506,7 +514,7 @@ print.glintnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #'
 #' A plot is produced, and nothing is returned.
 #'
-#' @aliases plot.cv.grpnet cv.glintnet
+#'
 #' @param x fitted \code{"cv.glintnet"} object
 #' @inherit plot.cv.grpnet
 #' @examples
@@ -535,3 +543,23 @@ plot.cv.glintnet <- function(x, sign.lambda = -1, ...){
     x$grpnet.fit = x$glintnet.fit["family"]
     NextMethod("plot")
     }
+
+### Utility function
+nonzeroTerms <- function(coefob,group, levels, pairs){
+    groups = nonzeroGroup(
+        coefob,
+        group,
+        logical = TRUE
+    )
+    nmain=length(levels)
+    groupid = seq_len(nmain)
+    termf = function(group_act,groupid,pairs){
+        main = group_act[groupid]
+        int = group_act[-groupid]
+         list(
+            main = if(any(main)) groupid[main] else NULL,
+            int = if(any(int))pairs[int,] else NULL
+        )
+}
+    apply(groups,2,termf,groupid=groupid,pairs=pairs)
+}

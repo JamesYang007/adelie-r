@@ -59,7 +59,6 @@ matrix.block_diag <- function(
 #' @examples
 #' n <- 100
 #' ps <- c(10, 20, 30)
-#' ps <- c(10, 20, 30)
 #' n <- 100
 #' mats <- lapply(ps, function(p) {
 #'     matrix.dense(matrix(rnorm(n * p), n, p))
@@ -397,7 +396,10 @@ matrix.lazy_cov <- function(
 #' n <- 100
 #' p <- 20
 #' mat <- matrix(rnorm(n * p), n, p)
-#' out <- matrix.one_hot(mat)
+#' fac <- sample(0:5, n, replace = TRUE)
+#' mat=cbind(fac,mat)
+#' levels <- c(6, rep(1,p))
+#' out <- matrix.one_hot(mat, levels = levels)
 #' @export
 matrix.one_hot <- function(
     mat,
@@ -572,6 +574,7 @@ matrix.sparse <- function(
 #' @param   n_threads   Number of threads.
 #' @return Standardized matrix.
 #' The object is an S4 class with methods for efficient computation by adelie.
+#' Conventions depend on the matrix class. For example, if a matrix is constructed using `matrix.onehot()`, only the quantitative variables are standardized.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100

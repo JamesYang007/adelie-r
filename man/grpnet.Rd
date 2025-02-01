@@ -147,7 +147,7 @@ See reference for details.}
 A list of class \code{"grpnet"}. This has a main component called \code{state} which
 represents the fitted path, and a few extra
 useful components such as the \code{call}, the \code{family} name, \code{groups} and \code{group_sizes}.
-Users typically use methods like \code{predict()}, \code{print()}, \code{plot()} etc to examine the object.
+Users typically use methods like \code{predict()}, \code{coef()}, \code{print()}, \code{plot()} etc to examine the object.
 }
 \description{
 Computes a group elastic-net regularization path for a variety of
@@ -167,7 +167,12 @@ groups <- c(1, sample(2:199, 60, replace = FALSE))
 groups <- sort(groups)
 fit <- grpnet(X, glm.gaussian(y), groups = groups)
 print(fit)
-
+plot(fit)
+coef(fit)
+cvfit  <- cv.grpnet(X, glm.gaussian(y), groups = groups)
+print(cvfit)
+plot(cvfit)
+predict(cvfit,newx=X[1:5,], lambda="lambda.min")
 }
 \references{
 Yang, James and Hastie, Trevor. (2024) A Fast and Scalable Pathwise-Solver for Group Lasso
@@ -187,7 +192,7 @@ Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
 \url{https://arxiv.org/abs/1011.2234}.\cr
 }
 \seealso{
-\code{cv.grpnet}, \code{predict.grpnet}, \code{plot.grpnet}, \code{print.grpnet}.
+\code{cv.grpnet}, \code{predict.grpnet}, \code{coef.grpnet}, \code{plot.grpnet}, \code{print.grpnet}.
 }
 \author{
 James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie

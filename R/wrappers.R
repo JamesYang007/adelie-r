@@ -116,7 +116,8 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' predictions are required. Default is the entire sequence used to create the
 #' model. If values of \code{lambda} are supplied, the function uses linear
 #' interpolation to make predictions for values of \code{lambda} that do
-#' not coincide with those used in the fitting algorithm.
+#' not coincide with those used in the fitting algorithm. Note: if newx is a vector
+#' (a single row which has lost its matrix dimensions), convert it to a 1-row matrix first, e.g. by supplying t(newx) instead.
 #' @param type Type of prediction required. Type \code{"link"} is  the default, and gives the linear
 #' predictors. Type \code{"response"} applies the inverse link to these predictions.
 #' Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.
@@ -156,7 +157,6 @@ predict.grpnet=function(object,newx,lambda=NULL,type=c("link","response","coeffi
   if(missing(newx)){
     if(!match(type,c("coefficients","nonzero"),FALSE))stop("You need to supply a value for 'newx'")
   }
- if(type=="response")stop("type response not yet implemented")
 
 state <- object$state
 
@@ -230,8 +230,36 @@ state <- object$state
      preds = array(preds,c(K,n,nlams))
      preds = aperm(preds,c(2,1,3))
  }
+ if(type=="response")
+     preds = InverseLink(preds,attr(object$state,"_glm"))
  return(preds)
 }
+
+InverseLink = function(pred, family.object){
+### pred is the vector/matrix/array of predictions produced at the natural parameter scale
+### family.object is the "_glm" attribute of the "state" object returned with groupnet
+    multinom_prob = function(pred){
+        multiprob=function(x){
+            x=exp(x)
+            x/rowSums(x)
+        }
+### pred is either a vector, a matrix, or a 3-dim array
+        dimp = dim(pred)
+        if(is.null(dimp)) {
+            pred=t(pred)
+            dimp=dim(pred)
+        }
+        if(length(dimp)==2)pred=multiprob(pred)
+        else  pred[]=apply(pred,3,multiprob)
+        drop(pred)
+    }
+
+    if(inherits(family.object,"Rcpp_RGlmMultinomial64"))
+        pred = multinom_prob(pred)
+    else   pred[]=family.object$inv_link(pred)
+    pred
+}
+
 
 
 lambda.interp=function(lambda,s){
@@ -367,7 +395,7 @@ coef.grpnet=function(object,lambda=NULL,...)
 #' groups <- sort(groups)
 #' cvfit <- cv.grpnet(X, glm.gaussian(y), groups = groups)
 #' print(cvfit)
-#' plot(cv.fit)
+#' plot(cvfit)
 #' predict(cvfit, type = "nonzero")
 #'
 #' @export cv.grpnet
@@ -500,7 +528,7 @@ cv.grpnet = function(
 #'
 #' A plot is produced, and nothing is returned.
 #'
-#' @aliases plot.cv.grpnet cv.glintnet
+#' @aliases plot.cv.grpnet plot.cv.glintnet
 #' @param x fitted \code{"cv.grpnet"} object
 #' @param sign.lambda Either plot against \code{log(lambda)} or its
 #' negative (default) if \code{sign.lambda=-1}
@@ -679,7 +707,7 @@ plot.grpnet=function(x, sign.lambda=-1,glm.name=TRUE,...){
 #' on the CV \code{object}. Alternatively \code{lambda="lambda.min"} can be used. If
 #' \code{lambda} is numeric, it is taken as the value(s) of \code{lambda} to be
 #' used.
-#' @param \dots Other arguments to code{predict.grpnet}, such at \code{type}.
+#' @param \dots Other arguments to \code{predict.grpnet}, such at \code{type}.
 #' @return The object returned depends on the arguments.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{grpnet}, and \code{print}, and \code{coef} methods, and

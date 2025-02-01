@@ -30,7 +30,8 @@ centers and scaling will be applied to this matrix. This argument is not used fo
 predictions are required. Default is the entire sequence used to create the
 model. If values of \code{lambda} are supplied, the function uses linear
 interpolation to make predictions for values of \code{lambda} that do
-not coincide with those used in the fitting algorithm.}
+not coincide with those used in the fitting algorithm. Note: if newx is a vector
+(a single row which has lost its matrix dimensions), convert it to a 1-row matrix first, e.g. by supplying t(newx) instead.}
 
 \item{type}{Type of prediction required. Type \code{"link"} is  the default, and gives the linear
 predictors. Type \code{"response"} applies the inverse link to these predictions.

@@ -18,7 +18,7 @@ cv.glintnet(
 )
 }
 \arguments{
-\item{X}{Feature matrix. Either a regualr R matrix, or else an
+\item{X}{Feature matrix. Either a regular R matrix, or else an
 \code{adelie} custom matrix class, or a concatination of such.}
 
 \item{glm}{GLM family/response object. This is an expression that
@@ -55,7 +55,7 @@ be missing.}
 
 \item{n_threads}{Number of threads, default \code{1}.}
 
-\item{...}{Other arguments that can be passed to \code{grpnet}}
+\item{...}{Additional named arguments to \code{grpnet}.}
 }
 \value{
 A list of class \code{"glintnet"}, which inherits from class \code{"grpnet"}.
@@ -98,7 +98,7 @@ y = xmat\%*\%beta+rnorm(n)*1.5
 
 cvfit <- cv.glintnet(Z, glm.gaussian(y), levels=levels, intr_keys = 1)
 plot(cvfit)
-predict(cvfit, newx=Z[1:5,]
+predict(cvfit, newx=Z[1:5,])
 
 }
 \references{

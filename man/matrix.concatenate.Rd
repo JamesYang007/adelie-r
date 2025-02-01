@@ -23,7 +23,6 @@ Creates a concatenation of the matrices.
 \examples{
 n <- 100
 ps <- c(10, 20, 30)
-ps <- c(10, 20, 30)
 n <- 100
 mats <- lapply(ps, function(p) {
     matrix.dense(matrix(rnorm(n * p), n, p))

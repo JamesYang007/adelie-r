@@ -17,9 +17,10 @@ made. This matrix is of the same form as in the call to \code{glintnet}.}
 predictions are required. Default is the entire sequence used to create the
 model. If values of \code{lambda} are supplied, the function uses linear
 interpolation to make predictions for values of \code{lambda} that do
-not coincide with those used in the fitting algorithm.}
+not coincide with those used in the fitting algorithm. Note: if newx is a vector
+(a single row which has lost its matrix dimensions), convert it to a 1-row matrix first, e.g. by supplying t(newx) instead.}
 
-\item{...}{Currently ignored.}
+\item{...}{Other arguments that can be passed to \code{predict.grpnet}}
 }
 \description{
 This function makes predictions from a cross-validated \code{glintnet} model, using
@@ -49,6 +50,6 @@ y = xmat\%*\%beta+rnorm(n)*1.5
 
 cvfit <- cv.glintnet(Z, glm.gaussian(y), levels=levels, intr_keys = 1)
 plot(cvfit)
-predict(cvfit, newx=Z[1:5,]
+predict(cvfit, newx=Z[1:5,])
 
 }

@@ -99,7 +99,7 @@ groups <- c(1, sample(2:199, 60, replace = FALSE))
 groups <- sort(groups)
 cvfit <- cv.grpnet(X, glm.gaussian(y), groups = groups)
 print(cvfit)
-plot(cv.fit)
+plot(cvfit)
 predict(cvfit, type = "nonzero")
 
 }

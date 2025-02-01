@@ -3,7 +3,6 @@
 \name{predict.glintnet}
 \alias{predict.glintnet}
 \alias{coef.glintnet}
-\alias{coef.grpnet}
 \title{make predictions from a "glintnet" object.}
 \usage{
 \method{predict}{glintnet}(
@@ -26,7 +25,8 @@ made. This matrix is of the same form as in the call to \code{glintnet}.}
 predictions are required. Default is the entire sequence used to create the
 model. If values of \code{lambda} are supplied, the function uses linear
 interpolation to make predictions for values of \code{lambda} that do
-not coincide with those used in the fitting algorithm.}
+not coincide with those used in the fitting algorithm. Note: if newx is a vector
+(a single row which has lost its matrix dimensions), convert it to a 1-row matrix first, e.g. by supplying t(newx) instead.}
 
 \item{type}{Type of prediction required. Type \code{"link"} is  the default, and gives the linear
 predictors. Type \code{"response"} applies the inverse link to these predictions.
@@ -38,7 +38,7 @@ for making predictions (except for \code{type="coefficients"}.}
 
 \item{n_threads}{Number of threads, default \code{1}.}
 
-\item{...}{Currently ignored.}
+\item{\dots}{Other arguments that can be passed to \code{predict.grpnet}}
 }
 \value{
 The object returned depends on type.

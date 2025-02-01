@@ -60,9 +60,9 @@ glm.binomial <- function(y, weights=NULL, link="logit")
 #' A GLM family object specifies the type of model fit, provides the appropriate response object and makes sure it is represented in the right form for the model family, and allows for optional parameters such as a weight vector.
 #'
 #' @param   stop     Stop time vector.
-#' @param   status     Binary status vector of same length as \code{stop}, with 1 a "death", and 0 censored.
-#' @param   strata      TODO
+#' @param   status   Binary status vector of same length as \code{stop}, with 1 a "death", and 0 censored.
 #' @param   start     Start time vector. Default is a vector of \code{-Inf} of same length as \code{stop}.
+#' @param   strata   Observations can belong in strata, labeled 1,2, .... If \code{strata = NULL} then all observations are in a single stratum.
 #' @param   weights Observation weights, with default \code{NULL}.
 #' @param tie_method    The tie-breaking method - one of  \code{"efron"} (default) or \code{"breslow"}.
 #' @return Cox GLM object.
@@ -70,11 +70,13 @@ glm.binomial <- function(y, weights=NULL, link="logit")
 #' @seealso \code{glm.gaussian}, \code{glm.binomial}, \code{glm.poisson},  \code{glm.multinomial}, \code{glm.multigaussian}, \code{glm.cox}.
 #' @examples
 #' n <- 100
-#' start <- sample.int(20, size=n, replace=TRUE)
-#' stop <- start + 1 + sample.int(5, size=n, replace=TRUE)
-#' # TODO: add strata?
+#' start <- sample.int(20, size = n, replace = TRUE)
+#' stop <- start + 1 + sample.int(5, size = n, replace = TRUE)
 #' status <- rbinom(n, 1, 0.5)
-#' obj <- glm.cox(start, stop, status)
+#' strata <- sample(c(1,2), n, replace = TRUE)
+#' obj1 <- glm.cox(stop, status)
+#' obj2 <- glm.cox(stop, status, start = start)
+#' obj3 <- glm.cox(stop, status, start = start, strata = strata)
 #' @export
 glm.cox <- function(stop, status, start = -Inf, strata=NULL, weights=NULL, tie_method=c("efron","breslow"))
 {
@@ -87,7 +89,7 @@ glm.cox <- function(stop, status, start = -Inf, strata=NULL, weights=NULL, tie_m
     if (is.null(strata)) {
         strata <- integer(n)
     } else {
-        strata <- as.integer(strata - 1) 
+        strata <- as.integer(strata - 1)
     }
     status <- input[["y"]]
     weights <- input[["weights"]]

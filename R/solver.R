@@ -313,7 +313,7 @@ gaussian_cov <- function(
 #' @return A list of class \code{"grpnet"}. This has a main component called \code{state} which
 #' represents the fitted path, and a few extra
 #' useful components such as the \code{call}, the \code{family} name, \code{groups} and \code{group_sizes}.
-#' Users typically use methods like \code{predict()}, \code{print()}, \code{plot()} etc to examine the object.
+#' Users typically use methods like \code{predict()}, \code{coef()}, \code{print()}, \code{plot()} etc to examine the object.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
 #' \email{hastie@@stanford.edu}
 #'
@@ -332,7 +332,7 @@ gaussian_cov <- function(
 #' Tibshirani, Ryan. (2012) \emph{Strong Rules for Discarding Predictors in
 #' Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
 #' \url{https://arxiv.org/abs/1011.2234}.\cr
-#' @seealso \code{cv.grpnet}, \code{predict.grpnet}, \code{plot.grpnet}, \code{print.grpnet}.
+#' @seealso \code{cv.grpnet}, \code{predict.grpnet}, \code{coef.grpnet}, \code{plot.grpnet}, \code{print.grpnet}.
 #' @examples
 #' set.seed(0)
 #' n <- 100
@@ -343,7 +343,12 @@ gaussian_cov <- function(
 #' groups <- sort(groups)
 #' fit <- grpnet(X, glm.gaussian(y), groups = groups)
 #' print(fit)
-#'
+#' plot(fit)
+#' coef(fit)
+#' cvfit  <- cv.grpnet(X, glm.gaussian(y), groups = groups)
+#' print(cvfit)
+#' plot(cvfit)
+#' predict(cvfit,newx=X[1:5,], lambda="lambda.min")
 #' @export
 grpnet <- function(
     X,
@@ -737,3 +742,4 @@ grpnet <- function(
     class(out) <- "grpnet"
     out
 }
+

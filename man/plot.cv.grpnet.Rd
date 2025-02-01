@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrappers.R
 \name{plot.cv.grpnet}
 \alias{plot.cv.grpnet}
-\alias{cv.glintnet}
+\alias{plot.cv.glintnet}
 \title{plot the cross-validation curve produced by cv.grpnet}
 \usage{
 \method{plot}{cv.grpnet}(x, sign.lambda = -1, ...)

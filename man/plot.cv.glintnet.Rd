@@ -2,8 +2,6 @@
 % Please edit documentation in R/glintnet.R
 \name{plot.cv.glintnet}
 \alias{plot.cv.glintnet}
-\alias{plot.cv.grpnet}
-\alias{cv.glintnet}
 \title{plot the cross-validation curve produced by cv.glintnet}
 \usage{
 \method{plot}{cv.glintnet}(x, sign.lambda = -1, ...)

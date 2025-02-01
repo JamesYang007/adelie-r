@@ -26,21 +26,3 @@ nonzeroGroup <- function(coefob,group, logical=FALSE){
     if(logical)nzb
     else apply(nzb,2,function(L,groupid)if(any(L))groupid[L]else NULL,groupid=seq(along.with=group))
     }
-nonzeroTerms <- function(coefob,group, levels, pairs){
-    groups = nonzeroGroup(
-        coefob,
-        group,
-        logical = TRUE
-    )
-    nmain=length(levels)
-    groupid = seq_len(nmain)
-    termf = function(group_act,groupid,pairs){
-        main = group_act[groupid]
-        int = group_act[-groupid]
-         list(
-            main = if(any(main)) groupid[main] else NULL,
-            int = if(any(int))pairs[int,] else NULL
-        )
-}
-    apply(groups,2,termf,groupid=groupid,pairs=pairs)
-}
