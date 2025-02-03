@@ -527,8 +527,7 @@ cv.grpnet = function(
 #' curves, as a function of the \code{lambda} values used.
 #'
 #' A plot is produced, and nothing is returned.
-#'
-#' @aliases plot.cv.grpnet plot.cv.glintnet
+#' @rdname plot.cv.glintnet
 #' @param x fitted \code{"cv.grpnet"} object
 #' @param sign.lambda Either plot against \code{log(lambda)} or its
 #' negative (default) if \code{sign.lambda=-1}

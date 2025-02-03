@@ -14,7 +14,7 @@ Description: Extremely efficient procedures for fitting the entire group lasso a
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 LinkingTo: 
     Rcpp,
     RcppEigen
@@ -36,4 +36,3 @@ Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://github.com/JamesYang007/adelie-r
 BugReports: https://github.com/JamesYang007/adelie-r/issues
-
