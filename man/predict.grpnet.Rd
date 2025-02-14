@@ -50,11 +50,12 @@ The object returned depends on type.
 }
 \description{
 Similar to other predict methods, this functions predicts linear predictors,
-coefficients and more from a fitted \code{"grpnet"} object.
+coefficients and more from a fitted \code{"grpnet"} object. Note that if the default \code{standardize=TRUEE} was used in fitting the \code{grpnet} object, the coefficients reported are for the standardized inputs.
+However, the \code{predict} function will apply the stored standardization to \code{newx} and give the correct predictions.
 }
 \details{
 The shape of the objects returned are different for \code{"multinomial"} and \code{"multigaussian"}
-objects
+objects.
 \code{coef(...)} is equivalent to \code{predict(type="coefficients",...)}
 }
 \examples{

@@ -236,7 +236,7 @@ gaussian_cov <- function(
 #' are written in C++), and allows for specialized matrix
 #' classes.
 #'
-#' @param X Feature matrix. Either a regualr R matrix, or else an
+#' @param X Feature matrix. Either a regular R matrix, or else an
 #'     \code{adelie} custom matrix class, or a concatination of such.
 #' @param glm GLM family/response object. This is an expression that
 #'     represents the family, the reponse and other arguments such as
@@ -245,12 +245,12 @@ gaussian_cov <- function(
 #'     \code{glm.multinomial()}, \code{glm.cox()}, \code{glm.multinomial()},
 #'     and \code{glm.multigaussian()}. This is a required argument, and
 #'     there is no default. In the simple example below, we use \code{glm.gaussian(y)}.
-#' @param constraints Constraints on the parameters. Currently these are ignored.
+#' @param constraints Constraints on the parameters. Currently these are ignored, but to come soon: upper and lower limits.
 #' @param groups This is an ordered vector of integers that represents the groupings,
-#' with each entry indicating where a group begins. The entries refer to column numbers
-#' in the feature matrix.
-#'        If there are \code{p} features, the default is \code{1:p} (no groups).
-#' (Note that in the output of \code{grpnet} this vector might be shifted to start from 0,
+#' with each entry indicating where a group begins.  The entries refer to column numbers
+#' in the feature matrix, and hence the memebers of a group have to be contiguous.
+#'        If there are \code{p} features, the default is \code{1:p} (no groups; i.e. `p` groups each of of size 1). So the length of `groups` is the number of groups.
+#' (Note that in the `state` output of \code{grpnet} this vector might be shifted to start from 0,
 #' since internally \code{adelie} uses zero-based indexing.)
 #' @param alpha The elasticnet mixing parameter, with \eqn{0\le\alpha\le 1}.
 #' The penalty is defined as
@@ -267,11 +267,11 @@ gaussian_cov <- function(
 #'     parameter, and is added to the fit.
 #' @param lambda A user supplied \code{lambda} sequence. Typical usage is to
 #' have the program compute its own \code{lambda} sequence based on
-#' \code{lmda_path_size} and \code{min_ratio}.
+#' \code{lmda_path_size} and \code{min_ratio}. This is returned with the fit.
 #' @param standardize If \code{TRUE} (the default), the columns of \code{X} are standardized before the
-#' fit is computed. This is good practice if the features are a mixed bag, because it has an impact on
+#' fit is computed. This is good practice if the features are on different scales, because it has an impact on
 #' the penalty. The regularization path is computed using the standardized features, and the
-#' standardization information is saved on the object for making future predictions.
+#' standardization information is saved on the object for making future predictions. The different matrix classes have their own methods for standardization. For example, for a sparse matrix the standardization information will be computed, but not actually applied (eg centering would destroy the sparsity). Rather, the methods for matrix multiply will be aware, and incorporate the standardization information.
 #' @param irls_max_iters Maximum number of IRLS iterations, default is
 #'     \code{1e4}.
 #' @param irls_tol IRLS convergence tolerance, default is \code{1e-7}.
@@ -313,7 +313,7 @@ gaussian_cov <- function(
 #' @return A list of class \code{"grpnet"}. This has a main component called \code{state} which
 #' represents the fitted path, and a few extra
 #' useful components such as the \code{call}, the \code{family} name, \code{groups} and \code{group_sizes}.
-#' Users typically use methods like \code{predict()}, \code{coef()}, \code{print()}, \code{plot()} etc to examine the object.
+#' Users are encouraged to use methods like \code{predict()}, \code{coef()}, \code{print()}, \code{plot()} etc to examine the object.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
 #' \email{hastie@@stanford.edu}
 #'
@@ -328,7 +328,7 @@ gaussian_cov <- function(
 #' Hazards Model via Coordinate Descent, Journal of Statistical Software, Vol.
 #' 39(5), 1-13},
 #' \doi{10.18637/jss.v039.i05}.\cr
-#' Tibshirani,Robert, Bien, J., Friedman, J., Hastie, T.,Simon, N.,Taylor, J. and
+#' Tibshirani,Robert, Bien, J., Friedman, J., Hastie, T.,Simon, N., Taylor, J. and
 #' Tibshirani, Ryan. (2012) \emph{Strong Rules for Discarding Predictors in
 #' Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
 #' \url{https://arxiv.org/abs/1011.2234}.\cr
@@ -339,8 +339,11 @@ gaussian_cov <- function(
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
 #' y <- X[,1] * rnorm(1) + rnorm(n)
+#' ## Here we create 60 groups randomly. Groups need to be contiguous, and the `groups` variable
+#' ## indicates the beginning position of each group.
 #' groups <- c(1, sample(2:199, 60, replace = FALSE))
 #' groups <- sort(groups)
+#' print(groups)
 #' fit <- grpnet(X, glm.gaussian(y), groups = groups)
 #' print(fit)
 #' plot(fit)

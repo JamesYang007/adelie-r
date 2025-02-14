@@ -1,0 +1,25 @@
+The Gaussian GLM also admits a different algorithm, which we call the _the covariance method_,
+using summary statistics rather than individual-level data.
+The covariance method solves the following problem:
+$$
+\begin{align*}
+    \mathrm{minimize}_{\beta} \quad&
+    \frac{1}{2} \beta^\top A \beta
+    - v^\top \beta
+    + 
+    \lambda \sum\limits_{g=1}^G \omega_g \left(
+        \alpha \|\beta_g\|_2 + \frac{1-\alpha}{2} \|\beta_g\|_2^2
+    \right)
+\end{align*}
+$$
+This method would be equivalent to the usual single-response Gaussian group elastic net problem
+if $A \equiv X_c^\top W X_c$ and $v \equiv X_c^\top W y_c$
+where $X_c$ is column-centered version of $X$ 
+and $y_c$ is the centered version of $y-\eta^0$
+where the means are computed with weights $W$
+(if intercept is to be fit).
+
+This method only works for the Gaussian case since the proximal Newton method
+changes the weights $W$ at every IRLS iteration,
+so that without access to $X$, it is not possible to compute the new "$A$" and "$v$".
+

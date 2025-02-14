@@ -99,10 +99,11 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' make predictions from a "grpnet" object.
 #'
 #' Similar to other predict methods, this functions predicts linear predictors,
-#' coefficients and more from a fitted \code{"grpnet"} object.
+#' coefficients and more from a fitted \code{"grpnet"} object. Note that if the default `standardize=TRUEE` was used in fitting the `grpnet` object, the coefficients reported are for the standardized inputs.
+#' However, the `predict` function will apply the stored standardization to `newx` and give the correct predictions.
 #'
 #' The shape of the objects returned are different for \code{"multinomial"} and \code{"multigaussian"}
-#' objects
+#' objects.
 #' \code{coef(...)} is equivalent to \code{predict(type="coefficients",...)}
 #'
 #' @aliases coef.grpnet predict.grpnet
@@ -384,7 +385,7 @@ coef.grpnet=function(object,lambda=NULL,...)
 #' Tibshirani, Ryan. (2012) \emph{Strong Rules for Discarding Predictors in
 #' Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
 #' \url{https://arxiv.org/abs/1011.2234}.\cr
-
+#' @seealso \code{print.cv.grpnet}, \code{predict.cv.grpnet}, \code{coef.cv.grpnet}, \code{plot.cv.grpnet}.
 #' @examples
 #' set.seed(0)
 #' n <- 100
@@ -396,6 +397,7 @@ coef.grpnet=function(object,lambda=NULL,...)
 #' cvfit <- cv.grpnet(X, glm.gaussian(y), groups = groups)
 #' print(cvfit)
 #' plot(cvfit)
+#' predict(cvfit, newx = X[1:5,])
 #' predict(cvfit, type = "nonzero")
 #'
 #' @export cv.grpnet
@@ -527,7 +529,6 @@ cv.grpnet = function(
 #' curves, as a function of the \code{lambda} values used.
 #'
 #' A plot is produced, and nothing is returned.
-#' @rdname plot.cv.glintnet
 #' @param x fitted \code{"cv.grpnet"} object
 #' @param sign.lambda Either plot against \code{log(lambda)} or its
 #' negative (default) if \code{sign.lambda=-1}

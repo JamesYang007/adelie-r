@@ -29,7 +29,7 @@ render_inputs_ <- function(y, weights)
 #' A GLM family object specifies the type of model fit, provides the appropriate response object and makes sure it is represented in the right form for the model family, and allows for optional parameters such as a weight vector.
 #'
 #' @param   y     Binary response vector, with values 0 or 1, or a logical vector. Alternatively, if data are represented by a two-column matrix of proportions (with row-sums = 1), then one can provide one of the columns as the response. This is useful for grouped binomial data, where each observation represents the result of \code{m[i]} successes out of \code{n[i]} trials. Then the response is provided as \code{y[i] = m[i]/n[i]} and the corresponding element of the weight vector as \code{w[i]=n[i]}. Alternatively can use \code{glm.multinomial()} instead.
-#' @param   weights Observation weight vector, with default \code{NULL}.
+#' @param   weights Observation weight vector, with default \code{NULL}, which results in weight `1/n` for each observation.
 #' @param   link    The link function type, with choice \code{"logit"} (default) or \code{"probit"}).
 #' @return Binomial GLM object.
 #' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>

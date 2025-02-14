@@ -514,9 +514,8 @@ print.glintnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #'
 #' A plot is produced, and nothing is returned.
 #'
-#'
+#' @rdname plot.cv.grpnet
 #' @param x fitted \code{"cv.glintnet"} object
-#' @inherit plot.cv.grpnet
 #' @examples
 #' set.seed(0)
 #' n=500

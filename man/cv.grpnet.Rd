@@ -100,6 +100,7 @@ groups <- sort(groups)
 cvfit <- cv.grpnet(X, glm.gaussian(y), groups = groups)
 print(cvfit)
 plot(cvfit)
+predict(cvfit, newx = X[1:5,])
 predict(cvfit, type = "nonzero")
 
 }
@@ -119,6 +120,9 @@ Tibshirani,Robert, Bien, J., Friedman, J., Hastie, T.,Simon, N.,Taylor, J. and
 Tibshirani, Ryan. (2012) \emph{Strong Rules for Discarding Predictors in
 Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
 \url{https://arxiv.org/abs/1011.2234}.\cr
+}
+\seealso{
+\code{print.cv.grpnet}, \code{predict.cv.grpnet}, \code{coef.cv.grpnet}, \code{plot.cv.grpnet}.
 }
 \author{
 James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
