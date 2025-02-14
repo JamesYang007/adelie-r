@@ -29,6 +29,7 @@ matrix.standardize(
 \value{
 Standardized matrix.
 The object is an S4 class with methods for efficient computation by adelie.
+Conventions depend on the matrix class. For example, if a matrix is constructed using \code{matrix.onehot()}, only the quantitative variables are standardized.
 }
 \description{
 Creates a standardized matrix.

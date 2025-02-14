@@ -51,7 +51,8 @@ if(length(weights)!=n)stop("replacement weight vector has to have same length as
 #' Print a summary of the grpnet path at each step along the path.
 #' @details
 #' The call that produced the object `x` is printed, followed by a
-#' three-column matrix with columns `Df`, `%Dev` and `Lambda`.
+#' four-column matrix with columns `Groups`, `Df`, `%Dev` and `Lambda`.
+#' The `Groups` column is the number of active groups in the solution.
 #' The `Df` column is the number of nonzero coefficients (Df is a
 #' reasonable name only for lasso fits). `%Dev` is the percent deviance
 #' explained (relative to the null deviance).
@@ -68,7 +69,7 @@ if(length(weights)!=n)stop("replacement weight vector has to have same length as
 #'
 #' x = matrix(rnorm(100 * 20), 100, 20)
 #' y = rnorm(100)
-#' fit1 = grpnet(x, glm.gaussian(y))
+#' fit1 = grpnet(x, glm.gaussian(y), groups = c(1:5,7,9))
 #' print(fit1)
 #' @method print grpnet
 #' @export
@@ -77,24 +78,32 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 {
     cat("\nCall: ", deparse(x$call), "\n\n")
     coefstuff <- coef(x)
+    groups = nonzeroGroup(
+        coefstuff,
+        group = x$groups,
+        logical = TRUE
+    )
+    Groups = apply(groups,2,sum)
     Df = coefstuff$df
     dev.ratio = x$state$devs
     lambdas=coefstuff$lambda
-    out = data.frame(Df, `%Dev` = round(dev.ratio *
+    out = data.frame(Groups, Df, `%Dev` = round(dev.ratio *
         100, 2), Lambda = signif(lambdas, digits), check.names = FALSE,
         row.names = seq(along.with = Df))
     class(out) = c("anova", class(out))
     print(out)
+    invisible(out)
 }
 
 
 #' make predictions from a "grpnet" object.
 #'
 #' Similar to other predict methods, this functions predicts linear predictors,
-#' coefficients and more from a fitted \code{"grpnet"} object.
+#' coefficients and more from a fitted \code{"grpnet"} object. Note that if the default `standardize=TRUEE` was used in fitting the `grpnet` object, the coefficients reported are for the standardized inputs.
+#' However, the `predict` function will apply the stored standardization to `newx` and give the correct predictions.
 #'
 #' The shape of the objects returned are different for \code{"multinomial"} and \code{"multigaussian"}
-#' objects
+#' objects.
 #' \code{coef(...)} is equivalent to \code{predict(type="coefficients",...)}
 #'
 #' @aliases coef.grpnet predict.grpnet
@@ -108,10 +117,12 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' predictions are required. Default is the entire sequence used to create the
 #' model. If values of \code{lambda} are supplied, the function uses linear
 #' interpolation to make predictions for values of \code{lambda} that do
-#' not coincide with those used in the fitting algorithm.
+#' not coincide with those used in the fitting algorithm. Note: if newx is a vector
+#' (a single row which has lost its matrix dimensions), convert it to a 1-row matrix first, e.g. by supplying t(newx) instead.
 #' @param type Type of prediction required. Type \code{"link"} is  the default, and gives the linear
 #' predictors. Type \code{"response"} applies the inverse link to these predictions.
 #' Type \code{"coefficients"} extracts the coefficients, intercepts and the active-set sizes.
+#' Type \code{"nonzero"} returns a list of active groups along the path, indexed from 1 to number of groups.
 #' @param newoffsets If an offset is used in the fit, then one must be supplied
 #' for making predictions (except for \code{type="coefficients"}.
 #' @param n_threads Number of threads, default \code{1}.
@@ -132,19 +143,21 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
 #' y <- X[,1] * rnorm(1) + rnorm(n)
-#' fit <- grpnet(X, glm.gaussian(y))
+#' groups <- c(1, sample(2:199, 60, replace = FALSE))
+#' groups <- sort(groups)
+#' fit <- grpnet(X, glm.gaussian(y), groups = groups)
 #' coef(fit)
-#' predict(fit,newx = X[1:5,])
+#' predict(fit,newx = X[1:5,], lambda = c(0.1, 0.05))
+#' predict(fit, type="nonzero", lambda = c(0.1, 0.05))
 #' @method predict grpnet
 #' @export
 #' @export predict.grpnet
-predict.grpnet=function(object,newx,lambda=NULL,type=c("link","response","coefficients"),
+predict.grpnet=function(object,newx,lambda=NULL,type=c("link","response","coefficients","nonzero"),
                         newoffsets=NULL,n_threads=1,...){
  type=match.arg(type)
   if(missing(newx)){
-    if(!match(type,c("coefficients"),FALSE))stop("You need to supply a value for 'newx'")
+    if(!match(type,c("coefficients","nonzero"),FALSE))stop("You need to supply a value for 'newx'")
   }
- if(type=="response")stop("type response not yet implemented")
 
 state <- object$state
 
@@ -169,12 +182,19 @@ state <- object$state
          diag(x=1-lamlist$frac,nrow=nlam)%*%intercepts[lamlist$right,,drop=FALSE]
      if(!inherits(betas,"dgRMatrix"))betas = as(betas,"RsparseMatrix")
  } else lambda = state$lmdas
- dof <- diff(betas@p)
+ nzb = as.matrix(betas) != 0
+ dof = apply(nzb, 1, sum)
+# dof <- diff(betas@p)
  if(is.multi)dof=dof/K
  nlams = nrow(intercepts)
  if(type=="coefficients")
      return(list(intercepts=intercepts,betas=betas,df=dof,lambda=lambda))
-
+ if(type=="nonzero"){
+     groups = object$groups
+     return(nonzeroGroup(
+         list(intercepts=intercepts,betas=betas),
+         groups))
+     }
  ## Convert newx to an adelie matrix
  if(inherits(newx,"sparseMatrix")){
      newx <- as(newx,"CsparseMatrix")
@@ -191,7 +211,7 @@ state <- object$state
 
 ### Now we produce either a prediction matrix (single response), or a prediction array (multi response)
  if(!is.multi){# single target
-     preds = newx$sp_btmul(betas)+outer(rep(1,n),drop(intercepts))
+     preds = newx$sp_tmul(betas)+outer(rep(1,n),drop(intercepts))
      if(!is.null(newoffsets)){
          if(length(newoffsets)!=n)stop("Argument newoffsets should have same number of elements as rows of newx")
          preds=preds+matrix(newoffsets,n,nlams)
@@ -199,7 +219,7 @@ state <- object$state
  }
  else{# multi targets
      newx = matrix.kronecker_eye(newx,K=K, n_threads=n_threads)
-     preds = newx$sp_btmul(betas)
+     preds = newx$sp_tmul(betas)
      nlams = ncol(preds)
      intercepts = matrix(intercepts,nlams,n*K)# recycles
      preds=preds+t(intercepts)
@@ -211,8 +231,36 @@ state <- object$state
      preds = array(preds,c(K,n,nlams))
      preds = aperm(preds,c(2,1,3))
  }
+ if(type=="response")
+     preds = InverseLink(preds,attr(object$state,"_glm"))
  return(preds)
 }
+
+InverseLink = function(pred, family.object){
+### pred is the vector/matrix/array of predictions produced at the natural parameter scale
+### family.object is the "_glm" attribute of the "state" object returned with groupnet
+    multinom_prob = function(pred){
+        multiprob=function(x){
+            x=exp(x)
+            x/rowSums(x)
+        }
+### pred is either a vector, a matrix, or a 3-dim array
+        dimp = dim(pred)
+        if(is.null(dimp)) {
+            pred=t(pred)
+            dimp=dim(pred)
+        }
+        if(length(dimp)==2)pred=multiprob(pred)
+        else  pred[]=apply(pred,3,multiprob)
+        drop(pred)
+    }
+
+    if(inherits(family.object,"Rcpp_RGlmMultinomial64"))
+        pred = multinom_prob(pred)
+    else   pred[]=family.object$inv_link(pred)
+    pred
+}
+
 
 
 lambda.interp=function(lambda,s){
@@ -255,7 +303,7 @@ list(left=left,right=right,frac=sfrac)
 #' @export
 #' @export coef.grpnet
 coef.grpnet=function(object,lambda=NULL,...)
-  predict(object,lambda=lambda,type="coefficients",...)
+  predict(object, lambda = lambda, type = "coefficients",...)
 
 
 #' Cross-validation for grpnet
@@ -267,12 +315,13 @@ coef.grpnet=function(object,lambda=NULL,...)
 #' of the folds omitted. The out-of-fold deviance is accumulated, and the average deviance and
 #' standard deviation over the folds is computed.  Note that \code{cv.grpnet}
 #' does NOT search for values for \code{alpha}. A specific value should be
-#' supplied, else \code{alpha=1} is assumed by default. If users would like to
+#' supplied, else \code{alpha = 1} is assumed by default. If users would like to
 #' cross-validate \code{alpha} as well, they should call \code{cv.grpnet} with
 #' a pre-computed vector \code{foldid}, and then use this same \code{foldid} vector in
 #' separate calls to \code{cv.grpnet} with different values of \code{alpha}.
 #' Note also that the results of \code{cv.grpnet} are random, since the folds
-#' are selected at random. Users can reduce this randomness by running
+#' are selected at random (unless supplied via \code{foldid}).
+#' Users can reduce this randomness by running
 #' \code{cv.grpnet} many times, and averaging the error curves.
 #'
 #' @param X Feature matrix. Either a regualr R matrix, or else an
@@ -336,15 +385,20 @@ coef.grpnet=function(object,lambda=NULL,...)
 #' Tibshirani, Ryan. (2012) \emph{Strong Rules for Discarding Predictors in
 #' Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
 #' \url{https://arxiv.org/abs/1011.2234}.\cr
-
+#' @seealso \code{print.cv.grpnet}, \code{predict.cv.grpnet}, \code{coef.cv.grpnet}, \code{plot.cv.grpnet}.
 #' @examples
 #' set.seed(0)
 #' n <- 100
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
-#' y <- X[,1] * rnorm(1) + rnorm(n)
-#' fit <- grpnet(X, glm.gaussian(y))
-#' print(fit)
+#' y <- X[,1:25] %*% rnorm(25)/4 + rnorm(n)
+#' groups <- c(1, sample(2:199, 60, replace = FALSE))
+#' groups <- sort(groups)
+#' cvfit <- cv.grpnet(X, glm.gaussian(y), groups = groups)
+#' print(cvfit)
+#' plot(cvfit)
+#' predict(cvfit, newx = X[1:5,])
+#' predict(cvfit, type = "nonzero")
 #'
 #' @export cv.grpnet
 
@@ -475,8 +529,6 @@ cv.grpnet = function(
 #' curves, as a function of the \code{lambda} values used.
 #'
 #' A plot is produced, and nothing is returned.
-#'
-#' @aliases plot.cv.grpnet
 #' @param x fitted \code{"cv.grpnet"} object
 #' @param sign.lambda Either plot against \code{log(lambda)} or its
 #' negative (default) if \code{sign.lambda=-1}
@@ -655,7 +707,7 @@ plot.grpnet=function(x, sign.lambda=-1,glm.name=TRUE,...){
 #' on the CV \code{object}. Alternatively \code{lambda="lambda.min"} can be used. If
 #' \code{lambda} is numeric, it is taken as the value(s) of \code{lambda} to be
 #' used.
-#' @param \dots Not used. Other arguments to predict.
+#' @param \dots Other arguments to \code{predict.grpnet}, such at \code{type}.
 #' @return The object returned depends on the arguments.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @seealso \code{grpnet}, and \code{print}, and \code{coef} methods, and

@@ -10,7 +10,7 @@ test_that("solver.gaussian_cov", {
     y <- X[,1] * rnorm(1) + rnorm(n)
     A <- t(X) %*% X / n
     v <- t(X) %*% y / n
-    state <- gaussian_cov(A, v)
+    expect_error(state <- gaussian_cov(A, v), NA)
 })
 
 test_that("solver.gaussian_naive", {

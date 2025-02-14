@@ -9,6 +9,19 @@ render_constraints_ <- function(
     constraints
 }
 
+render_dual_groups <- function(
+    constraints
+)
+{
+    G <- length(constraints)
+    counts <- sapply(1:G, function(i) {
+        c <- constraints[[i]]
+        if (is.null(c)) return(0)
+        c$dual_size
+    })
+    as.integer(cumsum(c(0, counts))[1:G])
+}
+
 render_gaussian_inputs_ <- function(
     groups,
     lmda_max,
@@ -73,7 +86,7 @@ render_multi_inputs_ <- function(
         ones_kron <- matrix.kronecker_eye(matrix(rep_len(1.0, n), n, 1), n_classes, n_threads)
         X <- matrix.concatenate(
             list(ones_kron, X),
-            axis=2,# Trevor changed the axis in concatenate by adding 1
+            axis=2,
             n_threads
         )
     }
@@ -112,7 +125,6 @@ state.gaussian_cov <- function(
     screen_set,
     screen_beta,
     screen_is_active,
-    screen_dual,
     active_set_size,
     active_set,
     rsq,
@@ -159,12 +171,15 @@ state.gaussian_cov <- function(
     }
 
     constraints <- render_constraints_(length(groups), constraints)
+    dual_groups <- render_dual_groups(constraints)
+
     input <- list(
         "A"=A,
         "v"=v,
         "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
+        "dual_groups"=dual_groups,
         "alpha"=alpha,
         "penalty"=penalty,
         "lmda_path"=lmda_path,
@@ -189,7 +204,6 @@ state.gaussian_cov <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
-        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "rsq"=rsq,
@@ -201,6 +215,7 @@ state.gaussian_cov <- function(
     attr(out, "_v") <- v
     attr(out, "_groups") <- groups
     attr(out, "_group_sizes") <- group_sizes
+    attr(out, "_dual_groups") <- dual_groups
     attr(out, "_penalty") <- penalty
     out
 }
@@ -223,7 +238,6 @@ state.gaussian_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
-    screen_dual,
     active_set_size,
     active_set,
     rsq,
@@ -273,6 +287,7 @@ state.gaussian_naive <- function(
 
     glm <- glm.gaussian(y=y, weights=weights)
     constraints <- render_constraints_(length(groups), constraints)
+    dual_groups <- render_dual_groups(constraints)
     input <- list(
         "X"=X,
         "X_means"=X_means,
@@ -283,6 +298,7 @@ state.gaussian_naive <- function(
         "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
+        "dual_groups"=dual_groups,
         "alpha"=alpha,
         "penalty"=penalty,
         "weights"=weights,
@@ -310,7 +326,6 @@ state.gaussian_naive <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
-        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "rsq"=rsq,
@@ -323,6 +338,7 @@ state.gaussian_naive <- function(
     attr(out, "_X_means") <- X_means
     attr(out, "_groups") <- groups
     attr(out, "_group_sizes") <- group_sizes
+    attr(out, "_dual_groups") <- dual_groups
     attr(out, "_penalty") <- penalty
     attr(out, "_offsets") <- offsets
     out
@@ -345,7 +361,6 @@ state.multigaussian_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
-    screen_dual,
     active_set_size,
     active_set,
     rsq,
@@ -404,9 +419,9 @@ state.multigaussian_naive <- function(
     X_expanded <- X
     weights_expanded <- rep(weights, each=n_classes) / n_classes
     constraints <- render_constraints_(length(groups), constraints)
+    dual_groups <- render_dual_groups(constraints)
 
     input <- list(
-        "group_type"="grouped", # TODO: remove with 1.1.47
         "n_classes"=n_classes,
         "multi_intercept"=intercept,
         "X"=X,
@@ -422,6 +437,7 @@ state.multigaussian_naive <- function(
         "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
+        "dual_groups"=dual_groups,
         "alpha"=alpha,
         "penalty"=penalty,
         "weights"=weights_expanded,
@@ -449,7 +465,6 @@ state.multigaussian_naive <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
-        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "rsq"=rsq,
@@ -463,6 +478,7 @@ state.multigaussian_naive <- function(
     attr(out, "_X_means") <- X_means
     attr(out, "_groups") <- groups
     attr(out, "_group_sizes") <- group_sizes
+    attr(out, "_dual_groups") <- dual_groups
     attr(out, "_penalty") <- penalty
     attr(out, "_weights_expanded") <- weights_expanded
     attr(out, "_offsets") <- offsets
@@ -495,7 +511,6 @@ state.glm_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
-    screen_dual,
     active_set_size,
     active_set,
     beta0,
@@ -552,6 +567,7 @@ state.glm_naive <- function(
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
     constraints <- render_constraints_(length(groups), constraints)
+    dual_groups <- render_dual_groups(constraints)
 
     input <- list(
         "X"=X,
@@ -560,6 +576,7 @@ state.glm_naive <- function(
         "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
+        "dual_groups"=dual_groups,
         "alpha"=alpha,
         "penalty"=penalty,
         "offsets"=offsets,
@@ -592,7 +609,6 @@ state.glm_naive <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
-        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "beta0"=beta0,
@@ -604,6 +620,7 @@ state.glm_naive <- function(
     attr(out, "_X") <- X
     attr(out, "_groups") <- groups
     attr(out, "_group_sizes") <- group_sizes
+    attr(out, "_dual_groups") <- dual_groups
     attr(out, "_penalty") <- penalty
     attr(out, "_offsets") <- offsets
     out
@@ -621,7 +638,6 @@ state.multiglm_naive <- function(
     screen_set,
     screen_beta,
     screen_is_active,
-    screen_dual,
     active_set_size,
     active_set,
     lmda,
@@ -684,10 +700,10 @@ state.multiglm_naive <- function(
     X <- inputs[["X"]]
     offsets <- inputs[["offsets"]]
     constraints <- render_constraints_(length(groups), constraints)
+    dual_groups <- render_dual_groups(constraints)
 
     X_expanded <- X
     input <- list(
-        "group_type"="grouped", # TODO: remove with 1.1.47
         "n_classes"=n_classes,
         "multi_intercept"=intercept,
         "X"=X_expanded,
@@ -696,6 +712,7 @@ state.multiglm_naive <- function(
         "constraints"=constraints,
         "groups"=groups,
         "group_sizes"=group_sizes,
+        "dual_groups"=dual_groups,
         "alpha"=alpha,
         "penalty"=penalty,
         "offsets"=as.double(t(offsets)),
@@ -728,7 +745,6 @@ state.multiglm_naive <- function(
         "screen_set"=screen_set,
         "screen_beta"=screen_beta,
         "screen_is_active"=screen_is_active,
-        "screen_dual"=screen_dual,
         "active_set_size"=active_set_size,
         "active_set"=active_set,
         "beta0"=0.0,
@@ -741,6 +757,7 @@ state.multiglm_naive <- function(
     attr(out, "_X_expanded") <- X_expanded
     attr(out, "_groups") <- groups
     attr(out, "_group_sizes") <- group_sizes
+    attr(out, "_dual_groups") <- dual_groups
     attr(out, "_penalty") <- penalty
     attr(out, "_offsets") <- offsets
     out

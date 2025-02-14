@@ -1,6 +1,7 @@
 #' Creates a block-diagonal matrix.
 #'
 #' @param   mats    List of matrices.
+#' @param   method  Method type, with  default \code{method="naive"}.
 #' @param   n_threads   Number of threads.
 #' @return Block-diagonal matrix.
 #' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
@@ -11,18 +12,25 @@
 #'     X <- matrix(rnorm(n * p), n, p)
 #'     matrix.dense(t(X) %*% X, method="cov")
 #' })
-#' out <- matrix.block_diag(mats)
+#' out <- matrix.block_diag(mats, method="cov")
+#' mats <- lapply(ps, function(p) {
+#'     X <- matrix(rnorm(n * p), n, p)
+#'     matrix.dense(X, method="naive")
+#' })
+#' out <- matrix.block_diag(mats, method="naive")
 #' @export
 matrix.block_diag <- function(
     mats,
+    method =c("naive", "cov"),
     n_threads =1
 )
 {
+    method <- match.arg(method)
     mats_wrap <- list()
     for (i in 1:length(mats)) {
         mat <- mats[[i]]
         if (is.matrix(mat) || is.array((mat)) || is.data.frame((mat))) {
-            mat <- matrix.dense(mat, method="cov", n_threads=n_threads)
+            mat <- matrix.dense(mat, method=method, n_threads=1)
         }
         mats_wrap[[i]] <- mat
     }
@@ -31,7 +39,11 @@ matrix.block_diag <- function(
         "mats"=mats,
         "n_threads"=n_threads
     )
-    out <- new(RMatrixCovBlockDiag64, input)
+    dispatcher <- c(
+        "cov"=RMatrixCovBlockDiag64,
+        "naive"=RMatrixNaiveBlockDiag64
+    )
+    out <- new(dispatcher[[method]], input)
     attr(out, "_mats") <- mats
     out
 }
@@ -47,7 +59,6 @@ matrix.block_diag <- function(
 #' @examples
 #' n <- 100
 #' ps <- c(10, 20, 30)
-#' ps <- c(10, 20, 30)
 #' n <- 100
 #' mats <- lapply(ps, function(p) {
 #'     matrix.dense(matrix(rnorm(n * p), n, p))
@@ -61,7 +72,7 @@ matrix.concatenate <- function(
 )
 {
     if(axis %in% c(1,2))axis = axis -1 # C++ base 0
-    else stop("axis can take values 1 (row-bind) or 2 (column bind)  only")
+    else stop("axis can take values 1 (row-bind) or 2 (column-bind) only")
     mats_wrap <- list()
     for (i in 1:length(mats)) {
         mat <- mats[[i]]
@@ -83,12 +94,74 @@ matrix.concatenate <- function(
     out
 }
 
+#' Creates a feature matrix for the convex relu problem.
+#'
+#' @param   mat    Base feature matrix. It is either a dense or sparse matrix.
+#' @param   mask   Boolean mask matrix.
+#' @param   gated  Flag to indicate whether to use the convex gated relu feature matrix.
+#' @param   n_threads   Number of threads.
+#' @return Convex relu feature matrix.
+#' The object is an S4 class with methods for efficient computation in C++ by adelie.
+#' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
+#' @examples
+#' n <- 100
+#' p <- 20
+#' m <- 10
+#' Z_dense <- matrix(rnorm(n * p), n, p)
+#' mask <- matrix(rbinom(n * m, 1, 0.5), n, m)
+#' out <- matrix.convex_relu(Z_dense, mask)
+#' Z_sparse <- as(Z_dense, "dgCMatrix")
+#' out <- matrix.convex_relu(Z_sparse, mask)
+#' @export
+matrix.convex_relu <- function(
+    mat,
+    mask,
+    gated =FALSE,
+    n_threads =1
+)
+{
+    if(inherits(mat,"sparseMatrix")){
+        if(!inherits(mat,"dgCMatrix"))
+            mat=as(as(as(mat, "generalMatrix"), "CsparseMatrix"), "dMatrix")
+
+        dispatcher <- c(
+            RMatrixNaiveConvexReluSparse64F,
+            RMatrixNaiveConvexGatedReluSparse64F
+        )[[gated+1]]
+        input <- list(
+            "rows"=nrow(mat),
+            "cols"=ncol(mat),
+            "nnz"=length(mat@i),
+            "outer"=mat@p,
+            "inner"=mat@i,
+            "value"=mat@x,
+            "mask"=mask,
+            "n_threads"=n_threads
+        )
+    } else {
+        dispatcher <- c(
+            RMatrixNaiveConvexReluDense64F,
+            RMatrixNaiveConvexGatedReluDense64F
+        )[[gated+1]]
+        input <- list(
+            "mat"=mat,
+            "mask"=mask,
+            "n_threads"=n_threads
+        )
+    }
+    out <- new(dispatcher, input)
+    attr(out, "_mats") <- mat
+    attr(out, "_mask") <- mask
+    out
+}
+
 #' Creates a dense matrix object.
 #'
 #' @param   mat     The dense matrix.
 #' @param   method  Method type, with  default \code{method="naive"}.
 #' If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
 #' Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.
+#' If \code{method="constraint"}, the matrix is used as input to the constraint objects.
 #' @param   n_threads   Number of threads.
 #' @return Dense matrix.
 #' The object is an S4 class with methods for efficient computation by adelie.
@@ -100,10 +173,11 @@ matrix.concatenate <- function(
 #' out <- matrix.dense(X_dense, method="naive")
 #' A_dense <- t(X_dense) %*% X_dense
 #' out <- matrix.dense(A_dense, method="cov")
+#' out <- matrix.dense(X_dense, method="constraint")
 #' @export
 matrix.dense <- function(
     mat,
-    method = c("naive","cov"),
+    method = c("naive","cov","constraint"),
     n_threads =1
 )
 {
@@ -111,12 +185,18 @@ matrix.dense <- function(
     mat <- as.matrix(mat)
     dispatcher <- c(
         "naive" = RMatrixNaiveDense64F,
-        "cov" = RMatrixCovDense64F
+        "cov" = RMatrixCovDense64F,
+        "constraint" = RMatrixConstraintDense64F
     )
     input <- list(
-        "mat"=mat,
         "n_threads"=n_threads
     )
+    if (method == "constraint") {
+        mat <- t(mat)
+        input[["matT"]] <- mat
+    } else {
+        input[["mat"]] <- mat
+    }
     out <- new(dispatcher[[method]], input)
     attr(out, "_mat") <- mat
     out
@@ -262,20 +342,16 @@ matrix.kronecker_eye <- function(
 {
     if (is.matrix(mat) || is.array((mat)) || is.data.frame((mat))) {
         mat <- as.matrix(mat)
-        input <- list(
-            "mat"=mat,
-            "K"=K,
-            "n_threads"=n_threads
-        )
-        out <- new(RMatrixNaiveKroneckerEyeDense64F, input)
+        dispatcher <- RMatrixNaiveKroneckerEyeDense64F
     } else {
-        input <- list(
-            "mat"=mat,
-            "K"=K,
-            "n_threads"=n_threads
-        )
-        out <- new(RMatrixNaiveKroneckerEye64, input)
+        dispatcher <- RMatrixNaiveKroneckerEye64
     }
+    input <- list(
+        "mat"=mat,
+        "K"=K,
+        "n_threads"=n_threads
+    )
+    out <- new(dispatcher, input)
     attr(out, "_mat") <- mat
     out
 }
@@ -320,7 +396,10 @@ matrix.lazy_cov <- function(
 #' n <- 100
 #' p <- 20
 #' mat <- matrix(rnorm(n * p), n, p)
-#' out <- matrix.one_hot(mat)
+#' fac <- sample(0:5, n, replace = TRUE)
+#' mat=cbind(fac,mat)
+#' levels <- c(6, rep(1,p))
+#' out <- matrix.one_hot(mat, levels = levels)
 #' @export
 matrix.one_hot <- function(
     mat,
@@ -436,6 +515,7 @@ matrix.snp_unphased <- function(
 #' @param   method  Method type, with  default \code{method="naive"}.
 #' If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
 #' Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.
+#' If \code{method="constraint"}, the matrix is used as input to the constraint objects.
 #' @param   n_threads   Number of threads.
 #' @return Sparse matrix object.
 #' The object is an S4 class with methods for efficient computation by adelie.
@@ -448,10 +528,11 @@ matrix.snp_unphased <- function(
 #' A_dense <- t(X_dense) %*% X_dense
 #' A_sp <- as(A_dense, "dgCMatrix")
 #' out <- matrix.sparse(A_sp, method="cov")
+#' out <- matrix.sparse(X_sp, method="constraint")
 #' @export
 matrix.sparse <- function(
     mat,
-    method = c("naive","cov"),
+    method = c("naive","cov","constraint"),
     n_threads =1
     )
 {
@@ -461,9 +542,13 @@ matrix.sparse <- function(
             mat=as(as(as(mat, "generalMatrix"), "CsparseMatrix"), "dMatrix")
     }
     else stop("matrix is not a 'sparseMatrix'")
+    if (method == "constraint") {
+        mat <- t(mat)
+    }
     dispatcher <- c(
         "naive" = RMatrixNaiveSparse64F,
-        "cov" = RMatrixCovSparse64F
+        "cov" = RMatrixCovSparse64F,
+        "constraint" = RMatrixConstraintSparse64F
     )
     input <- list(
         "rows"=nrow(mat),
@@ -489,6 +574,7 @@ matrix.sparse <- function(
 #' @param   n_threads   Number of threads.
 #' @return Standardized matrix.
 #' The object is an S4 class with methods for efficient computation by adelie.
+#' Conventions depend on the matrix class. For example, if a matrix is constructed using `matrix.onehot()`, only the quantitative variables are standardized.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
 #' n <- 100
@@ -508,25 +594,18 @@ matrix.standardize <- function(
 {
     n <- mat$rows
     p <- mat$cols
-    if(is.null(weights))
-        weights=rep(1/n,n)
-    else weights=weights/sum(weights)
-    sqrt_weights <- sqrt(weights)
+    if (is.null(weights)) {
+        weights <- rep(1/n, n)
+    } else {
+        weights <- weights / sum(weights)
+    }
     is_centers_none <- is.null(centers)
 
     if (is_centers_none) {
-        centers <- mat$mul(sqrt_weights, sqrt_weights)
+        centers <- mat$mean(weights)
     }
-
     if (is.null(scales)) {
-        if (is_centers_none) {
-            means <- centers
-        } else {
-            means <- mat$mul(sqrt_weights, sqrt_weights)
-        }
-
-        vars <- sapply(1:p, function(j) mat$cov(j-1, 1, sqrt_weights))
-        vars <- vars + centers * (centers - 2 * means)
+        vars <- mat$var(centers, weights)
         scales <- sqrt((n / (n - ddof)) * vars)
     }
 

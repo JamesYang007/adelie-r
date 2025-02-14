@@ -1,7 +1,9 @@
 #include "rcpp_glm.h"
 
 using value_t = double;
+using index_t = int;
 using vec_value_t = ad::util::colvec_type<value_t>;
+using vec_index_t = ad::util::colvec_type<index_t>;
 using rowarr_value_t = ad::util::rowarr_type<value_t>;
 using colarr_value_t = ad::util::colarr_type<value_t>;
 
@@ -26,9 +28,10 @@ auto make_r_glm_cox_64(Rcpp::List args)
     const Eigen::Map<vec_value_t> start = args["start"];
     const Eigen::Map<vec_value_t> stop = args["stop"];
     const Eigen::Map<vec_value_t> status = args["status"];
+    const Eigen::Map<vec_index_t> strata = args["strata"];
     const Eigen::Map<vec_value_t> weights = args["weights"];
     const std::string tie_method = args["tie_method"];
-    return new r_glm_cox_64_t(start, stop, status, weights, tie_method);
+    return new r_glm_cox_64_t(start, stop, status, strata, weights, tie_method);
 }
 
 auto make_r_glm_gaussian_64(Rcpp::List args)
@@ -82,25 +85,27 @@ RCPP_MODULE(adelie_core_glm)
 {
     /* base classes */
     Rcpp::class_<r_glm_base_64_t>("RGlmBase64")
-        .constructor()
-        .property("is_multi", &r_glm_base_64_t::is_multi, "")
-        .property("name", &r_glm_base_64_t::name, "")
-        .property("y", &r_glm_base_64_t::y, "")
-        .property("weights", &r_glm_base_64_t::weights, "")
         .method("gradient", &r_glm_base_64_t::gradient)
+        .method("hessian", &r_glm_base_64_t::hessian)
         .method("loss", &r_glm_base_64_t::loss)
         .method("loss_full", &r_glm_base_64_t::loss_full)
+        .method("inv_link", &r_glm_base_64_t::inv_link)
+        .property("is_multi", &r_glm_base_64_t::is_multi)
+        .property("name", &r_glm_base_64_t::name)
+        .property("y", &r_glm_base_64_t::y)
+        .property("weights", &r_glm_base_64_t::weights)
         ;
 
     Rcpp::class_<r_glm_multibase_64_t>("RGlmMultiBase64")
-        .constructor()
-        .property("is_multi", &r_glm_multibase_64_t::is_multi, "")
-        .property("name", &r_glm_multibase_64_t::name, "")
-        .property("y", &r_glm_multibase_64_t::y, "")
-        .property("weights", &r_glm_multibase_64_t::weights, "")
         .method("gradient", &r_glm_multibase_64_t::gradient)
+        .method("hessian", &r_glm_multibase_64_t::hessian)
         .method("loss", &r_glm_multibase_64_t::loss)
         .method("loss_full", &r_glm_multibase_64_t::loss_full)
+        .method("inv_link", &r_glm_multibase_64_t::inv_link)
+        .property("is_multi", &r_glm_multibase_64_t::is_multi)
+        .property("name", &r_glm_multibase_64_t::name)
+        .property("y", &r_glm_multibase_64_t::y)
+        .property("weights", &r_glm_multibase_64_t::weights)
         ;
 
     /* GLM classes */

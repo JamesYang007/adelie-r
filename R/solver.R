@@ -82,7 +82,7 @@ solve_ <- function(
 #' @param   pivot_subset_min    Minimum subset of pivot rule, default is \code{1}.
 #' @param   pivot_slack_ratio   Slack ratio of pivot rule, default is \code{1.25}.
 #' @param   check_state     Check state, default is \code{FALSE}.
-#' @param   progress_bar    Progress bar, default is \code{TRUE}.
+#' @param   progress_bar    Progress bar, default is \code{FALSE}.
 #' @param   warm_start      Warm start, default is \code{NULL} (no warm start).
 #' @return  State of the solver.
 #'
@@ -121,7 +121,7 @@ gaussian_cov <- function(
     pivot_subset_min = 1,
     pivot_slack_ratio = 1.25,
     check_state = FALSE,
-    progress_bar = TRUE,
+    progress_bar = FALSE,
     warm_start = NULL
 )
 {
@@ -157,15 +157,6 @@ gaussian_cov <- function(
         screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
         screen_beta <- double(sum(group_sizes[screen_set + 1]))
         screen_is_active <- as.integer(rep_len(1, length(screen_set)))
-        screen_dual_size <- 0
-        if (!is.null(constraints)) {
-            screen_dual_size <- as.integer(sum(
-                sapply(screen_set, function(k) {
-                    ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
-                })
-            ))
-        }
-        screen_dual <- double(screen_dual_size)
         active_set_size <- length(screen_set)
         active_set <- integer(G)
         if (active_set_size > 0) {
@@ -189,7 +180,6 @@ gaussian_cov <- function(
         screen_set <- as.integer(warm_start$screen_set)
         screen_beta <- as.double(warm_start$screen_beta)
         screen_is_active <- as.integer(warm_start$screen_is_active)
-        screen_dual <- as.double(warm_start$screen_dual)
         active_set_size <- as.integer(warm_start$active_set_size)
         active_set <- as.integer(warm_start$active_set)
         rsq <- as.double(warm_start$rsq)
@@ -207,7 +197,6 @@ gaussian_cov <- function(
         screen_set=screen_set,
         screen_beta=screen_beta,
         screen_is_active=screen_is_active,
-        screen_dual=screen_dual,
         active_set_size=active_set_size,
         active_set=active_set,
         rsq=rsq,
@@ -247,7 +236,7 @@ gaussian_cov <- function(
 #' are written in C++), and allows for specialized matrix
 #' classes.
 #'
-#' @param X Feature matrix. Either a regualr R matrix, or else an
+#' @param X Feature matrix. Either a regular R matrix, or else an
 #'     \code{adelie} custom matrix class, or a concatination of such.
 #' @param glm GLM family/response object. This is an expression that
 #'     represents the family, the reponse and other arguments such as
@@ -256,12 +245,12 @@ gaussian_cov <- function(
 #'     \code{glm.multinomial()}, \code{glm.cox()}, \code{glm.multinomial()},
 #'     and \code{glm.multigaussian()}. This is a required argument, and
 #'     there is no default. In the simple example below, we use \code{glm.gaussian(y)}.
-#' @param constraints Constraints on the parameters. Currently these are ignored.
+#' @param constraints Constraints on the parameters. Currently these are ignored, but to come soon: upper and lower limits.
 #' @param groups This is an ordered vector of integers that represents the groupings,
-#' with each entry indicating where a group begins. The entries refer to column numbers
-#' in the feature matrix.
-#'        If there are \code{p} features, the default is \code{1:p} (no groups).
-#' (Note that in the output of \code{grpnet} this vector might be shifted to start from 0,
+#' with each entry indicating where a group begins.  The entries refer to column numbers
+#' in the feature matrix, and hence the memebers of a group have to be contiguous.
+#'        If there are \code{p} features, the default is \code{1:p} (no groups; i.e. `p` groups each of of size 1). So the length of `groups` is the number of groups.
+#' (Note that in the `state` output of \code{grpnet} this vector might be shifted to start from 0,
 #' since internally \code{adelie} uses zero-based indexing.)
 #' @param alpha The elasticnet mixing parameter, with \eqn{0\le\alpha\le 1}.
 #' The penalty is defined as
@@ -278,11 +267,11 @@ gaussian_cov <- function(
 #'     parameter, and is added to the fit.
 #' @param lambda A user supplied \code{lambda} sequence. Typical usage is to
 #' have the program compute its own \code{lambda} sequence based on
-#' \code{lmda_path_size} and \code{min_ratio}.
+#' \code{lmda_path_size} and \code{min_ratio}. This is returned with the fit.
 #' @param standardize If \code{TRUE} (the default), the columns of \code{X} are standardized before the
-#' fit is computed. This is good practice if the features are a mixed bag, because it has an impact on
+#' fit is computed. This is good practice if the features are on different scales, because it has an impact on
 #' the penalty. The regularization path is computed using the standardized features, and the
-#' standardization information is saved on the object for making future predictions.
+#' standardization information is saved on the object for making future predictions. The different matrix classes have their own methods for standardization. For example, for a sparse matrix the standardization information will be computed, but not actually applied (eg centering would destroy the sparsity). Rather, the methods for matrix multiply will be aware, and incorporate the standardization information.
 #' @param irls_max_iters Maximum number of IRLS iterations, default is
 #'     \code{1e4}.
 #' @param irls_tol IRLS convergence tolerance, default is \code{1e-7}.
@@ -323,8 +312,8 @@ gaussian_cov <- function(
 #'
 #' @return A list of class \code{"grpnet"}. This has a main component called \code{state} which
 #' represents the fitted path, and a few extra
-#' useful components such as the \code{call}, the \code{family} name, and \code{group_sizes}.
-#' Users typically use methods like \code{predict()}, \code{print()}, \code{plot()} etc to examine the object.
+#' useful components such as the \code{call}, the \code{family} name, \code{groups} and \code{group_sizes}.
+#' Users are encouraged to use methods like \code{predict()}, \code{coef()}, \code{print()}, \code{plot()} etc to examine the object.
 #' @author James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie
 #' \email{hastie@@stanford.edu}
 #'
@@ -339,20 +328,30 @@ gaussian_cov <- function(
 #' Hazards Model via Coordinate Descent, Journal of Statistical Software, Vol.
 #' 39(5), 1-13},
 #' \doi{10.18637/jss.v039.i05}.\cr
-#' Tibshirani,Robert, Bien, J., Friedman, J., Hastie, T.,Simon, N.,Taylor, J. and
+#' Tibshirani,Robert, Bien, J., Friedman, J., Hastie, T.,Simon, N., Taylor, J. and
 #' Tibshirani, Ryan. (2012) \emph{Strong Rules for Discarding Predictors in
 #' Lasso-type Problems, JRSSB, Vol. 74(2), 245-266},
 #' \url{https://arxiv.org/abs/1011.2234}.\cr
-#' @seealso \code{cv.grpnet}, \code{predict.grpnet}, \code{plot.grpnet}, \code{print.grpnet}.
+#' @seealso \code{cv.grpnet}, \code{predict.grpnet}, \code{coef.grpnet}, \code{plot.grpnet}, \code{print.grpnet}.
 #' @examples
 #' set.seed(0)
 #' n <- 100
 #' p <- 200
 #' X <- matrix(rnorm(n * p), n, p)
 #' y <- X[,1] * rnorm(1) + rnorm(n)
-#' fit <- grpnet(X, glm.gaussian(y))
+#' ## Here we create 60 groups randomly. Groups need to be contiguous, and the `groups` variable
+#' ## indicates the beginning position of each group.
+#' groups <- c(1, sample(2:199, 60, replace = FALSE))
+#' groups <- sort(groups)
+#' print(groups)
+#' fit <- grpnet(X, glm.gaussian(y), groups = groups)
 #' print(fit)
-#'
+#' plot(fit)
+#' coef(fit)
+#' cvfit  <- cv.grpnet(X, glm.gaussian(y), groups = groups)
+#' print(cvfit)
+#' plot(cvfit)
+#' predict(cvfit,newx=X[1:5,], lambda="lambda.min")
 #' @export
 grpnet <- function(
     X,
@@ -390,6 +389,7 @@ grpnet <- function(
 {
     thiscall <- match.call()
     familyname <- glm$name
+    X_raw <- X # MUST come before processing X
     if(inherits(X,"sparseMatrix")){
         X <- as(X,"CsparseMatrix")
         X <- matrix.sparse(X, method="naive", n_threads=n_threads)
@@ -405,7 +405,6 @@ grpnet <- function(
         if(intercept)centers=NULL else centers = rep(0.0,p)
         X = matrix.standardize(X,centers=centers,weights=weights, n_threads=n_threads)
     }
-    X_raw <- X
     if (is.null(dim(y))) {
         y <- as.double(y)
     }
@@ -473,10 +472,9 @@ grpnet <- function(
         solver_args[["weights"]] <- weights
     }
 
-    if (is.null(groups)) {
-        groups <- 0:(p-1)
-    }
-    else(groups = as.integer(groups-1))# In R we do not do 0 indexing
+    if (is.null(groups)) groups <- 1:p
+    savegrps = groups
+    groups = as.integer(groups-1)# In R we do not do 0 indexing
     savegrpsize = diff(c(groups,p))
     # multi-response GLMs
     if (glm$is_multi) {
@@ -512,15 +510,6 @@ grpnet <- function(
             screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
             screen_beta <- double(sum(group_sizes[screen_set + 1]))
             screen_is_active <- as.integer(rep_len(1, length(screen_set)))
-            screen_dual_size <- 0
-            if (!is.null(constraints)) {
-                screen_dual_size <- as.integer(sum(
-                    sapply(screen_set, function(k) {
-                        ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
-                    })
-                ))
-            }
-            screen_dual <- double(screen_dual_size)
             active_set_size <- length(screen_set)
             active_set <- integer(G)
             if (active_set_size > 0) {
@@ -532,7 +521,6 @@ grpnet <- function(
             screen_set <- as.integer(warm_start$screen_set)
             screen_beta <- as.double(warm_start$screen_beta)
             screen_is_active <- as.integer(warm_start$screen_is_active)
-            screen_dual <- as.double(warm_start$screen_dual)
             active_set_size <- as.integer(warm_start$active_set_size)
             active_set <- as.integer(warm_start$active_set)
         }
@@ -545,7 +533,6 @@ grpnet <- function(
         solver_args[["screen_set"]] <- screen_set
         solver_args[["screen_beta"]] <- screen_beta
         solver_args[["screen_is_active"]] <- screen_is_active
-        solver_args[["screen_dual"]] <- screen_dual
         solver_args[["active_set_size"]] <- active_set_size
         solver_args[["active_set"]] <- active_set
 
@@ -557,7 +544,7 @@ grpnet <- function(
                     matrix(rep_len(1.0, n), n, 1), K, n_threads=n_threads
                 ),
                 X_aug
-            ), axis=2, n_threads=n_threads)# Trevor changed the axis meaning - it was 1
+            ), axis=2, n_threads=n_threads)
         }
 
         if (is_gaussian_opt) {
@@ -656,15 +643,6 @@ grpnet <- function(
             screen_set <- (0:(G-1))[(penalty <= 0) | (alpha <= 0)]
             screen_beta <- double(sum(group_sizes[screen_set + 1]))
             screen_is_active <- as.integer(rep_len(1, length(screen_set)))
-            screen_dual_size <- 0
-            if (!is.null(constraints)) {
-                screen_dual_size <- as.integer(sum(
-                    sapply(screen_set, function(k) {
-                        ifelse(is.null(constraints[k+1]), 0, constraints[k+1]$dual_size)
-                    })
-                ))
-            }
-            screen_dual <- double(screen_dual_size)
             active_set_size <- length(screen_set)
             active_set <- integer(G)
             if (active_set_size > 0) {
@@ -676,7 +654,6 @@ grpnet <- function(
             screen_set <- as.integer(warm_start$screen_set)
             screen_beta <- as.double(warm_start$screen_beta)
             screen_is_active <- as.integer(warm_start$screen_is_active)
-            screen_dual <- as.double(warm_start$screen_dual)
             active_set_size <- as.integer(warm_start$active_set_size)
             active_set <- as.integer(warm_start$active_set)
         }
@@ -689,7 +666,6 @@ grpnet <- function(
         solver_args[["screen_set"]] <- screen_set
         solver_args[["screen_beta"]] <- screen_beta
         solver_args[["screen_is_active"]] <- screen_is_active
-        solver_args[["screen_dual"]] <- screen_dual
         solver_args[["active_set_size"]] <- active_set_size
         solver_args[["active_set"]] <- active_set
 
@@ -765,7 +741,8 @@ grpnet <- function(
     stan = if(standardize)
                list(centers=attr(X,"_centers"),scales = attr(X,"_scales"))
            else NULL
-    out <- list(call=thiscall, family = familyname, group_sizes=savegrpsize,standardize = stan, state = state)
+    out <- list(call=thiscall, family = familyname, groups = savegrps, group_sizes=savegrpsize,standardize = stan, state = state)
     class(out) <- "grpnet"
     out
 }
+

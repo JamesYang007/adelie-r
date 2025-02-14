@@ -4,14 +4,15 @@
 \alias{matrix.sparse}
 \title{Creates a sparse matrix object.}
 \usage{
-matrix.sparse(mat, method = c("naive", "cov"), n_threads = 1)
+matrix.sparse(mat, method = c("naive", "cov", "constraint"), n_threads = 1)
 }
 \arguments{
 \item{mat}{A sparse matrix.}
 
 \item{method}{Method type, with  default \code{method="naive"}.
 If \code{method="cov"}, the matrix is used with the solver \code{gaussian_cov()}.
-Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.}
+Used for \code{glm.gaussian()} and \code{glm.multigaussian()} families. Generally "naive" is used for wide matrices, and "cov" for tall matrices.
+If \code{method="constraint"}, the matrix is used as input to the constraint objects.}
 
 \item{n_threads}{Number of threads.}
 }
@@ -31,4 +32,5 @@ out <- matrix.sparse(X_sp, method="naive")
 A_dense <- t(X_dense) \%*\% X_dense
 A_sp <- as(A_dense, "dgCMatrix")
 out <- matrix.sparse(A_sp, method="cov")
+out <- matrix.sparse(X_sp, method="constraint")
 }

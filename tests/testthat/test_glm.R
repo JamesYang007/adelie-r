@@ -26,7 +26,7 @@ test_that("glm.cox", {
     start <- sample.int(20, size=n, replace=TRUE)
     stop <- start + 1 + sample.int(5, size=n, replace=TRUE)
     status <- rbinom(n, 1, 0.5)
-    expect_error(glm.cox(start, stop, status), NA)
+    expect_error(glm.cox(start=start, stop=stop, status=status), NA)
 })
 
 test_that("glm.multinomial", {

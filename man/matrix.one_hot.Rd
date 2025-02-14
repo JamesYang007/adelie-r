@@ -24,7 +24,10 @@ Creates a one-hot encoded matrix.
 n <- 100
 p <- 20
 mat <- matrix(rnorm(n * p), n, p)
-out <- matrix.one_hot(mat)
+fac <- sample(0:5, n, replace = TRUE)
+mat=cbind(fac,mat)
+levels <- c(6, rep(1,p))
+out <- matrix.one_hot(mat, levels = levels)
 }
 \author{
 James Yang, Trevor Hastie, and  Balasubramanian Narasimhan \cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}

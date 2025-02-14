@@ -1,7 +1,7 @@
 Package: adelie
 Title: Group Lasso and Elastic Net Solver for Generalized Linear Models
-Version: 1.0.3
-Date: 2024-09-04
+Version: 1.0.6
+Date: 2025-02-13
 Authors@R: c(
     person("James", "Yang", , "jamesyang916@gmail.com", role = c("aut", "cph")),
     person("Trevor", "Hastie", , "hastie@stanford.edu", role = c("aut", "cph", "cre")),
@@ -9,12 +9,12 @@ Authors@R: c(
 Description: Extremely efficient procedures for fitting the entire group lasso and group elastic net regularization path for GLMs, multinomial, the Cox model and multi-task Gaussian models. Similar to the R package 'glmnet' in scope of models, and in computational speed.  This package provides  R bindings to the C++ code underlying the corresponding Python package 'adelie'. These bindings offer a general purpose group elastic net solver, 
     a wide range of matrix classes that can exploit special structure 
     to allow large-scale inputs, and an assortment of 
-    generalized linear model classes for fitting various types of data. The package includes
+    generalized linear model classes for fitting various types of data. 
     The package is an implementation of Yang, J. and Hastie, T. (2024) <doi:10.48550/arXiv.2405.08631>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 LinkingTo: 
     Rcpp,
     RcppEigen
@@ -25,6 +25,7 @@ Imports:
     Rcpp,
     methods,
     stringr,
+    utils
 Suggests:
     ggplot2,
     gridExtra,
@@ -35,4 +36,3 @@ Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://github.com/JamesYang007/adelie-r
 BugReports: https://github.com/JamesYang007/adelie-r/issues
-

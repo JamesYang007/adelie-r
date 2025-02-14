@@ -24,11 +24,23 @@ knitr::opts_chunk$set(
 The `adelie` package  provides extremely efficient procedures for
 fitting the entire group lasso and group elastic net regularization
 path for GLMs, multinomial, the Cox model and multi-task Gaussian
-models. `adelie` is similar to the R package `glmnet` in scope of models, and in computational speed.
-The R package `adelie` is built from the same C++ code as used in the
-corresponding [adelie Python package](https://github.com/JamesYang007/adelie).
+models. `adelie` is similar to the R package `glmnet` in scope of
+models, and in computational speed. 
+In fact, if there are no groups, `adelie` fits the same class of
+models as in `glmnet`, with similar computational speed.
 
-In this notebook, we give a brief overview of the group elastic net problem that `adelie` solves.
+The R package `adelie` is built from the same C++ code as used in the
+corresponding [adelie Python
+package](https://github.com/JamesYang007/adelie).
+See @yang2024adelie for details.
+The theory and algorithms in this implementation are inspired by
+@glmnet, @coxnet, @strongrules and @block.
+
+
+In this notebook, we give a brief overview of the group elastic net
+problem that `adelie` solves, and describe some of the features of
+this implementation. Then we develop a detailed example for fitting
+pairwise interactions, mimicking the `glinternet` R package (@glinternet)
 
 
 ## __Single-Response Group Elastic Net__
@@ -42,20 +54,24 @@ $$
         \alpha \|\beta_g\|_2 + \frac{1-\alpha}{2} \|\beta_g\|_2^2
     \right)
     \\\text{subject to}\quad&
-    \eta = X \beta + \beta_0 \mathbf{1} + \eta^0
+    \eta = \eta^0 + \beta_0 \mathbf{1} + X \beta 
 \end{align*}
 $$
-where 
-$\beta_0$ is the intercept,
-$\beta$ is the coefficient vector,
-$X$ is the feature matrix,
-$\eta^0$ is a fixed offset vector,
-$\lambda \geq 0$ is the regularization parameter,
-$G$ is the number of groups,
-$\omega_g \geq 0$ is the penalty factor per group,
-$\alpha \in [0,1]$ is the elastic net parameter,
-and $\beta_g$ are the coefficients for the $g$ th group.
-$\ell(\cdot)$ is the loss function defined by the GLM.
+where
+
+* $\ell(\cdot)$ is the loss function defined by the GLM,
+* $\eta^0$ is a fixed offset vector,
+* $\beta_0$ is the intercept,
+* $\beta$ is the coefficient vector,
+* $X$ is the feature matrix,
+* $\lambda \geq 0$ is the regularization parameter,
+* $G$ is the number of groups,
+* $\beta_g$ are the subvector of coefficients for the $g$th group,
+* $\omega_g \geq 0$ is the penalty factor per group, and
+* $\alpha \in [0,1]$ is the elastic net parameter.
+
+
+
 As an example, the Gaussian GLM 
 (`glm.gaussian()`)
 defines the loss function as
@@ -72,7 +88,7 @@ where
 $w \geq 0$ is the observation weight vector,
 $y$ is the response vector,
 and $\eta$ is the linear prediction vector as in the optimization
-problem above. This is equivalent to the weighted sum-of-squared errors
+problem above.  This is equivalent to the weighted sum-of-squared errors
 $$
 \begin{align*}
     \mbox{RSS}
@@ -84,6 +100,11 @@ $$
 since the term in $\sum w_iy_i^2$ is a constant for the
 optimization.
 
+By default we set the weights $w_i=1/n$, and if supplied
+they are renormalized to sum to 1.
+
+
+
 Specifically for the Gaussian GLM, we employ a specialized optimizer based on coordinate descent
 to solve the group elastic net problem.
 
@@ -92,36 +113,11 @@ $\eta_i$ the natural parameter. Other GLMs such as binomial
 (`glm.binomial()`) and Poisson (`glm.poisson()`) have similar
 expressions for the negative log-likelihood.
 For other general GLMs as well as the Cox model (`glm.cox()`), we use a proximal Newton method, 
-which leads to an Iterative Reweighted Least Squares (IRLS) algorithm,
+which leads to an _iteratively reweighted least squares_ (IRLS) algorithm,
 That is, we iteratively perform a quadratic approximation to $\ell(\cdot)$, 
 which yields a sequence of Gaussian GLM group elastic net problems
 that we solve using our special solver based on coordinate descent.
 
-
-The Gaussian GLM also admits a different algorithm, which we call the _the covariance method_,
-using summary statistics rather than individual-level data.
-The covariance method solves the following problem:
-$$
-\begin{align*}
-    \mathrm{minimize}_{\beta} \quad&
-    \frac{1}{2} \beta^\top A \beta
-    - v^\top \beta
-    + 
-    \lambda \sum\limits_{g=1}^G \omega_g \left(
-        \alpha \|\beta_g\|_2 + \frac{1-\alpha}{2} \|\beta_g\|_2^2
-    \right)
-\end{align*}
-$$
-This method would be equivalent to the usual single-response Gaussian group elastic net problem
-if $A \equiv X_c^\top W X_c$ and $v \equiv X_c^\top W y_c$
-where $X_c$ is column-centered version of $X$ 
-and $y_c$ is the centered version of $y-\eta^0$
-where the means are computed with weights $W$
-(if intercept is to be fit).
-
-This method only works for the Gaussian case since the proximal Newton method
-changes the weights $W$ at every IRLS iteration,
-so that without access to $X$, it is not possible to compute the new "$A$" and "$v$".
 
 
 ## __Multi-Response Group Elastic Net__
@@ -135,7 +131,7 @@ $$
         \alpha \|B_g\|_F + \frac{1-\alpha}{2} \|B_g\|_F^2
     \right)
     \\\text{subject to}\quad&
-        \eta = X B + \mathbf{1} \beta_0^\top + \eta^0
+        \eta =  \eta^0 + \mathbf{1}\beta_0^\top + X B
 \end{align*}
 $$
 The model arises in "multitask" learning --- `glm.multigaussian()` ---
@@ -157,8 +153,9 @@ $$
         \alpha \|\beta_g\|_2 + \frac{1-\alpha}{2} \|\beta_g\|_2^2
     \right)
     \\\text{subject to}\quad&
-    \mathrm{vec}(\eta^\top) = (X \otimes I_K) \beta + (\mathbf{1} \otimes I_K) \beta_0 + \mathrm{vec}(\eta^{0\top})
-\end{align*}
+    \mathrm{vec}(\eta^\top) = \mathrm{vec}(\eta^{0\top}) + (\mathbf{1}
+	\otimes I_K) \beta_0  + (X \otimes I_K) \beta
+	\end{align*}
 $$
 where $\mathrm{vec}(\cdot)$ is the operator that flattens a column-major matrix into a vector,
 and $A \otimes B$ is the Kronecker product operator. Hence $\beta \equiv \mathrm{vec}(B^\top)$.
@@ -174,7 +171,8 @@ and otherwise for general multi-response GLMs, we wrap the single-response GLM s
 
 # __Quickstart__
 
-In this section, we cover the basic usage of `adelie`.
+In this section, we cover the basic usage of `adelie` using very
+simple examples.
 
 ```{r}
 library(adelie)
@@ -192,21 +190,26 @@ n = 100     # number of observations
 p = 1000    # number of features
 set.seed(5) # seed
 X = matrix(rnorm(n*p),n,p)
-y = X[,1:10]%*%rnorm(10) + rnorm(n)*sqrt(10) # makes SNR = 1
+y = X[,1:10] %*% rnorm(10) + rnorm(n) * sqrt(10) # makes SNR = 1
 ```
 
 ### __Lasso__
 
 
 The most basic call to `grpnet` simply supplies a `X` matrix and a `glm` object.
-For example, `glm.gaussian()` returns a Gaussian `glm` object,
+For example, `glm.gaussian(y=y)` returns a Gaussian `glm` object with
+response variable `y`,
 which corresponds to the usual least squares loss function.
 By default, `grpnet` will fit lasso by setting each feature as its own group.
 `adelie` is written to treat groups of size `1` in a more optimized manner,
 so it is a competitive lasso solver that has computation times similar
 to those of the `glmnet` package.
-Like `glmnet`, `grpnet` will also generate a sequence of 100  regularizations $\lambda$ 
-evenly spaced on the log scale, by default if the user does not provide the path.
+Like `glmnet`, `grpnet` will also generate a sequence of 100  values
+for the regularization parameter $\lambda$ 
+evenly spaced on the log scale, by default if the user does not
+provide the path.
+The largest value of $\lambda$ will be the smallest value such that all the terms
+with positive $omega_g$ above in the solution are zero.
 Since `grpnet` is a path-solver, it will warm-start at the next $\lambda$
 using the current solution on the path.
 __For this reason, we recommend users to supply a sufficiently fine grid of__ $\lambda$ __or use the default path!__
@@ -244,9 +247,13 @@ a subset of the original:
 pred = predict(fit, newx = X[1:5,],lambda = c(1.5, 1))
 pred
 ```
+
+If you used `standardize = TRUE`, the default, you do not have to
+standardize `newx`; `adelie` will do it for you automatically.
+
 Finally, we would like to choose a good value for $\lambda$, and for
 that we use cross-validation. We include a `progress_bar` argument,
-which can be helful for big problems. The `plot` method for a
+which can be helpful for big problems. The `plot` method for a
 `cv.grpnet` object displays the average cross-validated deviance of the model,
 with approximate standard error bars for the average. 
 
@@ -275,6 +282,8 @@ $\lambda$ can be supplied.
 
 ### __Group Lasso__
 
+So far this has been a simple Gaussian lasso fit, and the results
+would be identical to those produced by `glmnet`.
 
 To fit group lasso, the user simply needs to supply a `groups` argument that
 defines the starting column index of $X$ for each group.
@@ -319,7 +328,7 @@ however the following discussion applies for any GLM.
 Let's modify our example and generate a binomial response.
 
 ```{r}
-eta = X[,1:5]%*%rnorm(5)/sqrt(5)
+eta = X[,1:5] %*% rnorm(5) / sqrt(5)
 mu = 1 / (1 + exp(-eta))
 y = rbinom(n, size = 1, prob = mu)
 ```
@@ -335,12 +344,21 @@ plot(fitb)
 
 Cross-validation works as before:
 ```{r}
-fitbcv = cv.grpnet(X,glm.binomial(y),progress_bar = TRUE)
+fitbcv = cv.grpnet(X,glm.binomial(y))
 plot(fitbcv)
 ```
-We can make predictions from the fitted objects as before. For GLMs,
-the predictions are for the link ($\eta$).
-
+We can make predictions from the fitted objects as before. 
+```{r}
+predict(fitb, newx = X[1:5,],lambda = c(0.13, 0.07))
+```
+For GLMs,
+the predictions are by default on the  link ($\eta$) scale.
+However, one can also make predictions on the _inverse link_ or
+_response_ scale ($\mu$):
+```{r}
+predict(fitb, newx = X[1:5,],lambda =  c(0.13, 0.07),type="response")
+```
+In this case we get the estimated probability of a 1-class.
 We can specify coefficient groups just as before.
 
 ## __Multi-Response GLM Elastic Net__
@@ -349,11 +367,15 @@ We can specify coefficient groups just as before.
 Currently, we only support MultiGaussian (least squares) and Multinomial GLMs.
  
 The following code shows an example of fitting a multinomial
-regression problem. We will use the `glm.multinomial()` family, which
+regression problem. We use the `glm.multinomial()` family, which
 expects a matrix response $Y$ with $K$ columns (the number of
 classes). Each row of $Y$ is a proportion vector which sums to 1.
 In the example below, $Y$ is an indicator matrix, with a single 1 in
-each row, the rest being zeros.
+each row, the rest being zeros. If instead the  data were grouped, and each
+row originally represented the number out of $n_i$ in category $k$, we
+would first divide each of the counts by $n_i$ turning them into
+proportions. Then we would supply weights $w_i=n_i$, normalized to sum
+to 1.0 overall.
 
 ```{r}
 n = 300     # number of observations
@@ -385,7 +407,7 @@ plot(fitm)
 ```
 The coefficient for each feature is a vector(one per class), so rather
 than show multiple coefficients, the plot shows the progress of the
-2norm as a function of $\lambda$. Once again, because of the grouping
+2norm of this vector as a function of $\lambda$. Once again, because of the grouping
 (into groups of 5 here), the groups are colored the same. In this
 case, the first group has all the action, so appears much earlier than
 the rest.
@@ -416,6 +438,15 @@ behaves as intended.
 predict(fitmcv,newx = X[1:3,])
 ```
 Here by default the prediction is made at `lambda = "lambda.1se"`.
+
+Typically for the multinomial we would be more interested in the
+predicted probabilities:
+
+```{r}
+predict(fitmcv,newx = X[1:3,], lambda="lambda.min", type = "response")
+```
+Each of the rows sum to 1.
+
 
 ## __Cox Models__
 
@@ -456,6 +487,426 @@ par(mfrow = c(1,2))
 plot(fitcv)
 plot(fitcv$grpnet.fit)
 ```
+The family `glm.cox()` accommodates start-stop data and strata as
+ well. It handles ties by default using the "Efron" method. See
+ `?glm.cox` for further details.
+ 
+# __Matrix__
+
+
+In group elastic net problems, the matrix object plays a crucial role in the performance of the solver.
+It becomes apparent in our optimization algorithm (and our benchmark analysis) 
+that most of the runtime lies in interacting with the matrix object, e.g. computing inner-products.
+Hence, a highly performant matrix object implementing a select set of methods that the solver requires
+will yield tremendous speed gains overall.
+In addition, we have found numerous examples where a matrix class admits some special structure
+that can be exploited for further speed and memory gains.
+One simple example is a large sparse matrix, which cannot fit in memory as a dense matrix.
+Another example is genomics datasets which are not only sparse, but only take on 3 possible integer values
+(see [Examples], to come), and generally have over 160 billion entries with 30\% non-zero entries.
+
+For these reasons, we found it fruitful to abstract out the matrix
+class, and 
+`adelie` provides a few examples.
+We discuss below some ways a user may interact with these classes.
+
+ 
+## __Some Useful Matrix Methods__
+
+We will go through a few matrix methods that will be useful in group
+lasso modeling.
+
+### Dense Matrix
+The simplest example of such a matrix is a dense matrix.
+Let us first construct a dense matrix and wrap it using `matrix.dense`.
+
+```{r dense}
+n = 4
+p = 2
+set.seed(0)
+X_dense = matrix(rnorm(n*p),n,p)
+print(X_dense)
+Xd = matrix.dense(X_dense)
+print(Xd)
+```
+If this is all we are going to pass to `grpnet()`, then we could have
+saved ourselves the trouble, because it will do so anyway in the call
+to `grpnet`. But we will
+see that it can still become useful when we combine matrices.
+
+### Sparse Matrix
+
+Similarly, we can wrap a sparse matrix using `matrix.sparse`. We will
+make a simple sparse matrix using the function `Matrix::sparseMatrix()`. We
+will use the _market matrix_ format, where we supply ` i, j, x` triples.
+
+```{r sparse}
+d = data.frame(
+    i = c(2, 1, 4, 1, 2, 4),
+    j= c(1, 2, 2, 3, 3, 3),
+    x = c(0.184, 0.330, 0.738, 0.576, -0.305, 0.390)
+)
+print(d)
+require(Matrix)
+X_sparse = with(d, sparseMatrix(i, j, x=x, dims=c(4,3)))
+print(X_sparse)
+Xs = matrix.sparse(X_sparse)
+print(Xs)
+```
+Likewise, if this was all we were to pass to `grpnet`, we again could
+have saved the trouble, because it would convert an S4 sparse matrix automatically.
+
+### Concatenated Matrices
+
+Suppose we have both a dense matrix and a sparse matrix. We can
+concatenate matrix classes together in `adelie`. This enables the
+software to use the most efficient methods for each when performing
+matrix multiplies.
+
+```{r concat}
+Xds = matrix.concatenate(list(Xd, Xs))
+print(Xds)
+Xds$rows; Xds$cols
+print(Xds)
+```
+By default we concatenated by columns (as in `cbind()`). We could
+alternatively concatenate by rows, using the `axis=1` argument, but
+that would fail here since the dimensions are not compatible.
+
+We currently do not have code that allows one to view these matrix objects;
+that may come in future versions of the package. Each matrix object
+has `attributes`, which typically contain the original matrix, or
+matrices if it was concatenated.
+
+### Mixed variables and one-hot encoding
+
+Sometimes we have a mixture of categorical and quantitative variables. 
+In this case we typically expand the categorical variables using
+_one_hot_ encoding (a.k.a _dummy variables_). Consider the simple
+example where we have `X_dense` as above, along with a factor with 3
+levels.  
+```{r mixed}
+X_mixed = cbind(X_dense, c(1,0,2,1))
+print(X_mixed)
+levels = c(1,1,3)
+```
+Along with this matrix we have an integer vector of levels, which says
+how many levels in each column, with quantitative variables depicted
+as 1.
+Notice for factors we represent the values for the factor starting at
+`0` in `adelie`.
+
+```{r onehot}
+Xoh = matrix.one_hot(X_mixed, levels = levels)
+Xoh$cols
+```
+We would like to see what is inside `X0h`. Since we dont have a print
+method yet, we will use a bit of trickery to do
+that, by multiplying it by the identity. Since only row-sparse
+matrices are allowed (they are meant to be adelie coefficient matrices), we will make one.
+
+```{r inoh}
+eye= as(as(diag(5), "generalMatrix"), "RsparseMatrix")
+Xoh$sp_tmul(eye)
+```
+
+### Standardization
+
+We typically wish to standardize the features before fitting an
+`adelie` model, with a few exceptions. If some columns represent the
+_one-hot_ vectors for a factor variable, we generally do not
+standardize them. Lets use that case as an example. Each matrix class
+has its own standardize method.
+
+```{r std}
+Xohs = matrix.standardize(Xoh)
+Xohs$sp_tmul(eye)
+```
+
+The standardization information is stored in the attributes of the
+matrix object.
+
+```{r attrs}
+print(attributes(Xohs))
+```
+
+# Extended Examples
+
+We now go through some applications where we use `adelie` and its
+group lasso facilities as a building block. Currently just one
+example, but more to follow.
+
+## Learning Interactions via Hierarchical Group-Lasso Regularization
+
+In regression settings, we may want to include pairwise interaction terms amongst a subset of features to capture some non-linearity.
+    Moreover, we would like to perform feature selection on the interaction terms as well.
+    However, to achieve an interpretable model, we would like to also impose a hierarchy such that interaction terms are only included in the model if the main effects are included.
+    Michael Lim and Trevor Hastie provide a formulation of this problem using group lasso where the group structure imposes the hierarchy and the group lasso penalty allows for feature selection.
+    For further details see their R package `glinternet` and the reference:
+    [Learning interactions via hierarchical group-lasso regularization](https://hastie.su.domains/Papers/glinternet_jcgs.pdf) 
+
+We implement their approach in `adelie`, and provide two advantages:
+
+1. We can provide interaction models for _all_ the `adelie`
+   response familes. The `glinternet` package handles two cases only -
+   Gaussian and binomial.
+2. A computation speedup by a factor of about 25.
+
+We first demonstrate the functions that are provided in the `adelie` package
+for fitting these models. 
+Then we develop our approach from scratch using `grpnet` as the work
+engine, which helps to explain how the model works.
+
+
+### Simulation Setup
+
+We will work under a simulation setting.
+We draw $n$ independent samples $Z_i \in \mathbb{R}^d$ where the
+continuous features are sampled from a standard normal and the
+discrete features are sampled uniformly. Remember that factors start
+at 0, and the maximum value is levels-1.
+
+```{r datasetup}
+require(adelie)
+n=1000
+d_cont = 10     # number of continuous features
+d_disc = 10     # number of discrete features
+set.seed(3)     # random seed
+Z_cont = matrix(rnorm(n*d_cont),n,d_cont)
+levels = sample(2:10,d_disc,replace=TRUE)
+Z_disc = matrix(0,n,d_disc)
+for(i in seq(d_disc))Z_disc[,i] = sample(0:(levels[i]-1),n,replace=TRUE)
+```
+
+It is customary to first center and scale the continuous features so that they have mean 0
+ and standard deviation 1.
+ 
+```{r standardize}
+sd0 = function(x)sd(x)*sqrt(1-1/length(x)) # SD formula with divition by n rather n-1
+Z_cont_means = apply(Z_cont,2,mean)
+Z_cont_stds = apply(Z_cont,2,sd0)
+Z_cont = scale(Z_cont, Z_cont_means,Z_cont_stds)
+```
+We now combine these matrices to form one big matrix, and a vector of
+levels that describes them all.
+
+```{r comb}
+Z = cbind(Z_cont,Z_disc)
+levels = c(rep(1,d_cont),levels)
+print(levels)
+```
+
+We make a response which has a main effect in each of a continuous
+feature and discrete one, and their interaction.
+
+```{r makey}
+xmat = model.matrix(~Z_cont[,1]*factor(Z_disc[,2]))
+nc=ncol(xmat)
+print(nc)
+set.seed(4)
+beta = rnorm(nc)
+y = xmat%*%beta+rnorm(n)*2.5
+```
+
+### Tools in adelie for fitting a glinternet model
+
+We now demonstrate the tools we have constructed to fit interaction
+models. In the next section, we describe a manual construction, in
+order to get some insight of what is _under the hood_.
+
+We provide a function `glintnet`, deliberately omitting the "er" in
+the middle to avoid confusion.
+In the following we consider a model with main effects, and
+possible interactions between the first variable, and all the others.
+
+```{r fig.width=7, fig.height=5}
+set.seed(2)
+fit = glintnet(Z,glm.gaussian(y),levels=levels,intr_keys = 1)
+cvfit = cv.glintnet(Z,glm.gaussian(y),levels=levels,intr_keys = 1)
+par(mfrow=c(1,2))
+plot(fit)
+plot(cvfit)
+```
+
+The generating model has 12 non-zero coefficients (including
+intercept), and the more conservative `lambda.1se` appears to have
+found these.
+
+We have some tools for poking in and seeing what was fit.
+The true model has main effects and interactions between variables 1 (continuous)
+and 12 (6-level factor).
+
+```{r}
+predict(cvfit,type="nonzero")
+```
+There is a main-effect for variable 12 (6 coefficients), and an
+interaction term between variable 12 and variable 1. This counts
+actually 12 coefficients - 6 for the interaction, and 6 again for the
+main effect. The algorithm uses the _overlap group lasso_ to ensure
+that when interactions are present, so are the main effects. Details
+can be found in the reference.
+
+Although the model has found the correct interactions, digging in to see the coefficents is less
+helpful. The following printout is truncated.
+
+```{r}
+coef(cvfit)
+```
+
+The coefficient matrix is quite wide, and seeing what goes with what
+is a little cumbersome. We will provide helpful tools in future to
+make these more manageable.
+
+
+Perhaps we made it too easy, by specifying that the only interactions
+could be with variable 1 (`intr_keys=1`).
+Now we repeat the process giving no hints to `glintnet`.
+
+```{r fig.width=7, fig.height=5}
+set.seed(2)
+fit2 = glintnet(Z,glm.gaussian(y),levels=levels)
+cvfit2 = cv.glintnet(Z,glm.gaussian(y),levels=levels)
+par(mfrow=c(1,2))
+plot(fit2)
+plot(cvfit2)
+```
+And the nonzero variables:
+
+```{r}
+predict(cvfit2,type="nonzero")
+```
+It still found them!
+We do not expect this to happen all the time, but is encouraging that
+it found the true signals here.
+
+The structure of `glintnet` and `cv.glintnet` mirrors that of `grpnet`
+and `cv.grpnet` - they have a few more arguments to specify the
+interactions, if needed.
+Importantly, they have all the methods such as `print()`, `coef()`, and
+`predict()`.
+
+```{r}
+predict(cvfit, newx=Z[1:3,])
+predict(cvfit, newx=Z[1:3,],lambda="lambda.min")
+print(cvfit)
+```        
+
+The print method for a `glintnet` fit adds some detail:
+```{r}
+print(fit)
+```
+
+
+### Details: manual construction of interaction model
+
+Here we go through details that are encapsulated in the `glintnet`
+function. Reader not interested in the innards should skip this section.
+
+The model starts of with a _one-hot_ encoded version of `Z`, which it
+then augments with additional blocks of interaction terms.
+
+We are now in position to construct the full feature matrix to fit a
+group lasso model. As a demonstration, suppose we (correctly) believe
+that there is a true interaction term containing the first continuous
+feature, but we do not know the other feature. We therefore wish to
+construct an interaction between the first continuous feature against
+all other features. It is easy to specify this pairing, as shown below
+via `intr_keys` and `intr_values`. The following code constructs the interaction matrix
+`X_intr`. 
+
+```{r interact}
+X_int = matrix.interaction(Z,intr_keys = 1, intr_values=list(NULL),levels=levels)
+```
+
+This function creates for each element of `intr_keys`, _Hadamard_
+products with each of the variables listed in `int_values`:
+
+- For two quantitative features, this just makes one new feature, but
+includes in addition both of the individual features --- so a 3-column matrix.
+- For a quantitative and a discrete variable, it does the same, but with
+the quantitative feature multiplied into each of the columns of the
+one-hot matrix for the factor. The one-hot matrix is also included, so if the
+factor feature has 5 levels, the result here is a 10-column matrix.
+- For two discrete features we get the Hadamard product of their
+  two one-hot matrices.
+
+In linear model termonology, these matrices are exactly what is needed
+to fit a main effect + interaction model for the pair of variables.
+Read the reference for further understanding of this particular construction.
+
+To put all groups of features on the same relative “scale”, we must
+further center and scale all interaction terms between two continuous
+features. Then, it can be shown that interaction block between two discrete
+features induce a (Frobenius) norm of 1, a discrete and continuous
+feature induce a norm of $\sqrt{2}$, and two continuous features induce a norm
+of $\sqrt{3}$. These values will be used as penalty factors later when we call
+the group lasso solver. We first compute the necessary centers and
+scales.
+
+```{r}
+pairs = attributes(X_int)[["_pairs"]] # base 0
+pair_levels = apply(pairs,1,function(i)levels[i+1]) # it is transposed
+is_cont_cont = apply(pair_levels,2,prod) == 1
+cont_cont_pairs = pairs[is_cont_cont,]
+cont_cont = Z[,cont_cont_pairs[,1]+1]*Z[,cont_cont_pairs[,2]+1] # base 0
+centers = rep(0,X_int$cols)
+scales = rep(1,X_int$cols)
+cont_cont_indices = X_int$groups[is_cont_cont]+2 # base 0
+centers[cont_cont_indices+1] = apply(cont_cont,2,mean) # base 0 index, so add 1
+scales[cont_cont_indices+1] = apply(cont_cont,2,sd)  # base 0 index, so add 1
+```
+
+So far we have just focussed on the interaction terms. Glinternet
+requires additional main-effect terms in case the model chooses to
+ignore the interactions.
+
+Now, we construct the full feature matrix including the one-hot
+ encoded main effects as well as the standardized version of the
+ interaction terms using the centers and scales defined above.
+ Note that we have already standardized the quantitative features in
+ the original matrix `Z`.
+ 
+```{r}
+X_one_hot = matrix.one_hot(Z, levels)
+X_int_std = matrix.standardize(
+    X_int,
+    centers=centers,
+    scales=scales)
+X = matrix.concatenate(
+    list(
+        X_one_hot,
+        X_int_std)
+    )
+X$cols
+```
+ 
+Before calling `grpnet` we must prepare the grouping and penalty
+factor information. Once again, we must remember the 0 base issue.
+
+```{r}
+groups = c(
+    as.vector(X_one_hot$groups),
+    X_one_hot$cols + as.vector(X_int$groups)) +1 # the +1 is the base 0 issue
+is_cont_disc = apply(pair_levels-1,2,function(x)xor(x[1],x[2]))
+penalty_int = rep(1, length(X_int$groups))
+penalty_int[is_cont_cont] = sqrt(3)
+penalty_int[is_cont_disc] = sqrt(2)
+penalty = c(
+    rep(1, length(X_one_hot$groups)),
+    penalty_int)
+```
+Finally we can call the group-lasso solver with our prepared inputs.
+
+```{r fig.width=7, fig.height=5}
+set.seed(2)
+fit = grpnet(X,glm.gaussian(y),groups=groups,penalty=penalty, standardize=FALSE)
+cv.fit = cv.grpnet(X,glm.gaussian(y),groups=groups,penalty=penalty, standardize=FALSE)
+par(mfrow=c(1,2))
+plot(fit)
+plot(cv.fit)
+```
+
+ 
 
 
 ## References
