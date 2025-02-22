@@ -4,7 +4,6 @@
 #' @param   upper       Upper bound.  
 #' @param   max_iters   Maximum number of proximal Newton iterations.
 #' @param   tol         Convergence tolerance for proximal Newton.
-#' @param   n_threads   Number of threads.
 #' @return Box constraint. 
 #' @author Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie <hastie@@stanford.edu>
 #' @examples
