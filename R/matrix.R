@@ -87,7 +87,8 @@ matrix.concatenate <- function(
         RMatrixNaiveCConcatenate64
     )
     input <- list(
-        "mats"=mats
+        "mats"=mats,
+        "n_threads"=n_threads
     )
     out <- new(dispatcher[[axis+1]], input)
     attr(out, "_mats") <- mats

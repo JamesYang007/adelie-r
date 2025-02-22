@@ -99,21 +99,23 @@ auto make_r_matrix_naive_block_diag_64(Rcpp::List args)
 auto make_r_matrix_naive_cconcatenate_64(Rcpp::List args)
 {
     Rcpp::List mat_list_r = args["mats"];
+    size_t n_threads = args["n_threads"];
     std::vector<matrix_naive_base_64_t*> mat_list;
     for (auto obj : mat_list_r) {
         mat_list.push_back(Rcpp::as<r_matrix_naive_base_64_t*>(obj)->ptr.get());
     }
-    return new r_matrix_naive_cconcatenate_64_t(mat_list);
+    return new r_matrix_naive_cconcatenate_64_t(mat_list, n_threads);
 }
 
 auto make_r_matrix_naive_rconcatenate_64(Rcpp::List args)
 {
     Rcpp::List mat_list_r = args["mats"];
+    size_t n_threads = args["n_threads"];
     std::vector<matrix_naive_base_64_t*> mat_list;
     for (auto obj : mat_list_r) {
         mat_list.push_back(Rcpp::as<r_matrix_naive_base_64_t*>(obj)->ptr.get());
     }
-    return new r_matrix_naive_rconcatenate_64_t(mat_list);
+    return new r_matrix_naive_rconcatenate_64_t(mat_list, n_threads);
 }
 
 auto make_r_matrix_naive_convex_gated_relu_dense_64F(Rcpp::List args)
@@ -270,7 +272,9 @@ RCPP_MODULE(adelie_core_matrix)
     /* base matrices */
     Rcpp::class_<r_matrix_constraint_base_64_t>("RMatrixConstraintBase64")
         .method("rmmul", &r_matrix_constraint_base_64_t::rmmul)
+        .method("rmmul", &r_matrix_constraint_base_64_t::rmmul_safe)
         .method("rvmul", &r_matrix_constraint_base_64_t::rvmul)
+        .method("rvmul", &r_matrix_constraint_base_64_t::rvmul_safe)
         .method("rvtmul", &r_matrix_constraint_base_64_t::rvtmul)
         .method("mul", &r_matrix_constraint_base_64_t::mul)
         .method("tmul", &r_matrix_constraint_base_64_t::tmul)
@@ -288,8 +292,10 @@ RCPP_MODULE(adelie_core_matrix)
         ;
     Rcpp::class_<r_matrix_naive_base_64_t>("RMatrixNaiveBase64")
         .method("cmul", &r_matrix_naive_base_64_t::cmul)
+        .method("cmul", &r_matrix_naive_base_64_t::cmul_safe)
         .method("ctmul", &r_matrix_naive_base_64_t::ctmul)
         .method("bmul", &r_matrix_naive_base_64_t::bmul)
+        .method("bmul", &r_matrix_naive_base_64_t::bmul_safe)
         .method("btmul", &r_matrix_naive_base_64_t::btmul)
         .method("mul", &r_matrix_naive_base_64_t::mul)
         .method("cov", &r_matrix_naive_base_64_t::cov)
