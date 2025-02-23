@@ -17,7 +17,7 @@ render_dual_groups <- function(
     counts <- sapply(1:G, function(i) {
         c <- constraints[[i]]
         if (is.null(c)) return(0)
-        c$dual_size
+        c$dual_sizes
     })
     as.integer(cumsum(c(0, counts))[1:G])
 }
