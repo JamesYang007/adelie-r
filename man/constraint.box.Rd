@@ -2,35 +2,46 @@
 % Please edit documentation in R/constraints.R
 \name{constraint.box}
 \alias{constraint.box}
-\title{Creates a box constraint.}
+\title{Create a box constraint for a group.}
 \usage{
 constraint.box(lower, upper, max_iters = 100, tol = 1e-09)
 }
 \arguments{
-\item{lower}{Lower bound.}
+\item{lower}{lower bound for each coefficient in the group. If the group has \code{m} variables, this should be a vector of length \code{m}. Values can be \code{-Inf}.}
 
-\item{upper}{Upper bound.}
+\item{upper}{upper bound for each coefficient in the group. If the group has \code{m} variables, this should be a vector of length \code{m}. Values can be \code{Inf}.}
 
-\item{max_iters}{Maximum number of proximal Newton iterations.}
+\item{max_iters}{maximum number of proximal Newton iterations; default is 100.}
 
-\item{tol}{Convergence tolerance for proximal Newton.}
-
-\item{n_threads}{Number of threads.}
+\item{tol}{convergence tolerance for proximal Newton; default is 1e-9.}
 }
 \value{
-Box constraint.
+Box constraint object.
 }
 \description{
-Creates a box constraint.
+A box constraint sets upper and lower bounds for coefficients in a model.
+This is done per group, and this function is used separately to set the bounds for each group in the model. The constraints are returned as a list, with number of elements the number of groups. List entries can be \code{NULL}, which means no constraints for that group. Currently works with single-response models (so \code{glm.multinomial} and \code{glm.multigaussian} are excluded).
 }
 \examples{
 
-lower <- double(10)
-upper <- lower + 5
-c <- constraint.box(
-    lower=lower,
-    upper=upper
-)
+# Group of length 10, with positivity constraint on all the coefficients.
+lower <- rep(0,10)
+upper <- rep(Inf,10)
+cont <- constraint.box(
+                       lower=lower,
+                       upper=upper
+                       )
+
+# No groups, 10 variables, and positivity constraints on all parameters.
+box_cont <- constraint.box(
+                           upper=Inf,
+                           lower=0
+                           )
+cont <- rep(list(box_cont),10)
+
+# Same, but only positivity on first 5 coefficients
+cont <- c(rep(list(box_cont), 5), rep(list(NULL), 5))
+
 }
 \author{
 Trevor Hastie and James Yang\cr Maintainer: Trevor Hastie \href{mailto:hastie@stanford.edu}{hastie@stanford.edu}

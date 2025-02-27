@@ -490,7 +490,44 @@ plot(fitcv$grpnet.fit)
 The family `glm.cox()` accommodates start-stop data and strata as
  well. It handles ties by default using the "Efron" method. See
  `?glm.cox` for further details.
- 
+
+## Constraints
+
+Adelie supports _box constraints_ (lower and upper bounds on
+coefficients. Here we demosntrate with a few examples. Currently only
+works with scalar response models.
+
+### Non-negative Lasso
+
+For our first example we will fit a non-negative lasso, using randomly
+generated data.
+
+```{r}
+n <- 100
+p <- 30
+set.seed(1)
+X <- matrix(rnorm(n * p, n, p), n, p)
+y <- X[,c(1:5)] %*% rnorm(5)/6 + rnorm(n)*5
+
+fit <- grpnet(X, glm.gaussian(y))
+constrs = lapply(1:p, function(i) constraint.box(lower = -.001, upper = Inf))
+fit.constr = grpnet(X, glm.gaussian(y), constraints = constrs)
+
+fit.constrg = glmnet(X,y,lower=0,upper=Inf)
+par(mfrow=c(1,2))
+plot(fit)
+plot(fit.constr)
+```
+
+
+plot(state00)
+out00<- glmnet(X, y,family="gaussian", standardize=F,lambda.min.ratio=0.01)
+plot(out00)
+state0 <- grpnet(X, glm.gaussian(y), group=c(1,5:30), standardize=F,adev_tol=1)
+plot(state0)
+
+
+
 # __Matrix__
 
 

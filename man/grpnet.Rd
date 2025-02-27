@@ -50,7 +50,7 @@ weights, if present. The choices are \code{glm.gaussian()},
 and \code{glm.multigaussian()}. This is a required argument, and
 there is no default. In the simple example below, we use \code{glm.gaussian(y)}.}
 
-\item{constraints}{Constraints on the parameters. Currently these are ignored, but to come soon: upper and lower limits.}
+\item{constraints}{Group-wise constraints on the parameters, supplied as a list with an element for each group. Default is \code{NULL}, which means no constraints. List elements can be \code{NULL} as well. Currently only 'box constraints' are supported, which means upper and lower limits. The function \code{constraint.box()} must be used to set the constraints for each group that has constraints. Details are given in the documentation for \code{constraint.box}.}
 
 \item{groups}{This is an ordered vector of integers that represents the groupings,
 with each entry indicating where a group begins.  The entries refer to column numbers
