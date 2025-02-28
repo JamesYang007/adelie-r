@@ -500,32 +500,50 @@ works with scalar response models.
 ### Non-negative Lasso
 
 For our first example we will fit a non-negative lasso, using randomly
-generated data.
+generated data. Note that even though it seems the constraint object
+is the same for each singleton group, they need to be created
+separately; i.e. we cannot make one, and replicate it.
+This is somewhat counter-intuitive, but these are the rules. 
+
 
 ```{r}
 n <- 100
 p <- 30
 set.seed(1)
-X <- matrix(rnorm(n * p, n, p), n, p)
-y <- X[,c(1:5)] %*% rnorm(5)/6 + rnorm(n)*5
+X <- matrix(rnorm(n * p), n, p)
+y <- X[,c(1:5)] %*% rnorm(5)/3 + rnorm(n)
 
 fit <- grpnet(X, glm.gaussian(y))
-constrs = lapply(1:p, function(i) constraint.box(lower = -.001, upper = Inf))
+constrs = lapply(1:p, function(i) constraint.box(lower = 0, upper = Inf))
 fit.constr = grpnet(X, glm.gaussian(y), constraints = constrs)
-
-fit.constrg = glmnet(X,y,lower=0,upper=Inf)
 par(mfrow=c(1,2))
 plot(fit)
 plot(fit.constr)
 ```
+### Constraints on a single group
 
+Next we create a group of the first four variables.
+We first fit the model unconstrained, and observe the final
+coefficients for the first four variables.  Then we put very specific
+constraints on each of the four coefficients in that first group, and
+leave the rest of the variables alone. We add blue broken lines to
+show these constraints. Note that we can replicate  NULL constraints. 
 
-plot(state00)
-out00<- glmnet(X, y,family="gaussian", standardize=F,lambda.min.ratio=0.01)
-plot(out00)
-state0 <- grpnet(X, glm.gaussian(y), group=c(1,5:30), standardize=F,adev_tol=1)
-plot(state0)
-
+```{r}
+fit <- grpnet(X, glm.gaussian(y), groups=c(1,5:30))
+beta <- coef(fit)$beta[100, 1:4]
+print(beta)
+lower = lower=c(-Inf,-Inf,-Inf,-.2)
+upper=c(0.2,0.05,0.4,Inf)
+constrs = rep(list(NULL),27) # there are 27 groups
+constrs[[1]] = constraint.box(lower=lower,upper=upper)
+fit.constr = grpnet(X, glm.gaussian(y), groups=c(1,5:30), constraints = constrs)
+par(mfrow=c(1,2))
+plot(fit)
+plot(fit.constr)
+abline(h=lower,col="blue",lty=2)
+abline(h=upper,col="blue",lty=2)
+```
 
 
 # __Matrix__

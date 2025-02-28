@@ -20,27 +20,21 @@ Box constraint object.
 }
 \description{
 A box constraint sets upper and lower bounds for coefficients in a model.
-This is done per group, and this function is used separately to set the bounds for each group in the model. The constraints are returned as a list, with number of elements the number of groups. List entries can be \code{NULL}, which means no constraints for that group. Currently works with single-response models (so \code{glm.multinomial} and \code{glm.multigaussian} are excluded).
+This is done per group, and this function is used separately to set the bounds for each group in the model. The constraints are returned as a list, with number of elements the number of groups. List entries can be \code{NULL}, which means no constraints for that group. Currently works with single-response models (so \code{glm.multinomial} and \code{glm.multigaussian} are excluded). Note that for each group for which non-null constraints are provide, a separate call to \code{constraint.box()} must be made (i.e. the constraint object cannot be replicated). See the second example below.
 }
 \examples{
 
 # Group of length 10, with positivity constraint on all the coefficients.
 lower <- rep(0,10)
 upper <- rep(Inf,10)
-cont <- constraint.box(
-                       lower=lower,
-                       upper=upper
-                       )
+cont <- constraint.box(lower = lower, upper = upper)
 
-# No groups, 10 variables, and positivity constraints on all parameters.
-box_cont <- constraint.box(
-                           upper=Inf,
-                           lower=0
-                           )
-cont <- rep(list(box_cont),10)
+# 10 singleton groups, and non-negativity constraints on all parameters.
+cont <- lapply(1:10, function(i)constraint.box(lower = 0, upper = Inf))
 
-# Same, but only positivity on first 5 coefficients
-cont <- c(rep(list(box_cont), 5), rep(list(NULL), 5))
+# Same as above, but non-negativity constraints only on first 5 parameters.
+cont <- lapply(1:5, function(i)constraint.box(lower = 0, upper = Inf))
+cont <- c(cont, rep(list(NULL), 5)) # rep rule does not apply to NULL
 
 }
 \author{
