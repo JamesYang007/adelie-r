@@ -22,7 +22,9 @@ nonzeroGroup <- function(coefob,group, logical=FALSE){
     nzb = matrix(apply(nzb,1,cumsum),ncols,nlams)#transposes
     nzb= rbind(rbind(0,nzb)[group,,drop=FALSE],nzb[ncols,,drop=FALSE])
     nzb = apply(nzb,2,diff)
-    nzb = array(nzb > 0,dim(nzb))
+    dim.nzb = dim(nzb)
+    if(is.null(dim.nzb))dim.nzb <- c(1,length(nzb))# singleton in x
+    nzb = array(nzb > 0,dim.nzb)
     if(logical)nzb
     else apply(nzb,2,function(L,groupid)if(any(L))groupid[L]else NULL,groupid=seq(along.with=group))
     }
