@@ -424,7 +424,7 @@ grpnet <- function(
         dim.y <- dim(y)
         if (((!is.null(dim.offsets) || !is.null(dim.y)) && !identical(dim.offsets, dim.y)) ||
             (length(offsets) != length(y))
-        ) {
+            ) {
             stop("offsets must be same shape as y if not NULL.")
         }
     } else {
