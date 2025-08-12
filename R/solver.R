@@ -405,10 +405,7 @@ grpnet <- function(
         if(intercept)centers=NULL else centers = rep(0.0,p)
         X <- matrix.standardize(X,centers=centers,weights=weights, n_threads=n_threads)
         if (is.matrix(X_raw) || is.array(X_raw) || is.data.frame(X_raw)) {
-            # TODO: replace this line.
-            # Grab the attributes "_centers" and "_scales" from X.
-            # Use these to standardize X_raw in the usual fashion (X_raw - centers) / scales.
-            X_raw <- X
+            X_raw <- scale(X_raw, attr(X,"_centers"),attr(X,"_scales"))
         } else {
             X_raw <- X
         }
