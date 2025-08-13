@@ -28,3 +28,29 @@ nonzeroGroup <- function(coefob,group, logical=FALSE){
     if(logical)nzb
     else apply(nzb,2,function(L,groupid)if(any(L))groupid[L]else NULL,groupid=seq(along.with=group))
     }
+
+unstanCoef <- function(stan,intercepts,betas,df,lambda,K){
+###  Check stan to see if standardization was done. If so, converts the coefficients
+    if(!is.null(stan)){
+        sc=stan$scales
+### Now we make a matrix and use the adelie multiply to get the intercepts
+
+        xzero=matrix.dense(matrix(0,1,length(sc)),method="naive")
+        xzero = matrix.standardize(xzero,centers=stan$centers,scales=sc)
+        if(K==1){
+            preds = xzero$sp_tmul(betas)
+            intercepts <- intercepts + t(preds)
+        }
+        else{ #K>1
+            xzero = matrix.kronecker_eye(xzero,K=K)
+            preds = xzero$sp_tmul(betas)
+            nlams=ncol(preds)
+            intercepts = matrix(intercepts,nlams,K)
+            intercepts=intercepts+t(preds)
+            sc=rep(sc,rep(K,length(sc)))
+        }
+        betas <- betas%*%Diagonal(x=1/sc)
+        }
+        list(intercepts=intercepts,betas=betas,df=df,lambda=lambda)
+}
+

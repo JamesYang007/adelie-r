@@ -99,11 +99,11 @@ print.grpnet <- function (x, digits = max(3, getOption("digits") - 3), ...)
 #' make predictions from a "grpnet" object.
 #'
 #' Similar to other predict methods, this functions predicts linear predictors,
-#' coefficients and more from a fitted \code{"grpnet"} object. Note that if the default `standardize=TRUEE` was used in fitting the `grpnet` object, the coefficients reported are for the standardized inputs.
-#' However, the `predict` function will apply the stored standardization to `newx` and give the correct predictions.
+#' coefficients and more from a fitted \code{"grpnet"} object. Note that if the default `standardize=TRUE` was used in fitting the `grpnet` object, the coefficients are fit using the standardized features, and these are stored on the `state` component of the fitted `grpnet` object. However, the `coef()` method and `predict(, type = "coefficients") will convert these back to the original scale.
+#' Also the `predict` function will apply the stored standardization to `newx` and give the correct predictions.
 #'
 #' The shape of the objects returned are different for \code{"multinomial"} and \code{"multigaussian"}
-#' objects.
+#' objects. In particular, the coefficients are flattened such that if there are K responses, the first K coefficients will be for feature 1, the next K for feature 2, and so on.
 #' \code{coef(...)} is equivalent to \code{predict(type="coefficients",...)}
 #'
 #' @aliases coef.grpnet predict.grpnet
@@ -186,9 +186,13 @@ state <- object$state
  dof = apply(nzb, 1, sum)
 # dof <- diff(betas@p)
  if(is.multi)dof=dof/K
+ stan = object$standardize
  nlams = nrow(intercepts)
- if(type=="coefficients")
-     return(list(intercepts=intercepts,betas=betas,df=dof,lambda=lambda))
+
+ if(type=="coefficients"){
+      if(!is.multi)K=1
+      return(unstanCoef(stan,intercepts,betas,df=dof,lambda=lambda,K))
+      }
  if(type=="nonzero"){
      groups = object$groups
      return(nonzeroGroup(
@@ -196,21 +200,20 @@ state <- object$state
          groups))
      }
  ## Convert newx to an adelie matrix
- if(inherits(newx,"sparseMatrix")){
+  if(inherits(newx,"sparseMatrix")){
      newx <- as(newx,"CsparseMatrix")
      newx <- matrix.sparse(newx, method="naive", n_threads=n_threads)
  }
  if (is.matrix(newx) || is.array(newx) || is.data.frame(newx)) {
      newx <- matrix.dense(newx, method="naive", n_threads=n_threads)
  }
- stan = object$standardize
  if(!is.null(stan))
      newx = matrix.standardize(newx,centers=stan$centers,scales=stan$scales, n_threads=n_threads)
 
  n <- newx$rows
 
 ### Now we produce either a prediction matrix (single response), or a prediction array (multi response)
- if(!is.multi){# single target
+  if(!is.multi){# single target
      preds = newx$sp_tmul(betas)+outer(rep(1,n),drop(intercepts))
      if(!is.null(newoffsets)){
          if(length(newoffsets)!=n)stop("Argument newoffsets should have same number of elements as rows of newx")
