@@ -1,7 +1,7 @@
 Package: adelie
 Title: Group Lasso and Elastic Net Solver for Generalized Linear Models
-Version: 1.0.8
-Date: 2025-06-28
+Version: 1.0.9
+Date: 2025-08-12
 Authors@R: c(
     person("James", "Yang", role = c("aut", "cph")),
     person("Trevor", "Hastie", email="hastie@stanford.edu", role = c("aut", "cph", "cre")),
