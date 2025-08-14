@@ -563,7 +563,7 @@ state.glm_naive <- function(
     setup_loss_null <- inputs[["setup_loss_null"]]
     loss_null <- inputs[["loss_null"]]
 
-    if (is.matrix(X)) {
+    if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
     }
     constraints <- render_constraints_(length(groups), constraints)

@@ -393,9 +393,13 @@ grpnet <- function(
     if(inherits(X,"sparseMatrix")){
         X <- as(X,"CsparseMatrix")
         X <- matrix.sparse(X, method="naive", n_threads=n_threads)
+        # No special handling is required for sparse matrices for subsequent code.
+        X_raw <- X
     }
     if (is.matrix(X) || is.array(X) || is.data.frame(X)) {
         X <- matrix.dense(X, method="naive", n_threads=n_threads)
+        # Keep X_raw as raw dense matrix rather than adelie matrix.
+        # Multi-response can be optimized further using raw dense.
     }
     n <- X$rows
     p <- X$cols
