@@ -1,4 +1,5 @@
 ^research$
+^bug_reports$
 ^CRAN-RELEASE$
 ^src/*\.o$
 ^src/*\.so$
