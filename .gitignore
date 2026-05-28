@@ -9,3 +9,6 @@ inst/doc
 /doc/
 /Meta/
 *CRAN-SUBMISSION
+src/*.o
+src/*.so
+

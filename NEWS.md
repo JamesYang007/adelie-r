@@ -1,5 +1,11 @@
 # adelie (development version)
+# adelie 1.0.10
 
+* Fixed an issue with standardization. Variables with zero variance
+  get turned into Inf. What we do instead is change the variance to
+  Inf, and those variables become all 0 and are given zero
+  coefficients. This problem can exhibit during CV. 
+  
 # adelie 1.0.9
 
 * Fixed an infinite loop in `grpnet()` and `cv.grpnet()` triggered by
