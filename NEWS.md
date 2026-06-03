@@ -5,6 +5,16 @@
   get turned into Inf. What we do instead is change the variance to
   Inf, and those variables become all 0 and are given zero
   coefficients. This problem can exhibit during CV. 
+
+* Fixed the dense-matrix `sp_tmul` so that its serial path honors
+  `n_threads`. Its `n_threads = 1` branch ran a raw Eigen product that
+  ignored the requested thread count and fell back to Eigen's global
+  default (all cores), inflating example CPU time to `user/elapsed`
+  ~10x with no wall-clock gain on a many-core machine (the source of
+  CRAN's gcc-16 R-devel "CPU time > 2.5 times elapsed" NOTE). The
+  `inst/adelie` submodule points at the one-line fix on a forked branch
+  (`bnaras/adelie@zero-variance`). Investigation notes and a Docker
+  reprex live in `debug/` (excluded from the package tarball).
   
 # adelie 1.0.9
 
