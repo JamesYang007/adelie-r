@@ -605,11 +605,13 @@ matrix.standardize <- function(
     if (is_centers_none) {
         centers <- mat$mean(weights)
     }
-    if (is.null(scales)) {
-        vars <- mat$var(centers, weights)
+    if (is.null(scales)) { ## Standardize with variance irrespective of centers
+        centers.var <- if(is_centers_none) centers
+                       else mat$mean(weights)
+        vars <- mat$var(centers.var, weights)
+        vars[vars <= .Machine$double.eps] <- Inf
         scales <- sqrt((n / (n - ddof)) * vars)
     }
-
     centers <- as.numeric(centers)
     scales <- as.numeric(scales)
     input <- list(

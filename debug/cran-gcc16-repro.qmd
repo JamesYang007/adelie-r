@@ -1,0 +1,328 @@
+---
+title: "Reproducing CRAN's gcc-16 / R-devel Pretest for adelie"
+format: gfm
+---
+
+This note records the Docker setup used to investigate the NOTE `adelie`
+showed on CRAN's `CRAN_pretest` machine, and the root cause and one-line
+fix it led to.
+
+## Target environment
+
+The CRAN pretest reported:
+
+```text
+* using R Under development (unstable) (2026-05-27 r90083)
+* using platform: x86_64-pc-linux-gnu
+* R was compiled by
+    gcc-16 (Debian 16-20260425-1) 16.0.1 20260425 (prerelease) [gcc-16 r16-8812-gd9c07462a22]
+    GNU Fortran (Debian 16-20260425-1) 16.0.1 20260425 (prerelease) [gcc-16 r16-8812-gd9c07462a22]
+* running under: Debian GNU/Linux forky/sid
+* using session charset: UTF-8
+```
+
+Key properties this image reproduces:
+
+- Debian forky/sid (`debian:sid`), x86_64
+- **gcc-16** as the C/C++/Fortran compiler
+- R-devel built **from source with gcc-16**, so `adelie`'s own C++
+  (Rcpp / RcppEigen / Eigen) is also compiled by gcc-16 at install time
+- R's internal reference BLAS (`libRblas`)
+- `C.UTF-8` locale
+
+Deliberate simplifications (we are chasing a **runtime/test behavior**, not
+a bit-for-bit toolchain match):
+
+- We use whatever gcc-16 snapshot Debian sid ships *now*, not the exact
+  `16-20260425-1` snapshot. Pin via `snapshot.debian.org` only if the
+  behavior proves snapshot-sensitive.
+- R-devel is the current svn trunk, not exactly r90083.
+
+Note: this runs under `linux/amd64` emulation on Apple Silicon. Rosetta/QEMU
+reproduce SSE2 double arithmetic faithfully, which is what R and Eigen use;
+this is adequate for a runtime/threading test.
+
+## Directory layout
+
+```text
+debug/
+  cran-gcc16-repro.qmd            <- this note
+  cran-gcc16-debian/
+    Dockerfile                    <- image definition (reproduced below)
+    omp-thread-experiment.R       <- first (synthetic) thread probe
+    real-examples-timing.R        <- times the actual grpnet/cv.grpnet Rd examples
+    sptmul-nthreads-confirm.R     <- confirms the fix still honors n_threads > 1
+```
+
+Run commands from the repo root (`adelie-r/`).
+
+## The Dockerfile
+
+```dockerfile
+FROM --platform=linux/amd64 debian:sid
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      gcc-16 g++-16 gfortran-16 \
+      make \
+      ca-certificates wget curl subversion rsync \
+      xz-utils bzip2 file patch \
+      libreadline-dev \
+      libpcre2-dev \
+      zlib1g-dev \
+      libbz2-dev \
+      liblzma-dev \
+      libcurl4-openssl-dev \
+      libssl-dev \
+      libxml2-dev \
+      libicu-dev \
+      libpng-dev libjpeg-dev libtiff-dev \
+      libcairo2-dev \
+      libuv1-dev \
+      locales \
+    && rm -rf /var/lib/apt/lists/*
+
+# C.UTF-8 matches CRAN's "session charset: UTF-8".
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+RUN gcc-16 --version && gfortran-16 --version
+
+# Build R-devel from svn trunk with gcc-16.
+WORKDIR /opt/src
+RUN svn checkout https://svn.r-project.org/R/trunk R-devel
+
+WORKDIR /opt/src/R-devel
+RUN ./tools/rsync-recommended
+
+# No --with-blas / --with-lapack => R's internal reference BLAS (libRblas),
+# matching a vanilla source build. Recommended packages are kept (gives Matrix).
+RUN ./configure \
+      --prefix=/opt/R/devel-gcc16 \
+      --enable-R-shlib \
+      --with-readline \
+      --with-x=no \
+      CC=gcc-16 \
+      CXX=g++-16 \
+      FC=gfortran-16 \
+      F77=gfortran-16
+
+RUN make -j"$(nproc)"
+RUN make install
+
+ENV PATH="/opt/R/devel-gcc16/bin:${PATH}"
+ENV R_HOME="/opt/R/devel-gcc16/lib/R"
+
+# Symlink R/Rscript into /usr/local/bin so they are found even by login shells
+# (`bash -lc`), whose /etc/profile resets PATH and would otherwise drop the
+# ENV PATH above.
+RUN ln -sf /opt/R/devel-gcc16/bin/R /opt/R/devel-gcc16/bin/Rscript /usr/local/bin/
+
+RUN echo 'options(repos = c(CRAN = "https://cloud.r-project.org"))' \
+      >> /opt/R/devel-gcc16/lib/R/etc/Rprofile.site
+
+RUN Rscript -e 'cat(R.version.string, "\n"); \
+                cat("platform =", R.version$platform, "\n"); \
+                cat("BLAS =", extSoftVersion()[["BLAS"]], "\n")' \
+ && echo "--- Makeconf compilers ---" \
+ && grep -E "^(CC|CXX|CXX17|FC|F77) =" /opt/R/devel-gcc16/lib/R/etc/Makeconf
+```
+
+## Build the image
+
+```sh
+docker build --platform=linux/amd64 \
+  -t adelie-debian-sid-gcc16-rdevel \
+  -f debug/cran-gcc16-debian/Dockerfile \
+  debug/cran-gcc16-debian
+```
+
+The final build step prints the R version, BLAS, and the compilers baked
+into `Makeconf`. Expect `CC = gcc-16`, `CXX = g++-16`, reference `libRblas`.
+
+## Install dependencies (persistent volume)
+
+Use a dedicated volume so compiled packages survive between runs:
+
+```sh
+docker volume create adelie-sid-gcc16-r-lib
+
+docker run --rm --platform=linux/amd64 \
+  -e R_LIBS_SITE=/usr/local/lib/R/site-library \
+  -v adelie-sid-gcc16-r-lib:/usr/local/lib/R/site-library \
+  adelie-debian-sid-gcc16-rdevel \
+  Rscript -e 'install.packages(c(
+      "Rcpp", "RcppEigen", "r2r", "stringr",
+      "testthat", "ggplot2", "gridExtra", "knitr", "rmarkdown"))'
+```
+
+## Install adelie and run its tests
+
+Mount the working tree read-only, copy it to a scratch dir, strip stale
+build artifacts, install with gcc-16, then run the test suite.
+
+```sh
+docker run --rm --platform=linux/amd64 \
+  -e R_LIBS_SITE=/usr/local/lib/R/site-library \
+  -v adelie-sid-gcc16-r-lib:/usr/local/lib/R/site-library \
+  -v "$PWD:/src:ro" \
+  adelie-debian-sid-gcc16-rdevel \
+  bash -lc 'set -e
+    rm -rf /tmp/adelie && cp -a /src /tmp/adelie
+    find /tmp/adelie/src \( -name "*.o" -o -name "*.so" -o -name "*.dll" \) -delete
+    R CMD INSTALL --library=/usr/local/lib/R/site-library /tmp/adelie
+    Rscript -e "library(testthat); library(adelie); \
+                test_dir(\"/tmp/adelie/tests/testthat\", reporter=\"summary\")"'
+```
+
+## Full R CMD check --as-cran (optional)
+
+```sh
+docker run --rm --platform=linux/amd64 \
+  -e R_LIBS_SITE=/usr/local/lib/R/site-library \
+  -v adelie-sid-gcc16-r-lib:/usr/local/lib/R/site-library \
+  -v "$PWD:/src:ro" \
+  adelie-debian-sid-gcc16-rdevel \
+  bash -lc 'set -e
+    rm -rf /tmp/adelie && cp -a /src /tmp/adelie
+    find /tmp/adelie/src \( -name "*.o" -o -name "*.so" -o -name "*.dll" \) -delete
+    cd /tmp
+    R CMD build adelie
+    R CMD check --as-cran adelie_*.tar.gz
+    cat /tmp/adelie.Rcheck/00check.log'
+```
+
+# Findings
+
+## The CRAN signature
+
+```text
+* checking examples ... [24s/12s] NOTE
+Examples with CPU (user + system) or elapsed time > 5s
+                user system elapsed
+plot.cv.grpnet 8.311  0.009   1.563
+Examples with CPU time > 2.5 times elapsed time
+                user system elapsed  ratio
+grpnet         3.292  0.016   0.315 10.502
+cv.grpnet      2.868  0.022   0.290  9.966
+plot.cv.grpnet 8.311  0.009   1.563  5.323
+```
+
+This is not slowness (elapsed is tiny). It is the `user >> elapsed` ratio:
+`user` is CPU summed over all threads, so ~10 means the work ran on ~10
+threads. CRAN flags `ratio > 2.5` because its policy caps examples at ~2
+cores.
+
+A first, important deduction: **a `ratio > 2.5` line cannot be emitted while
+`OMP_THREAD_LIMIT=2` is in force** (a 2-thread cap holds the ratio near 2).
+So whatever CRAN's general policy, the run that produced these numbers was
+*not* capped, and `adelie` must default to few threads on its own.
+
+## Reproducing with the real examples
+
+`real-examples-timing.R` runs the verbatim `grpnet.Rd` and `cv.grpnet.Rd`
+example blocks (the synthetic `omp-thread-experiment.R` used `n=100,p=200`
+toy code and under-reproduced the effect, which is why it is kept only as a
+historical first probe). Sweeping the available thread count on the 16-core
+container, `OMP_THREAD_LIMIT` unset:
+
+| `OMP_NUM_THREADS` | grpnet ratio | cv.grpnet ratio | cv.grpnet user |
+|:-----------------:|:------------:|:---------------:|:--------------:|
+|         1         |     1.00     |      1.00       |     1.134      |
+|         2         |     1.10     |      1.11       |     1.269      |
+|         4         |     1.30     |      1.33       |     1.531      |
+|         8         |     1.70     |      1.76       |     2.017      |
+|        16         |     2.75     |      2.91       |     3.412      |
+
+`elapsed` stays flat at ~1.15s throughout; only `user` grows, roughly
+`user ~= 0.98 + 0.152 * threads`. That is the signature of OpenMP threads
+spun up on work too small to benefit: they burn CPU on overhead, not work.
+Extrapolating, the ratio reaches CRAN's ~10x at ~65 threads — exactly what a
+large, uncapped CRAN pretest box delivers. The 16-core container sits at 2.9x
+on the same line. And `OMP_THREAD_LIMIT=2` collapses it to ~1.1 (consistent
+with the deduction above).
+
+## Root cause: one unguarded Eigen product
+
+It is **not** a global Eigen misbehavior, and not adelie's own loops:
+
+- `grpnet`, `cv.grpnet`, and `predict` all default `n_threads = 1`, and
+  adelie's own `#pragma omp ... num_threads(n_threads)` loops are therefore
+  pinned to one thread. They do not respond to `OMP_NUM_THREADS`.
+- On Linux, `adelie` uses no external BLAS (`EIGEN_USE_BLAS` is guarded behind
+  `#if defined(__APPLE__)`), so the only parallelism is Eigen's own kernels.
+- The ratio *does* respond to `OMP_NUM_THREADS`, so the culprit is an Eigen
+  product that consults Eigen's global thread count instead of the requested
+  `n_threads`.
+
+That product is in `MatrixNaiveDense::sp_tmul`
+(`adelie_core/matrix/matrix_naive_dense.ipp`), the kernel behind
+`predict()`'s `newx$sp_tmul(betas)` (the `X %*% beta` over the full λ path):
+
+```cpp
+if (_n_threads <= 1) {
+    out.noalias() = v * _mat.transpose();   // raw Eigen sparse x dense
+    return;
+}
+// _n_threads > 1: omp_parallel_for over the rows of v
+```
+
+The `_n_threads <= 1` branch was the intended *serial* path, but its Eigen
+product takes its thread count from the **global** `Eigen::nbThreads()`,
+which defaults to `omp_get_max_threads()` = all cores. So the "serial" branch
+silently parallelized across every core, ignoring `n_threads = 1`. Every
+other matrix routine (kronecker_eye, constraint_dense, cov_lazy, the `dgemm`
+in `utils.hpp`) already wraps its Eigen products in `Eigen::setNbThreads`;
+this one site did not.
+
+## The fix (one line)
+
+In the `_n_threads <= 1` branch of `sp_tmul`, pin Eigen to the requested
+count before the product:
+
+```cpp
+if (_n_threads <= 1) {
+    Eigen::setNbThreads(_n_threads);    // <-- added
+    out.noalias() = v * _mat.transpose();
+    return;
+}
+```
+
+`setNbThreads` is the only lever for an Eigen product — there is nothing to
+attach an OpenMP `num_threads` clause to. In this branch `_n_threads` is
+exactly 1 (the constructor forbids `< 1`), so this makes the default path
+genuinely serial without touching Eigen globally.
+
+The fix lives in the `inst/adelie` submodule on `bnaras/adelie@zero-variance`.
+
+## Verification
+
+Patched build, real examples, `OMP_THREAD_LIMIT` unset — the ratio is flat at
+1.00 regardless of cores (so it no longer relies on an env cap), and
+`elapsed` is unchanged (the parallelism gave zero speedup at these sizes):
+
+| `OMP_NUM_THREADS` | cv.grpnet ratio (unpatched) | cv.grpnet ratio (patched) |
+|:-----------------:|:---------------------------:|:-------------------------:|
+|         1         |            1.00             |           1.00            |
+|         4         |            1.33             |         **1.00**          |
+|        16         |            2.91             |         **1.00**          |
+
+Crucially, the fix is surgical, not a global throttle. `sptmul-nthreads-confirm.R`
+calls `sp_tmul` on a large matrix (X = 2000x2000, v = 200x2000 sparse) with
+the matrix built at several `n_threads`:
+
+| `n_threads` |  user | elapsed | ratio | speedup vs n=1 |
+|:-----------:|:-----:|:-------:|:-----:|:--------------:|
+|      1      | 16.73 |  16.74  | 1.00  |   1.00x (ref)  |
+|      8      | 25.90 |   3.24  | 7.99  |     5.17x      |
+|     16      | 36.02 |   2.36  | 15.30 |     7.11x      |
+
+`n_threads = 8` drives ~8-way work (ratio 7.99) with a real 5.17x wall-clock
+speedup. So the default path is serial (fixing the CRAN NOTE) while explicit
+`n_threads > 1` still fans out fully.
+
+This is why a global `Eigen::setNbThreads(1)` at load (or
+`-DEIGEN_DONT_PARALLELIZE`) was the *wrong* fix: it would flat-line this
+table to 1.00 everywhere and destroy a genuine 5x speedup for users who ask
+for threads. The per-call guard keeps both behaviors correct.
