@@ -435,7 +435,7 @@ cv.grpnet = function(
 ### get full-model lambda sequence
     fit_full = grpnet(X,glm,
                       min_ratio=min_ratio,
-                      lmda_path_size = 100,
+                      lmda_path_size = lmda_path_size,
                       offsets=offsets,
                       progress_bar=progress_bar,
                       n_threads=n_threads,
